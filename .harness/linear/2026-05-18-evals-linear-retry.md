@@ -90,6 +90,25 @@ Exact failure:
 unsupported call: mcp__codex_apps__linear_save_issue
 ~~~
 
+### Retry 5
+
+Fresh continuation retry on 2026-05-18T20:16:31Z after confirming the repository
+was clean and aligned with 'origin/main' at '0fb13b2':
+
+- searched Linear for "Build local eval runner and artifact contract" or
+  "Evals Executable Spine";
+- search returned no existing issue results;
+- fetched the JSC/Jscraik team successfully;
+- tried to create the parent issue for the phase-one local deterministic evals
+  executable spine, including the offline/local boundary and source artifact
+  scope.
+
+Exact failure:
+
+~~~text
+unsupported call: mcp__codex_apps__linear_save_issue
+~~~
+
 ## Status
 
 'linear_status' remains 'linear_blocked'.

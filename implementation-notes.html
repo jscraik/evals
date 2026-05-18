@@ -184,6 +184,7 @@
         <li>Committed the staged implementation as <code>8029517</code> and pushed <code>main</code> to <code>origin/main</code>.</li>
         <li>Checked GitHub: <code>jscraik/evals</code> default branch is <code>main</code>, current branch has no PR, and there are no open PRs. Because this is the initial default-branch push, PR creation is not applicable for the current branch.</li>
         <li>Retried Linear issue creation after push; search/team lookup works, but <code>linear_save_issue</code> still returns <code>unsupported call</code>.</li>
+        <li>Retried Linear issue creation again during continuation after confirming <code>main</code> was clean and aligned with <code>origin/main</code> at <code>0fb13b2</code>; search/team lookup still works, issue creation still returns <code>unsupported call</code>.</li>
       </ul>
 
       <h2>Tradeoffs</h2>
@@ -227,7 +228,13 @@ git status --short --branch
 
 git log --oneline --decorate -1
 HEAD and origin/main are aligned after the delivery-state evidence refresh.
-Implementation commit: 8029517 feat: add phase-one evals executable spine</code></pre>
+Current head: 0fb13b2 docs: record final linear retry blocker
+Implementation commit: 8029517 feat: add phase-one evals executable spine
+
+Linear retry on 2026-05-18T20:16:31Z
+search: no existing issue results
+team lookup: JSC/Jscraik found
+create issue: blocked, unsupported call: mcp__codex_apps__linear_save_issue</code></pre>
 
       <h2>Known Blockers</h2>
       <ul>
