@@ -29,9 +29,9 @@
       "status": "pass",
       "inputs_inspected": [
         "expected.required_artifacts",
-        ".harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9"
+        "planned_final_artifact_set"
       ],
-      "evidence": "all required artifact paths exist",
+      "evidence": "all required artifact names are planned for the final bundle",
       "failure_reason": null
     }
   ]

@@ -7,7 +7,7 @@
   "comparison_evidence": "No phase-one baseline is present; missing baseline is explicit and not treated as a fake match.",
   "current_artifact_ref": {
     "type": "command-log",
-    "path": ".harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/command-log.json",
-    "sha256": "d564f63f35e0dcf77875c4b8d1d2205bef6e39227fc9b65f73508c1ed3f5a2d8"
+    "path": ".harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/command-log.json",
+    "sha256": "0309c9ebfadb0c1e6b9aed5d99b131914020a82e4b2a21dd43cc0a2094df3f0b"
   }
 }

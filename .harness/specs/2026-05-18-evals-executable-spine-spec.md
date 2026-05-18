@@ -10,7 +10,7 @@ risk: high
 depth: deepened
 ui: false
 traceability_required: true
-linear_status: linear_blocked
+linear_status: override_approved
 linear_team: JSC
 linear_project: missing_or_unverified
 linear_parent_title: Build local eval runner and artifact contract
@@ -26,11 +26,12 @@ roles_missing: none_checked_after_draft
 
 ## Mode Decision
 
-Mode: tracked HE spec with blocked Linear issue creation.
+Mode: tracked HE spec with approved tracker override.
 
 Reason: the source artifact is a Linear-ready plan for non-trivial tracked
 delivery. Linear is the tracker of record, but the connector could create the
-repo label and could not create issues in this session.
+repo label and could not create issues in this session. Jamie approved the
+exceptional local tracker override for phase-one implementation evidence.
 
 Current tracker state:
 
@@ -42,14 +43,21 @@ Current tracker state:
 - Parent issue and child issues are not created.
 - Mutation blocker is recorded in
   `.harness/linear/2026-05-18-evals-linear-mutation-attempt.md`.
+- Tracker override is recorded in
+  `.harness/linear/2026-05-18-evals-tracker-override-approved.md`.
 
-This spec is allowed to exist as local requirements evidence, but the work
-should not be treated as normally tracker-ready until the parent issue exists.
-If Linear issue creation remains blocked, only Jamie may approve a tracker
-override, and that override must be recorded in this spec or a sibling
-`.harness/linear/*override*.md` artifact with actor, timestamp, reason,
-blocked payload, attempted Linear command, exact error, and the recovery
-condition for returning to normal Linear tracking.
+This spec is allowed to close local implementation evidence through the
+approved override. The override must not be represented as a live Linear issue
+or normal tracker delivery. The recovery condition remains to create or link
+the Linear parent issue when issue creation becomes available.
+
+## Implementation Status Amendment
+
+Status as of 2026-05-18: the phase-one local executable spine is implemented
+under Jamie's approved tracker override. Closure evidence may use
+`linear_status: override_approved` if it cites the override artifact and keeps
+the Linear recovery condition visible. Future changes should preserve this
+status unless a real Linear issue supersedes it.
 
 ## Problem
 
@@ -118,7 +126,7 @@ The executable spine must provide a local, replayable, deterministic eval loop:
 
 ## Linear Work Item Contract
 
-linear_status: linear_blocked
+linear_status: override_approved
 
 ready_to_create_payload:
 
@@ -154,8 +162,8 @@ Payload note: these labels reflect the live Linear label checks performed on
 successfully; the parent and child issues were not created because issue
 mutation failed with `unsupported call`.
 
-The Linear issue must include a link or reference to this spec before
-implementation starts.
+When Linear issue creation is recovered, the Linear issue must include a link
+or reference to this spec.
 
 ### Tracker Override Contract
 
@@ -179,6 +187,9 @@ scope_limit: "documentation/schema/runner work only; no expansion work"
 Without this artifact, `linear_status: linear_blocked` remains active and
 implementation may prepare local artifacts but must not be presented as normally
 tracker-complete.
+
+The required override artifact now exists at
+`.harness/linear/2026-05-18-evals-tracker-override-approved.md`.
 
 ## Ownership And Decision Authority
 
@@ -720,9 +731,10 @@ Phase-one run artifacts are local review evidence.
 
 ## First Slice
 
-The first gate is tracker recovery or an explicit tracker-blocked local-prep
-note. Documentation authority compression is the first implementation slice
-allowed while `linear_blocked` remains explicit.
+The first gate was tracker recovery or an explicit tracker override. Jamie's
+override artifact now satisfies that gate for local phase-one implementation.
+Documentation authority compression remains the first implementation slice in
+the historical sequence.
 
 Why first:
 
@@ -851,7 +863,8 @@ The executable spine is done when:
 
 ## HE Plan Handoff
 
-Handoff status: plan exists; implementation handoff remains tracker-blocked.
+Handoff status: plan exists; implementation handoff is complete under Jamie's
+approved tracker override.
 
 Plan artifact:
 
@@ -866,15 +879,18 @@ Planning result:
 - EP-005: deterministic scorers and baseline comparator;
 - EP-006: closure eval and drift proof.
 
-Local documentation, schema, and runner preparation may proceed while
-`linear_blocked` is explicit, but implementation may be represented as normal
-tracked delivery, PR-ready work, or milestone-complete only after one of:
+Local documentation, schema, and runner implementation may be represented as
+complete only through one of:
 
 - Linear parent and children are created and linked; or
 - Jamie approves the tracker override artifact defined in this spec.
 
-Until then, the plan is valid sequencing evidence and any local implementation
-work must preserve `linear_blocked` status.
+The second condition is satisfied by
+`.harness/linear/2026-05-18-evals-tracker-override-approved.md`. This is not
+normal Linear delivery evidence, and it does not remove the recovery condition.
+
+The override condition is now satisfied, so local implementation evidence may
+use `override_approved` while preserving the Linear recovery condition.
 
 Handoff inputs:
 
@@ -887,7 +903,7 @@ Handoff inputs:
 
 Planning constraints:
 
-- Start with tracker recovery or an explicit tracker-blocked local-prep note.
+- Start with tracker recovery or an explicit tracker override.
 - Then documentation authority compression.
 - Then schemas and smoke fixture.
 - Then local runner and artifact writer.
@@ -901,11 +917,11 @@ blackboard_delta:
 stage: he-spec
 artifact: .harness/specs/2026-05-18-evals-executable-spine-spec.md
 plan: .harness/plans/2026-05-18-evals-executable-spine-plan.md
-linear_status: linear_blocked
-next_stage: implementation_after_tracker_recovery_or_jamie_override
+linear_status: override_approved
+next_stage: linear_recovery_when_issue_creation_is_supported
 acceptance_ids: SA-001..SA-036
 plan_ids: EP-001..EP-006
-first_slice: tracker_recovery_then_documentation_authority_compression
+first_slice: tracker_override_then_documentation_authority_compression
 blocked_mutation:
   tool: mcp__codex_apps__linear_save_issue
   error: unsupported call

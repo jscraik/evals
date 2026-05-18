@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "presence_status": "missing",
+  "comparison_status": "not_compared",
+  "promotion_status": "not_requested",
+  "baseline_owner": null,
+  "comparison_evidence": "No phase-one baseline is present; missing baseline is explicit and not treated as a fake match.",
+  "current_artifact_ref": {
+    "type": "command-log",
+    "path": ".harness/evals/runs/20260518T212019Z-pr-closeout-f8d3bda9/command-log.json",
+    "sha256": "cf4c9c104ddea680e2da6ff520bd48ae020d9d18f040c4c0fb2d5a2273e2a159"
+  }
+}

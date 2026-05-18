@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "evals": "node src/cli.js"
+    "evals": "node src/cli.js",
+    "check": "node src/cli.js check"
   },
   "dependencies": {},
   "devDependencies": {}

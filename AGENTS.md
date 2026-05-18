@@ -68,8 +68,14 @@ find schemas -maxdepth 1 -type f -name "*.schema.json" -print
 test -f fixtures/smoke/pr-closeout.case.json
 pnpm evals run fixtures/smoke/pr-closeout.case.json
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
+pnpm evals check --json
 rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" fixtures .harness/evals
 ~~~
+
+The check command validates the smoke fixture against
+'schemas/eval-case.schema.json' and validates the latest result, manifest,
+scorer results, baseline result, and manifest artifact hashes from
+'.harness/evals/runs/latest.json'.
 
 The regex check is a lightweight phase-one privacy aid, not full secret-scan
 coverage.

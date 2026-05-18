@@ -4,7 +4,7 @@ title: Evals Executable Spine Closure Eval
 date: 2026-05-18
 status: complete_tracker_override_approved
 linear_status: override_approved
-run_id: 20260518T195651Z-pr-closeout-f8d3bda9
+run_id: 20260518T212318Z-pr-closeout-f8d3bda9
 git_status: pushed_to_origin_main
 ---
 
@@ -39,11 +39,11 @@ Human command:
 ~~~text
 pnpm evals run fixtures/smoke/pr-closeout.case.json
 verdict: pass
-run_id: 20260518T195651Z-pr-closeout-f8d3bda9
-manifest: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/manifest.json
-result: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/result.json
-report: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/report.md
-command_log: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/command-log.json
+run_id: 20260518T212019Z-pr-closeout-f8d3bda9
+manifest: .harness/evals/runs/20260518T212019Z-pr-closeout-f8d3bda9/manifest.json
+result: .harness/evals/runs/20260518T212019Z-pr-closeout-f8d3bda9/result.json
+report: .harness/evals/runs/20260518T212019Z-pr-closeout-f8d3bda9/report.md
+command_log: .harness/evals/runs/20260518T212019Z-pr-closeout-f8d3bda9/command-log.json
 ~~~
 
 JSON command:
@@ -52,13 +52,14 @@ JSON command:
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 verdict: pass
 status: passed
-run_id: 20260518T195651Z-pr-closeout-f8d3bda9
-manifest_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/manifest.json
-result_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/result.json
-report_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/report.md
-command_log_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/command-log.json
-baseline_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/baseline-result.json
-scorer_results_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/scorer-results.json
+run_id: 20260518T212318Z-pr-closeout-f8d3bda9
+manifest_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/manifest.json
+result_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/result.json
+report_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/report.md
+command_log_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/command-log.json
+baseline_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/baseline-result.json
+baseline_result_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/baseline-result.json
+scorer_results_path: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/scorer-results.json
 ~~~
 
 ## Artifact Paths
@@ -66,12 +67,12 @@ scorer_results_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/s
 | Artifact | Path |
 | --- | --- |
 | Latest pointer | .harness/evals/runs/latest.json |
-| Result | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/result.json |
-| Report | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/report.md |
-| Manifest | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/manifest.json |
-| Command log | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/command-log.json |
-| Scorer results | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/scorer-results.json |
-| Baseline result | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/baseline-result.json |
+| Result | .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/result.json |
+| Report | .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/report.md |
+| Manifest | .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/manifest.json |
+| Command log | .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/command-log.json |
+| Scorer results | .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/scorer-results.json |
+| Baseline result | .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/baseline-result.json |
 | Linear retry evidence | .harness/linear/2026-05-18-evals-linear-retry.md |
 | Linear override evidence | .harness/linear/2026-05-18-evals-tracker-override-approved.md |
 | Completion audit | .harness/evals/evals-executable-spine-completion-audit.md |
@@ -89,8 +90,11 @@ scorer_results_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/s
 | Check | Status | Evidence |
 | --- | --- | --- |
 | Schema files exist | pass | 'find schemas -maxdepth 1 -type f -name "*.schema.json" -print' found eval-case, eval-result, artifact-manifest, scorer-result, and baseline-result schemas. |
-| Fixture exists | pass | 'test -f fixtures/smoke/pr-closeout.case.json' passed. |
-| Runtime validation | pass | The runner validates required fixture fields before execution and the canonical smoke command passed. |
+| Fixture schema validation | pass | 'pnpm evals check --json' validates fixtures/smoke/pr-closeout.case.json against schemas/eval-case.schema.json. |
+| Latest result schema validation | pass | 'pnpm evals check --json' validates the latest result.json against schemas/eval-result.schema.json. |
+| Latest manifest schema validation | pass | 'pnpm evals check --json' validates the latest manifest.json against schemas/artifact-manifest.schema.json and verifies manifest hashes for generated artifacts. |
+| Latest scorer-results schema validation | pass | 'pnpm evals check --json' validates the latest scorer-results.json against schemas/scorer-result.schema.json. |
+| Latest baseline schema validation | pass | 'pnpm evals check --json' validates the latest baseline-result.json against schemas/baseline-result.schema.json. |
 | JSON syntax | pass | 'node --check src/cli.js' passed and fixture JSON was parsed by the runner. |
 
 ## Deterministic Scorer Verdicts
@@ -102,10 +106,10 @@ or hosted service participates in pass, fail, block, promote, or close.
 | --- | --- | --- |
 | exit-code | pass | actual=0; expected=0 |
 | required-output | pass | all required output fragments found |
-| artifact-completeness | pass | all required artifact paths exist |
+| artifact-completeness | pass | all required artifact names are planned for the final bundle; 'pnpm evals check --json' verifies final manifest paths and hashes |
 
 Scorer result path:
-'.harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/scorer-results.json'.
+'.harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/scorer-results.json'.
 
 ## Baseline
 
@@ -118,7 +122,7 @@ Baseline fields remain split:
 | promotion_status | not_requested |
 
 Baseline evidence:
-'.harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/baseline-result.json'.
+'.harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/baseline-result.json'.
 
 The missing baseline is explicit and is not treated as a fake match.
 
@@ -141,9 +145,12 @@ The missing baseline is explicit and is not treated as a fake match.
 | find schemas | pass | five schema files found |
 | test -f fixture | pass | smoke fixture exists |
 | node --check src/cli.js | pass | syntax check passed |
+| pnpm evals check --json | pass | validates fixture, latest result, manifest, scorer results, baseline result, and manifest artifact hashes |
+| pnpm evals validate fixtures/smoke/pr-closeout.case.json --json | pass | smoke fixture validates against the local case schema |
+| pnpm evals validate .harness/evals/runs/latest.json --json | pass | latest run artifacts validate against local schemas and manifest hashes |
 | pnpm evals run fixtures/smoke/pr-closeout.case.json | pass | human output names verdict and artifact paths without relying on color |
 | pnpm evals run fixtures/smoke/pr-closeout.case.json --json | pass | JSON output names verdict, run ID, manifest, result, report, command log, baseline, and scorer paths |
-| latest pointer path check | pass | latest.json paths exist |
+| latest pointer path check | pass | latest.json paths exist for manifest, result, report, command log, baseline result, and scorer results |
 | rg baseline fields | pass | presence_status, comparison_status, and promotion_status found in run artifacts |
 | rg judge/advisory/deterministic | pass | run report states judge output is not decision authority and result has deterministic_verdict |
 | rg lightweight credential pattern | pass | no matches in fixtures or .harness/evals after credential metadata rename |

@@ -108,7 +108,7 @@
   <body>
     <main>
       <h1>Evals Executable Spine Implementation Notes</h1>
-      <p class="meta">Running notes for <code>/Users/jamiecraik/dev/evals</code>. Last updated: 2026-05-18 21:17 Europe/London.</p>
+      <p class="meta">Running notes for <code>/Users/jamiecraik/dev/evals</code>. Last updated: 2026-05-18 21:45 Europe/London.</p>
 
       <section class="status" aria-label="Current status">
         <div class="tile"><strong>Local runner</strong><span class="pass">implemented and passing</span></div>
@@ -143,8 +143,8 @@
           </tr>
           <tr>
             <td>Schema validation</td>
-            <td>Hand-written runtime validation plus JSON Schema files.</td>
-            <td>Adding Ajv or a similar dependency would be reasonable later, but phase one can validate required fields directly and keep the dependency surface empty.</td>
+            <td>Repo-local JSON Schema subset validation plus phase-one runtime invariants.</td>
+            <td>The hardening pass needed real schema proof without expanding dependencies. The validator now checks the schema keywords used by this repo and <code>pnpm evals check --json</code> validates the smoke fixture, latest result, manifest, scorer results, baseline result, and manifest hashes.</td>
           </tr>
           <tr>
             <td>Smoke execution</td>
@@ -176,7 +176,12 @@
         <li>Added <code>.gitignore</code> and removed local <code>node_modules/</code> and <code>.pnpm-store/</code> scratch directories created by running <code>pnpm</code>.</li>
         <li>Recorded a fresh Linear retry in <code>.harness/linear/2026-05-18-evals-linear-retry.md</code> after the connector still returned <code>unsupported call</code>.</li>
         <li>Added <code>UBIQUITOUS_LANGUAGE.md</code> after loading the named ubiquitous-language skill contract.</li>
-        <li>Removed the old empty/pending artifact placeholders; the runner now writes a complete preliminary bundle, scores artifact completeness against real files, then finalizes the bundle.</li>
+        <li>Removed the old empty/pending artifact placeholders.</li>
+        <li>Refactored the runner again after review: result, report, scorer results, and manifest now have a single final write path. Artifact-completeness scores the planned final artifact set, then <code>pnpm evals check --json</code> validates the final file paths and hashes.</li>
+        <li>Added a best-effort post-start <code>failure.json</code> artifact path so a failure after the run directory exists leaves structured evidence with partial artifact names.</li>
+        <li>Added <code>pnpm evals check --json</code> and <code>pnpm evals validate &lt;case-file|latest.json&gt; --json</code> for local schema proof.</li>
+        <li>Added <code>baseline_result_path</code> and <code>scorer_results_path</code> to <code>.harness/evals/runs/latest.json</code>.</li>
+        <li>Amended the spec and plan status to <code>override_approved</code> while preserving the Linear recovery condition.</li>
         <li>Added explicit fallback artifacts for <code>testing-reviewer</code> and <code>coderabbit</code> so the review lane records their coverage instead of relying on mailbox text.</li>
         <li>Initialized git, renamed the initial branch to <code>main</code>, and attached <code>origin</code> to <code>https://github.com/jscraik/evals.git</code>; the closeout docs now distinguish initialized git from PR-ready delivery.</li>
         <li>Removed stale generated run directories and kept only the latest proof bundle plus <code>latest.json</code> for staging.</li>
@@ -197,13 +202,13 @@
         <tbody>
           <tr>
             <td>No dependency-based schema validator</td>
-            <td>Small, offline, easy-to-inspect runner.</td>
-            <td>Multi-fixture suites will need stronger schema validation or contract tests.</td>
+            <td>Small, offline, easy-to-inspect runner with a local validator covering the schemas currently in use.</td>
+            <td>Multi-fixture suites may still want Ajv or another full JSON Schema implementation once schemas grow beyond the local subset.</td>
           </tr>
           <tr>
-            <td>Two-step artifact finalization</td>
-            <td>Artifact-completeness now inspects real preliminary files before the final scorer/result/manifest pass.</td>
-            <td>A later multi-case runner may want an explicit artifact transaction helper.</td>
+            <td>Single final artifact write path</td>
+            <td>Artifact-completeness now inspects planned final artifact names, and the validation command proves final paths and hashes after the bundle is written.</td>
+            <td>A later multi-case runner may want an explicit artifact transaction helper and structured failure artifacts for post-start failures.</td>
           </tr>
           <tr>
             <td>Approved tracker override</td>
@@ -216,7 +221,12 @@
       <h2>Validation Snapshot</h2>
       <pre><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 verdict: pass
-latest run: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/
+latest run: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/
+
+pnpm evals check --json
+status: passed
+latest run: .harness/evals/runs/20260518T212318Z-pr-closeout-f8d3bda9/
+validated: fixture, result, manifest, scorer results, baseline result, manifest hashes
 
 node src/cli.js run fixtures/smoke/missing.case.json --json
 status: failed

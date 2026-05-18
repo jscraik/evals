@@ -9,10 +9,10 @@ No blocking findings after cleanup.
 
 ## Actions
 
-- Replaced empty/pending placeholder artifact writes with a complete
-  preliminary artifact bundle.
+- Replaced empty/pending placeholder artifact writes with a single final
+  artifact write path for result, report, scorer results, and manifest.
 - Split runtime scorers from artifact-completeness scoring so the artifact
-  scorer checks real files that already exist.
+  scorer checks the planned final artifact set before final files are written.
 - Kept final artifact writes deterministic and local.
 
 ## No Blocking Findings
@@ -24,13 +24,12 @@ architecture, or sibling-repo runtime dependencies.
 
 ## Residual Risk
 
-The runner has hand-written validation rather than a JSON Schema validator.
-That is acceptable for phase one because no dependency surface is required, but
-future multi-fixture support should either adopt a local validator or add
-targeted contract tests.
+The runner has a repo-local JSON Schema subset validator rather than an
+external full JSON Schema implementation. That is acceptable for phase one
+because the schema keyword surface is small, but future multi-fixture support
+should either adopt a full local validator or add targeted contract tests.
 
-The runner still rewrites report, result, and manifest once after
-artifact-completeness scoring so checksums and final scorer evidence line up.
-That is a bounded artifact-finalization step, not an empty placeholder state.
+The runner has a best-effort post-start failure artifact, but a later
+multi-case runner may still want an explicit artifact transaction helper.
 
 WROTE: artifacts/reviews/simplify.md

@@ -2,11 +2,11 @@
 schema_version: 1
 title: Evals Executable Spine Plan
 type: he-plan
-status: linear_blocked_ready
+status: complete_tracker_override_approved
 date: 2026-05-18
 source_spec: .harness/specs/2026-05-18-evals-executable-spine-spec.md
 source_linear_plan: .harness/linear/2026-05-18-evals-executable-spine-linear-plan.md
-linear_status: linear_blocked
+linear_status: override_approved
 linear_team: JSC
 linear_parent_title: Build local eval runner and artifact contract
 linear_label: Repo › evals
@@ -18,18 +18,25 @@ acceptance_ids: SA-001..SA-036
 
 ## Planning Decision
 
-This plan is ready for implementation sequencing. Normal HE handoff,
-PR/milestone closure, and tracker-complete claims remain blocked until Linear
-tracking is recovered or Jamie records the tracker override allowed by the
-spec.
+This plan is implemented for the phase-one local executable spine. Normal
+Linear issue delivery remains unavailable, but Jamie approved the exceptional
+tracker override recorded in
+`.harness/linear/2026-05-18-evals-tracker-override-approved.md`.
 
 Reason: the source spec is a tracked HE spec and Linear is the tracker of
-record. The existing spec records that the Linear label was created, but issue
-creation failed with an unsupported tool call. Local planning can proceed as
-requirements evidence; implementation must not be presented as normally
-tracker-complete until tracker recovery occurs. Local preparatory artifacts may
-be created while blocked only if they preserve `linear_blocked` status and do
-not claim normal delivery completion.
+record. The Linear label was created, but issue creation failed with an
+unsupported tool call. The approved override satisfies the spec's exceptional
+local closure path for implementation evidence only. It does not create a live
+Linear issue, and the recovery condition remains to create or link the Linear
+parent issue when issue creation becomes available.
+
+## Implementation Status Amendment
+
+Status as of 2026-05-18: implementation is complete under Jamie's approved
+tracker override, not through a live Linear issue. Closure evidence must use
+`linear_status: override_approved`, cite the override artifact, and preserve
+the Linear recovery condition. Future agents must not downgrade this plan back
+to `linear_blocked` unless the override is explicitly superseded or invalidated.
 
 ## Source Evidence
 
@@ -41,11 +48,11 @@ not claim normal delivery completion.
 | .harness/refactors/stabilize-evals-executable-spine.md | refactor/migration rationale | present |
 | .harness/core/2026-05-18-evals-core.md | compressed invariants | present |
 | .harness/references/local-reuse-map.md | local prior-art reuse boundary | present |
-| README.md | first-slice output | missing |
-| AGENTS.md | first-slice output | missing |
-| package.json | command surface | missing |
-| schemas/*.schema.json | schema contracts | missing |
-| fixtures/smoke/pr-closeout.case.json | smoke fixture | missing |
+| README.md | first-slice output | present |
+| AGENTS.md | first-slice output | present |
+| package.json | command surface | present |
+| schemas/*.schema.json | schema contracts | present |
+| fixtures/smoke/pr-closeout.case.json | smoke fixture | present |
 
 ## Execution Contract
 
@@ -226,10 +233,15 @@ Validation commands:
 - `REPORT_PATH=$(jq -r '.report_path' "$RUN_POINTER")`
 - `MANIFEST_PATH=$(jq -r '.manifest_path' "$RUN_POINTER")`
 - `COMMAND_LOG_PATH=$(jq -r '.command_log_path' "$RUN_POINTER")`
+- `BASELINE_RESULT_PATH=$(jq -r '.baseline_result_path' "$RUN_POINTER")`
+- `SCORER_RESULTS_PATH=$(jq -r '.scorer_results_path' "$RUN_POINTER")`
 - `test -f "$RESULT_PATH"`
 - `test -f "$REPORT_PATH"`
 - `test -f "$MANIFEST_PATH"`
 - `test -f "$COMMAND_LOG_PATH"`
+- `test -f "$BASELINE_RESULT_PATH"`
+- `test -f "$SCORER_RESULTS_PATH"`
+- `pnpm evals check --json`
 
 If `jq` is unavailable, the implementation must provide an equivalent
 repo-owned latest-run resolver before EP-004 can close.
@@ -311,9 +323,9 @@ Rollback:
 
 Parallelism:
 
-- EP-002 and EP-003A can run in parallel as local preparatory work while
-  `linear_blocked` is explicit, but neither can be represented as
-  tracker-complete until EP-001 is resolved or explicitly overridden.
+- EP-002 and EP-003A can run in parallel as local preparatory work. They may be
+  represented as complete only because EP-001 is explicitly overridden by
+  Jamie's tracker override artifact.
 - EP-003 may begin only after EP-003A exists and must not close until the reuse
   map has been applied as prior art without creating a sibling-repo runtime
   dependency.
@@ -337,7 +349,7 @@ Parallelism:
 
 | Risk | Severity | Response |
 | --- | --- | --- |
-| Linear remains unavailable | high | keep plan `linear_blocked_ready`; require issue recovery or Jamie override |
+| Linear remains unavailable | high | keep plan `override_approved`; preserve issue recovery condition and do not claim a live issue |
 | First code copies external framework vocabulary | high | enforce ADR-002 and local schema review |
 | Local prior art becomes hidden dependency | high | keep `coding-harness` and `agent-skills` as reference/consumer inputs only |
 | Dashboard/telemetry work starts early | high | block via README/AGENTS and acceptance matrix |
@@ -350,6 +362,8 @@ Parallelism:
 Status updates should be short and blocker-first:
 
 - `linear_blocked`: issue creation unavailable; ready payload exists.
+- `override_approved`: issue creation unavailable; Jamie-approved override
+  artifact exists and Linear recovery remains required.
 - `docs_ready`: README/AGENTS added and hard blocks visible.
 - `reuse_map_ready`: local prior-art map exists and rejects sibling-repo
   runtime dependencies.
@@ -363,21 +377,21 @@ closure eval artifact and tracker recovery or approved override.
 
 ## Handoff Readiness
 
-Ready for normal implementation handoff or closure only after one of:
+Ready for local implementation closure only because one of:
 
 - Linear parent and children are created and linked; or
 - Jamie approves the tracker override artifact.
 
-Until then, this plan is valid as local sequencing evidence. Local
-documentation, schema, and runner preparation may proceed only with
-`linear_blocked` status preserved and no claim of normal tracker completion.
+The second condition is now satisfied. This is still not normal Linear
+delivery evidence; create or link the parent issue when issue creation becomes
+available.
 
 blackboard_delta:
 
 ```yaml
 status: updated
-learning: "The evals executable spine is planned as six bounded units, but implementation remains tracker-blocked until Linear recovery or Jamie override."
+learning: "The evals executable spine is implemented under Jamie's approved tracker override; Linear issue recovery remains required when issue creation becomes available."
 target_surface: plan
 owner: he-plan
-follow_up: "Recover Linear parent issue or create Jamie-approved tracker override before implementation handoff."
+follow_up: "Recover or link the Linear parent issue when issue creation is supported."
 ```

@@ -12,6 +12,12 @@ Canonical command:
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 ```
 
+Canonical validation command:
+
+```bash
+pnpm evals check --json
+```
+
 ## Doctrine
 
 - Artifacts decide.
@@ -53,7 +59,7 @@ this repo's phase-one runtime behavior.
 ## Tracker State
 
 Linear issue creation remains unavailable because
-'mcp**codex_apps**linear_save_issue' fails with 'unsupported call'. Jamie
+`mcp__codex_apps__linear_save_issue` fails with 'unsupported call'. Jamie
 approved the exceptional tracker override recorded in
 '.harness/linear/2026-05-18-evals-tracker-override-approved.md'. This does not
 create a Linear issue; it satisfies the spec's override path for the phase-one
@@ -73,8 +79,9 @@ A passing smoke run writes:
 - '.harness/evals/runs/latest.json'
 
 'latest.json' names the latest run ID, case ID, manifest path, result path,
-report path, and command log path so agents do not have to guess the newest
-artifact directory.
+report path, command log path, baseline result path, and scorer results path
+so agents do not have to guess the newest artifact directory or detour through
+result.json for first-order evidence.
 
 ## Closure Evidence
 
@@ -83,5 +90,9 @@ with command output, artifact paths, schema validation, scorer verdicts,
 baseline field values, drift status, rollback status, tracker state, and a
 pass/fail/blocked/not-applicable classification for docs, schema, smoke,
 security, accessibility, traceability, and implementation checks.
+
+Schema validation is proven by `pnpm evals check --json`, which validates the
+smoke fixture, latest result, latest manifest, latest scorer results, latest
+baseline result, and manifest artifact hashes.
 
 Passing the command alone is not completion.
