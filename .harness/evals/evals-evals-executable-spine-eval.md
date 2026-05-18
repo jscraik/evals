@@ -18,8 +18,10 @@ present. Tracker closeout remains blocked:
 
 - Linear issue creation is blocked by 'unsupported call:
   mcp__codex_apps__linear_save_issue'.
-- Commit '8029517' was pushed to 'origin/main' at
+- Implementation commit '8029517' was pushed to 'origin/main' at
   'https://github.com/jscraik/evals.git'.
+- A follow-up delivery-state evidence commit was also pushed; local 'main' and
+  'origin/main' are aligned.
 - GitHub reports 'jscraik/evals' default branch as 'main' and no open PRs.
 - A PR is not associated with the current branch because the implementation was
   delivered as the initial commit on the repository default branch.
@@ -144,7 +146,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | he_linear_traceability_lint.py | blocked | Infrastructure/scripts/validation-and-linting/he_linear_traceability_lint.py is absent in this repo |
 | git status --short --branch | pass | clean branch tracking origin/main |
 | git remote -v | pass | origin is 'https://github.com/jscraik/evals.git' for fetch and push |
-| git log --oneline --decorate -1 | pass | 8029517 on HEAD -> main and origin/main |
+| git log --oneline --decorate --max-count=3 | pass | HEAD and origin/main are aligned; history includes implementation commit 8029517 and the delivery-state evidence refresh |
 | gh repo view jscraik/evals | pass | defaultBranchRef.name is main; repo URL is https://github.com/jscraik/evals |
 | gh pr status / gh pr list | not applicable | no PR is associated with main and no open PRs exist after initial default-branch push |
 
@@ -158,7 +160,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | Security | pass with limited scope | Lightweight regex inspection found no matches in fixtures or .harness/evals. This is not full dedicated scanner coverage. |
 | Accessibility | pass | Human output is plain text and names verdict plus artifact paths; Markdown reports use headings and tables. |
 | Traceability | blocked | Linear issue creation and repo-local traceability lint are blocked. |
-| Implementation | pass local / pushed | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, the implementation was committed, and commit 8029517 was pushed to origin/main. |
+| Implementation | pass local / pushed | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, implementation commit 8029517 was pushed to origin/main, and the delivery-state evidence refresh was pushed after it. |
 | Review lane | partial / fallback complete | CodeRabbit mailbox findings were fixed. Initial review agents and a later artifact-review-probe failed artifact verification, so coordinator-run fallback review artifacts were written for simplify, ubiquitous-language, architecture, unslopify, testing-reviewer, and CodeRabbit; see artifacts/reviews/review-coordination.md. |
 
 ## Tracker State
@@ -190,10 +192,16 @@ Current status after commit and push:
 ## main...origin/main
 ~~~
 
-Latest implementation commit:
+Implementation commit:
 
 ~~~text
-8029517 (HEAD -> main, origin/main) feat: add phase-one evals executable spine
+8029517 feat: add phase-one evals executable spine
+~~~
+
+Current git status after the delivery-state evidence refresh:
+
+~~~text
+## main...origin/main
 ~~~
 
 GitHub repository state:
