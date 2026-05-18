@@ -4,7 +4,7 @@ schema_version: 2
 
 # Evals Agent Instructions
 
-These instructions apply to all work in '/Users/jamiecraik/dev/evals'.
+These instructions apply to all work in this repository.
 
 ## Mission
 
@@ -13,14 +13,22 @@ canonical schemas, artifact bundles, deterministic scorer contracts, baseline
 result shape, and closure evidence. Consuming repositories own suite intent,
 real fixtures, rubrics, thresholds, privacy approval, and baseline promotion.
 
-## Read Order
+## Discovery
+
+Always read:
 
 1. '.harness/core/2026-05-18-evals-core.md'
-2. '.harness/specs/2026-05-18-evals-executable-spine-spec.md'
-3. '.harness/plans/2026-05-18-evals-executable-spine-plan.md'
-4. '.harness/references/local-reuse-map.md'
-5. 'UBIQUITOUS_LANGUAGE.md'
-6. The specific schema, fixture, runner, or artifact file being changed.
+2. 'UBIQUITOUS_LANGUAGE.md'
+3. The specific schema, fixture, runner, or artifact file being changed.
+
+Load the deeper planning surfaces only when the task touches their scope:
+
+- '.harness/specs/2026-05-18-evals-executable-spine-spec.md' for acceptance
+  IDs, scope changes, closure criteria, or implementation-status changes.
+- '.harness/plans/2026-05-18-evals-executable-spine-plan.md' for phase
+  sequencing, validation expansion, or delivery-state edits.
+- '.harness/references/local-reuse-map.md' when borrowing concepts from
+  'coding-harness' or 'agent-skills'.
 
 ## Canonical Command
 
@@ -33,7 +41,7 @@ a later ADR or spec supersedes it.
 
 ## Phase-One Hard Blocks
 
-Before local artifact proof exists, do not add:
+Until a later ADR or spec explicitly opens the next phase, do not add:
 
 - dashboards;
 - external adapters;
