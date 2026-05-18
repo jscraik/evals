@@ -1,0 +1,11 @@
+{
+  "command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+  "simulated_command": "simulate-pr-closeout",
+  "started_at": "2026-05-18T19:56:51.833Z",
+  "finished_at": "2026-05-18T19:56:51.834Z",
+  "duration_ms": 1,
+  "exit_code": 0,
+  "stdout": "case pr-closeout wrote artifact bundle\ndeterministic scorers completed\nbaseline missing: presence_status=missing comparison_status=not_compared promotion_status=not_requested",
+  "stderr": "",
+  "failure_class": null
+}

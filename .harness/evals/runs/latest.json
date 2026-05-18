@@ -1,0 +1,8 @@
+{
+  "run_id": "20260518T195651Z-pr-closeout-f8d3bda9",
+  "case_id": "pr-closeout",
+  "manifest_path": ".harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/manifest.json",
+  "result_path": ".harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/result.json",
+  "report_path": ".harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/report.md",
+  "command_log_path": ".harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/command-log.json"
+}

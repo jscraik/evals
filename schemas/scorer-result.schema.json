@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/scorer-result.schema.json",
+  "title": "Scorer Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "results"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scorer_id", "scorer_version", "status", "inputs_inspected", "evidence", "failure_reason"],
+        "properties": {
+          "scorer_id": { "type": "string", "enum": ["exit-code", "artifact-completeness", "required-output"] },
+          "scorer_version": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["pass", "fail"] },
+          "inputs_inspected": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "evidence": { "type": "string", "minLength": 1 },
+          "failure_reason": { "type": ["string", "null"] }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

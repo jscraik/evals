@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/eval-case.schema.json",
+  "title": "Eval Case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "suite_id", "owner", "fixture_source", "privacy", "promotion", "input", "expected", "scorers"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "case_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "suite_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "type": "string", "enum": ["synthetic", "repo"] },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "fixture_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "provenance", "redaction_status"],
+      "properties": {
+        "type": { "type": "string", "enum": ["synthetic", "real"] },
+        "provenance": { "type": "string", "minLength": 1 },
+        "redaction_status": { "type": "string", "enum": ["synthetic_no_redaction_needed", "redacted", "not_redacted"] }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "contains_private_content", "contains_credentials"],
+      "properties": {
+        "class": { "type": "string", "enum": ["synthetic_public", "internal", "private"] },
+        "contains_private_content": { "type": "boolean" },
+        "contains_credentials": { "type": "boolean" }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "baseline_owner"],
+      "properties": {
+        "status": { "type": "string", "enum": ["not_promoted", "candidate", "promoted"] },
+        "baseline_owner": { "type": ["string", "null"] }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "payload"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "payload": { "type": "object" }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exit_code", "required_output_contains", "required_artifacts"],
+      "properties": {
+        "exit_code": { "type": "integer" },
+        "required_output_contains": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+        "required_artifacts": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_presence", "artifact_path"],
+      "properties": {
+        "expected_presence": { "type": "string", "enum": ["missing", "present"] },
+        "artifact_path": { "type": ["string", "null"] }
+      }
+    },
+    "scorers": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["exit-code", "artifact-completeness", "required-output"] },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}

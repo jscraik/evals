@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/baseline-result.schema.json",
+  "title": "Baseline Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "presence_status", "comparison_status", "promotion_status", "baseline_owner", "comparison_evidence", "current_artifact_ref"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "presence_status": { "type": "string", "enum": ["missing", "present"] },
+    "comparison_status": { "type": "string", "enum": ["not_compared", "matched", "changed", "error"] },
+    "promotion_status": { "type": "string", "enum": ["not_requested", "promoted", "blocked"] },
+    "baseline_owner": { "type": ["string", "null"] },
+    "comparison_evidence": { "type": "string", "minLength": 1 },
+    "current_artifact_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "sha256"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

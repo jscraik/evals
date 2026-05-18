@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "case_id": "pr-closeout",
+  "suite_id": "smoke",
+  "owner": {
+    "type": "synthetic",
+    "name": "evals phase-one smoke"
+  },
+  "fixture_source": {
+    "type": "synthetic",
+    "provenance": "Synthetic fixture authored for the evals executable spine; it contains no private PR, Linear, session, or transcript content.",
+    "redaction_status": "synthetic_no_redaction_needed"
+  },
+  "privacy": {
+    "class": "synthetic_public",
+    "contains_private_content": false,
+    "contains_credentials": false
+  },
+  "promotion": {
+    "status": "not_promoted",
+    "baseline_owner": null
+  },
+  "input": {
+    "command": "simulate-pr-closeout",
+    "payload": {
+      "summary": "Synthetic closeout checks one local command, one artifact bundle, deterministic scorer evidence, and explicit baseline state.",
+      "changed_files": ["README.md", "AGENTS.md", "schemas/eval-case.schema.json", "src/cli.js"]
+    }
+  },
+  "expected": {
+    "exit_code": 0,
+    "required_output_contains": ["artifact bundle", "deterministic scorers", "baseline missing"],
+    "required_artifacts": ["result.json", "report.md", "command-log.json", "manifest.json", "scorer-results.json", "baseline-result.json"]
+  },
+  "baseline": {
+    "expected_presence": "missing",
+    "artifact_path": null
+  },
+  "scorers": ["exit-code", "artifact-completeness", "required-output"]
+}
