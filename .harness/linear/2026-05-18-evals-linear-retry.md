@@ -128,9 +128,10 @@ authenticated Linear web session.
 
 ## Status
 
-'linear_status' remains 'linear_blocked'.
+'linear_status' was 'linear_blocked' during these recovery attempts.
 
-Local implementation may proceed only as tracker-blocked preparation. Do not
-claim tracker-complete, PR-ready, or milestone-complete delivery until the
-Linear parent issue exists or Jamie records the approved tracker override
-required by the spec.
+Jamie later approved the exceptional tracker override recorded at
+'.harness/linear/2026-05-18-evals-tracker-override-approved.md'. This retry log
+remains the recovery evidence for that override. The override does not create a
+live Linear issue; create or link the parent issue when issue creation becomes
+available.

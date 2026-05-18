@@ -2,8 +2,8 @@
 schema_version: 1
 title: Evals Executable Spine Closure Eval
 date: 2026-05-18
-status: local_complete_pushed_tracker_blocked
-linear_status: linear_blocked
+status: complete_tracker_override_approved
+linear_status: override_approved
 run_id: 20260518T195651Z-pr-closeout-f8d3bda9
 git_status: pushed_to_origin_main
 ---
@@ -14,10 +14,13 @@ git_status: pushed_to_origin_main
 
 Local executable-spine implementation evidence is present and passing for the
 phase-one smoke command. Git delivery to the repository default branch is
-present. Tracker closeout remains blocked:
+present. Tracker closeout is complete through Jamie's approved exceptional
+override:
 
-- Linear issue creation is blocked by 'unsupported call:
+- Linear issue creation remains blocked by 'unsupported call:
   mcp__codex_apps__linear_save_issue'.
+- Jamie approved the tracker override recorded at
+  '.harness/linear/2026-05-18-evals-tracker-override-approved.md'.
 - Implementation commit '8029517' was pushed to 'origin/main' at
   'https://github.com/jscraik/evals.git'.
 - A follow-up delivery-state evidence commit was also pushed; local 'main' and
@@ -26,8 +29,8 @@ present. Tracker closeout remains blocked:
 - A PR is not associated with the current branch because the implementation was
   delivered as the initial commit on the repository default branch.
 
-This artifact is closure evidence for the local executable spine and git push,
-not a claim of tracker-complete delivery.
+This artifact is closure evidence for the local executable spine, git push, and
+approved tracker override. It is not a claim that a live Linear issue exists.
 
 ## Command Output
 
@@ -70,6 +73,7 @@ scorer_results_path: .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/s
 | Scorer results | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/scorer-results.json |
 | Baseline result | .harness/evals/runs/20260518T195651Z-pr-closeout-f8d3bda9/baseline-result.json |
 | Linear retry evidence | .harness/linear/2026-05-18-evals-linear-retry.md |
+| Linear override evidence | .harness/linear/2026-05-18-evals-tracker-override-approved.md |
 | Completion audit | .harness/evals/evals-executable-spine-completion-audit.md |
 | Ubiquitous language | UBIQUITOUS_LANGUAGE.md |
 | Review coordination | artifacts/reviews/review-coordination.md |
@@ -159,8 +163,8 @@ The missing baseline is explicit and is not treated as a fake match.
 | Smoke | pass | Synthetic fixture runs through the canonical command and writes the local artifact bundle. |
 | Security | pass with limited scope | Lightweight regex inspection found no matches in fixtures or .harness/evals. This is not full dedicated scanner coverage. |
 | Accessibility | pass | Human output is plain text and names verdict plus artifact paths; Markdown reports use headings and tables. |
-| Traceability | blocked | Linear issue creation and repo-local traceability lint are blocked. |
-| Implementation | pass local / pushed | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, implementation commit 8029517 was pushed to origin/main, and the delivery-state evidence refresh was pushed after it. |
+| Traceability | pass via approved override / lint blocked | Linear issue creation remains unavailable, but Jamie approved the tracker override required by the spec. Repo-local traceability lint remains blocked because the script is absent. |
+| Implementation | pass local / pushed / override approved | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, implementation commit 8029517 was pushed to origin/main, and the delivery-state evidence refresh was pushed after it. |
 | Review lane | partial / fallback complete | CodeRabbit mailbox findings were fixed. Initial review agents and a later artifact-review-probe failed artifact verification, so coordinator-run fallback review artifacts were written for simplify, ubiquitous-language, architecture, unslopify, testing-reviewer, and CodeRabbit; see artifacts/reviews/review-coordination.md. |
 
 ## Tracker State
@@ -174,8 +178,12 @@ Exact blocker:
 unsupported call: mcp__codex_apps__linear_save_issue
 ~~~
 
-No Jamie-approved tracker override exists in this workspace. Therefore tracker
-closure remains blocked.
+Jamie-approved tracker override evidence is recorded at
+'.harness/linear/2026-05-18-evals-tracker-override-approved.md'.
+
+Therefore tracker closure is satisfied through the spec's exceptional override
+path. The override does not create a Linear issue; the recovery condition is to
+create or link the Linear parent issue when issue creation becomes available.
 
 ## Git And PR State
 
@@ -214,5 +222,6 @@ current branch PR: none
 ~~~
 
 Because this was delivered as the initial commit to the repository default
-branch, PR creation is not applicable for the current branch. No PR-ready
-tracker-complete delivery is claimed while Linear remains blocked.
+branch, PR creation is not applicable for the current branch. Tracker closure is
+claimed only through the Jamie-approved override, not through a live Linear
+issue.

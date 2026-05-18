@@ -186,6 +186,7 @@
         <li>Retried Linear issue creation after push; search/team lookup works, but <code>linear_save_issue</code> still returns <code>unsupported call</code>.</li>
         <li>Retried Linear issue creation again during continuation after confirming <code>main</code> was clean and aligned with <code>origin/main</code> at <code>0fb13b2</code>; search/team lookup still works, issue creation still returns <code>unsupported call</code>.</li>
         <li>Checked fallback tracker recovery paths: no local Linear CLI/API credential was exposed, and the in-app browser reached Linear's login screen instead of an authenticated issue composer.</li>
+        <li>Recorded Jamie's approved tracker override in <code>.harness/linear/2026-05-18-evals-tracker-override-approved.md</code>; this closes the spec's exceptional tracker path without claiming a live Linear issue exists.</li>
       </ul>
 
       <h2>Tradeoffs</h2>
@@ -205,9 +206,9 @@
             <td>A later multi-case runner may want an explicit artifact transaction helper.</td>
           </tr>
           <tr>
-            <td>Local closure but blocked delivery</td>
-            <td>Local evidence is useful and replayable now; git push is complete.</td>
-            <td>Linear state must be recovered or explicitly overridden before tracker-complete or milestone claims.</td>
+            <td>Approved tracker override</td>
+            <td>Local evidence is replayable, git push is complete, and Jamie approved the exceptional override path.</td>
+            <td>A real Linear parent issue should still be created or linked when issue creation becomes available.</td>
           </tr>
         </tbody>
       </table>
@@ -240,11 +241,16 @@ create issue: blocked, unsupported call: mcp__codex_apps__linear_save_issue
 Browser fallback on 2026-05-18T20:20:28Z
 local CLI/API credential: unavailable
 in-app browser: Linear login screen, no authenticated issue composer
-tracker recovery: still blocked</code></pre>
+tracker recovery before override: blocked
 
-      <h2>Known Blockers</h2>
+Tracker override on 2026-05-18T20:23:36Z
+approved_by: Jamie
+artifact: .harness/linear/2026-05-18-evals-tracker-override-approved.md
+linear_status: override_approved</code></pre>
+
+      <h2>Known Follow-Through</h2>
       <ul>
-        <li><strong>Linear:</strong> <code>mcp__codex_apps__linear_save_issue</code> still returns <code>unsupported call</code>, including after commit/push.</li>
+        <li><strong>Linear:</strong> <code>mcp__codex_apps__linear_save_issue</code> still returns <code>unsupported call</code>; the override does not create a live Linear issue.</li>
         <li><strong>PR:</strong> no PR exists because the implementation was pushed as the initial commit on the default branch; this is recorded as not applicable, not PR approval evidence.</li>
         <li><strong>Traceability lint:</strong> <code>Infrastructure/scripts/validation-and-linting/he_linear_traceability_lint.py</code> is absent in this repo.</li>
       </ul>

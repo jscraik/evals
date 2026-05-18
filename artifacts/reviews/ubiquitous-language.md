@@ -22,7 +22,7 @@ No blocking findings after glossary follow-through.
 | deterministic verdict | consistent | UBIQUITOUS_LANGUAGE.md defines it; schemas/eval-result.schema.json and src/cli.js use deterministic verdict as the required outcome. |
 | scorer result | consistent | UBIQUITOUS_LANGUAGE.md defines it; schemas/scorer-result.schema.json and run artifacts use scorer-results.json. |
 | baseline result | consistent | UBIQUITOUS_LANGUAGE.md defines it; schemas/baseline-result.schema.json and runner output preserve presence_status, comparison_status, and promotion_status. |
-| tracker blocked | consistent | UBIQUITOUS_LANGUAGE.md defines it; README.md, AGENTS.md, Linear retry evidence, and closure eval preserve linear_blocked status. |
+| tracker state | consistent | UBIQUITOUS_LANGUAGE.md defines both tracker blocked and tracker override approved; README.md, AGENTS.md, Linear retry evidence, override evidence, and closure eval preserve the distinction between a live Linear issue and the approved override path. |
 
 ## Residual Risk
 

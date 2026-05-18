@@ -50,11 +50,12 @@ runtime dependency.
 
 ## Tracker Rule
 
-Current tracker state is 'linear_blocked'. The Linear parent issue is not
+Current tracker state is 'override_approved'. The Linear parent issue is not
 created because 'mcp__codex_apps__linear_save_issue' fails with
-'unsupported call'. Preserve that status in docs and closure evidence until a
-Linear issue exists or Jamie records the approved tracker override required by
-the spec.
+'unsupported call', but Jamie approved the exceptional override recorded at
+'.harness/linear/2026-05-18-evals-tracker-override-approved.md'. Do not
+represent the override as a live Linear issue; preserve the recovery condition
+to create or link the parent issue when issue creation becomes available.
 
 ## Validation
 

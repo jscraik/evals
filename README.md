@@ -52,12 +52,13 @@ this repo's phase-one runtime behavior.
 
 ## Tracker State
 
-Linear tracking is currently blocked because
-'mcp**codex_apps**linear_save_issue' fails with 'unsupported call'. Local
-preparatory and executable-spine work may proceed only while preserving that
-'linear_blocked' state. Do not claim tracker-complete, PR-ready, or milestone
-complete delivery until a Linear parent issue exists or Jamie records the
-approved tracker override described in the spec.
+Linear issue creation remains unavailable because
+'mcp**codex_apps**linear_save_issue' fails with 'unsupported call'. Jamie
+approved the exceptional tracker override recorded in
+'.harness/linear/2026-05-18-evals-tracker-override-approved.md'. This does not
+create a Linear issue; it satisfies the spec's override path for the phase-one
+local executable spine and preserves the recovery condition to create or link
+the Linear parent issue when issue creation becomes available.
 
 ## Local Artifacts
 
