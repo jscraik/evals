@@ -69,6 +69,27 @@ Exact failure:
 unsupported call: mcp__codex_apps__linear_save_issue
 ~~~
 
+### Retry 4
+
+Final retry after confirming the repository was clean and pushed at
+'c9c9aab' on 'origin/main':
+
+- searched Linear for "Build local eval runner and artifact contract" or
+  "Evals Executable Spine";
+- search returned no existing issue results;
+- fetched the JSC/Jscraik team successfully;
+- checked for '.harness/linear/*override*.md' and found no override artifact;
+- tried to create the parent issue with implementation commit '8029517',
+  current pushed head 'c9c9aab', remote 'https://github.com/jscraik/evals',
+  latest run '20260518T195651Z-pr-closeout-f8d3bda9', and the source
+  spec/plan/reuse map.
+
+Exact failure:
+
+~~~text
+unsupported call: mcp__codex_apps__linear_save_issue
+~~~
+
 ## Status
 
 'linear_status' remains 'linear_blocked'.
