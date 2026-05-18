@@ -109,6 +109,23 @@ Exact failure:
 unsupported call: mcp__codex_apps__linear_save_issue
 ~~~
 
+### Browser Recovery Attempt
+
+Fresh browser fallback attempt on 2026-05-18T20:20:28Z:
+
+- confirmed the repository was clean and aligned with 'origin/main' at
+  '9da300e';
+- checked for a local Linear CLI/API fallback and found no 'linear' command and
+  no exposed 'LINEAR*' environment credential;
+- opened 'https://linear.app/jscraik/new' in the Codex in-app browser;
+- selected the page's "Open here instead" action after Linear first reported
+  "Link opened in the Linear app";
+- the in-app browser landed on the Linear login screen with "Log in to Linear"
+  and no authenticated issue composer.
+
+Result: blocked. The browser route cannot create the tracker without an
+authenticated Linear web session.
+
 ## Status
 
 'linear_status' remains 'linear_blocked'.
