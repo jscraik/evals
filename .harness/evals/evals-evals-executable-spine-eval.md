@@ -2,10 +2,10 @@
 schema_version: 1
 title: Evals Executable Spine Closure Eval
 date: 2026-05-18
-status: blocked_tracker_git_initialized
+status: local_complete_pushed_tracker_blocked
 linear_status: linear_blocked
 run_id: 20260518T195651Z-pr-closeout-f8d3bda9
-git_status: initialized_with_origin
+git_status: pushed_to_origin_main
 ---
 
 # Evals Executable Spine Closure Eval
@@ -13,20 +13,19 @@ git_status: initialized_with_origin
 ## Verdict
 
 Local executable-spine implementation evidence is present and passing for the
-phase-one smoke command. Delivery remains blocked for tracker closeout and not
-yet claimed for PR readiness:
+phase-one smoke command. Git delivery to the repository default branch is
+present. Tracker closeout remains blocked:
 
 - Linear issue creation is blocked by 'unsupported call:
   mcp__codex_apps__linear_save_issue'.
-- '/Users/jamiecraik/dev/evals' is now a git repository with origin set to
+- Commit '8029517' was pushed to 'origin/main' at
   'https://github.com/jscraik/evals.git'.
-- git-project-triage ran read-only, and the intentional implementation/proof
-  set is staged on branch 'main'.
-- Commit, push, PR creation, and final tracker-complete delivery are not
-  claimed while Linear remains blocked.
+- GitHub reports 'jscraik/evals' default branch as 'main' and no open PRs.
+- A PR is not associated with the current branch because the implementation was
+  delivered as the initial commit on the repository default branch.
 
-This artifact is closure evidence for the local executable spine, not a claim
-of tracker-complete or PR-ready delivery.
+This artifact is closure evidence for the local executable spine and git push,
+not a claim of tracker-complete delivery.
 
 ## Command Output
 
@@ -143,8 +142,11 @@ The missing baseline is explicit and is not treated as a fake match.
 | rg judge/advisory/deterministic | pass | run report states judge output is not decision authority and result has deterministic_verdict |
 | rg lightweight credential pattern | pass | no matches in fixtures or .harness/evals after credential metadata rename |
 | he_linear_traceability_lint.py | blocked | Infrastructure/scripts/validation-and-linting/he_linear_traceability_lint.py is absent in this repo |
-| git status --short --branch | pass | repository initialized; currently 'No commits yet on main' with implementation files untracked |
+| git status --short --branch | pass | clean branch tracking origin/main |
 | git remote -v | pass | origin is 'https://github.com/jscraik/evals.git' for fetch and push |
+| git log --oneline --decorate -1 | pass | 8029517 on HEAD -> main and origin/main |
+| gh repo view jscraik/evals | pass | defaultBranchRef.name is main; repo URL is https://github.com/jscraik/evals |
+| gh pr status / gh pr list | not applicable | no PR is associated with main and no open PRs exist after initial default-branch push |
 
 ## Requirement Classifications
 
@@ -156,7 +158,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | Security | pass with limited scope | Lightweight regex inspection found no matches in fixtures or .harness/evals. This is not full dedicated scanner coverage. |
 | Accessibility | pass | Human output is plain text and names verdict plus artifact paths; Markdown reports use headings and tables. |
 | Traceability | blocked | Linear issue creation and repo-local traceability lint are blocked. |
-| Implementation | pass local / blocked delivery | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran and intentional files are staged. Delivery remains blocked by Linear, and PR readiness remains unclaimed until commit/push/PR checks can run. |
+| Implementation | pass local / pushed | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, the implementation was committed, and commit 8029517 was pushed to origin/main. |
 | Review lane | partial / fallback complete | CodeRabbit mailbox findings were fixed. Initial review agents and a later artifact-review-probe failed artifact verification, so coordinator-run fallback review artifacts were written for simplify, ubiquitous-language, architecture, unslopify, testing-reviewer, and CodeRabbit; see artifacts/reviews/review-coordination.md. |
 
 ## Tracker State
@@ -175,32 +177,34 @@ closure remains blocked.
 
 ## Git And PR State
 
-This directory has been initialized as a git repository and origin is set:
+This directory is a git repository on branch 'main' with origin set:
 
 ~~~text
 origin  https://github.com/jscraik/evals.git (fetch)
 origin  https://github.com/jscraik/evals.git (push)
 ~~~
 
-Current status after intentional staging:
+Current status after commit and push:
 
 ~~~text
-## No commits yet on main
-A  .gitignore
-A  .harness/
-A  AGENTS.md
-A  README.md
-A  UBIQUITOUS_LANGUAGE.md
-A  artifacts/
-A  fixtures/
-A  implementation-notes.html
-A  package.json
-A  pnpm-lock.yaml
-A  schemas/
-A  src/
+## main...origin/main
 ~~~
 
-git-project-triage reported the local implementation/proof set as coherent for
-an initial commit, with the remaining process risk that Linear and live GitHub
-PR/check context must not be claimed complete before they are actually
-recoverable.
+Latest implementation commit:
+
+~~~text
+8029517 (HEAD -> main, origin/main) feat: add phase-one evals executable spine
+~~~
+
+GitHub repository state:
+
+~~~text
+defaultBranchRef.name: main
+url: https://github.com/jscraik/evals
+open PRs: none
+current branch PR: none
+~~~
+
+Because this was delivered as the initial commit to the repository default
+branch, PR creation is not applicable for the current branch. No PR-ready
+tracker-complete delivery is claimed while Linear remains blocked.

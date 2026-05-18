@@ -52,6 +52,23 @@ Exact failure:
 unsupported call: mcp__codex_apps__linear_save_issue
 ~~~
 
+### Retry 3
+
+Fresh retry after git commit and push on 2026-05-18:
+
+- searched Linear for "Build local eval runner and artifact contract";
+- search returned no existing issue results;
+- fetched the JSC/Jscraik team successfully;
+- tried to create the parent issue with implementation evidence including
+  commit '8029517', remote 'https://github.com/jscraik/evals', latest run
+  '20260518T195651Z-pr-closeout-f8d3bda9', and the source spec/plan/reuse map.
+
+Exact failure:
+
+~~~text
+unsupported call: mcp__codex_apps__linear_save_issue
+~~~
+
 ## Status
 
 'linear_status' remains 'linear_blocked'.
