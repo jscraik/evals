@@ -19,12 +19,13 @@ date: 2026-05-18
 ### Low: Delivery evidence language was drifting from live git state
 
 Evidence:
-- .harness/evals/evals-evals-executable-spine-eval.md:24 names 8029517 as the implementation commit pushed to origin/main.
-- .harness/evals/evals-evals-executable-spine-eval.md:160 and :174 still summarize history around 8029517 and the delivery-state refresh, omitting the current hardening commit.
-- implementation-notes.html:241-244 says current head is 0fb13b2 even though live HEAD/origin/main is 8e9f6fb.
+- .harness/evals/evals-evals-executable-spine-eval.md:24 names 8029517 as the initial implementation commit pushed to origin/main.
+- .harness/evals/evals-evals-executable-spine-eval.md:26-29 and :162 correctly include schema-validation hardening commit 8e9f6fb in the history summary.
+- .harness/evals/evals-evals-executable-spine-eval.md:176 correctly mentions follow-up delivery/hardening commits were pushed.
+- The evaluation artifact instructs readers to verify current git state live with 'git status --short --branch' and 'git log --oneline --decorate -1'.
 
 Triage:
-Resolved in this pass by changing the durable docs to distinguish initial
+Resolved in this pass by ensuring the durable docs distinguish initial
 implementation commit 8029517 from follow-up hardening commit 8e9f6fb and by
 telling future agents to verify live git state before delivery decisions.
 
@@ -32,7 +33,7 @@ Prompt translation:
 When Jamie asks "where are we at?", agents should answer from live git state first, then cite older implementation commits as historical milestones.
 
 Applied wording:
-"Initial implementation commit: 8029517. Latest pushed hardening commit at review time: 8e9f6fb. Verify current state with git status --short --branch and git log --oneline --decorate -1."
+"Initial implementation commit: 8029517. Follow-up hardening commits pushed include: 8e9f6fb (schema-validation hardening). Always verify current state with git status --short --branch and git log --oneline --decorate -1."
 
 ## Skipped Evidence
 
