@@ -17,7 +17,7 @@ Target reader jobs:
 | --- | --- |
 | Regression test command exists | package.json script 'test' runs 'node --test'. |
 | Canonical smoke command exists | package.json script 'evals' runs 'node src/cli.js'; CLI help lists 'pnpm evals run <case-file> [--json]'. |
-| Canonical validation command exists | package.json script 'check' runs 'node src/cli.js check'; CLI help lists 'pnpm evals check [--latest] [--json]'. |
+| Canonical validation command exists | package.json script 'check' runs 'node src/cli.js check'; CLI help lists 'pnpm evals check [--json]'. |
 | Latest artifact validation exists | CLI help lists 'pnpm evals validate <case-file|latest.json> [--json]'. |
 | Phase-one hard blocks are active | AGENTS.md and README.md block dashboards, adapters, cloud runners, telemetry authority, plugin systems, source mining, judge gates, and sibling runtime dependencies until a later ADR/spec opens scope. |
 | Tracker is override-approved, not live Linear | '.harness/linear/2026-05-18-evals-tracker-override-approved.md' records 'linear_status: override_approved' and the unsupported Linear create failure. |

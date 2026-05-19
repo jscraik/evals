@@ -44,3 +44,33 @@ Session logs were not used because the current repo files and live git state wer
 - pass: canonical terms have one-sentence definitions.
 - pass: AGENTS.md read order references UBIQUITOUS_LANGUAGE.md.
 - pass: prompt translations include Jamie-style phrases.
+
+## 2026-05-19 Reviewer-Hardening Pass
+
+schema_version: 1
+selected_skill: ubiquitous-language
+
+highest_value_terms:
+Repo-relative artifact pointer was added to UBIQUITOUS_LANGUAGE.md after the
+adversarial and best-practices reviewers found latest.json and manifest path
+boundary gaps. The term keeps the contract concrete: stored artifact paths are
+repository-relative, never absolute, and never traversal-based.
+
+prompt_translations:
+- "path-boundary hardening" now maps to validating repo-relative artifact
+  pointers before reading, hashing, or trusting generated run evidence.
+
+sources:
+- src/cli.js repoRelativePath helper.
+- test/cli.test.js traversal and absolute-path validation cases.
+- AGENTS.md Discovery pointer to UBIQUITOUS_LANGUAGE.md.
+
+skipped_evidence:
+No session logs were used. The live diff, tests, and project glossary were
+enough for the terminology update.
+
+validation:
+- pass: UBIQUITOUS_LANGUAGE.md exists.
+- pass: repo-relative artifact pointer has a one-sentence definition.
+- pass: prompt translations include Jamie-style wording.
+- pass: AGENTS.md references UBIQUITOUS_LANGUAGE.md.

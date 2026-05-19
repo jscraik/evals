@@ -106,6 +106,21 @@ test("case path traversal is rejected before file reads", () => {
   }
 });
 
+test("validate path traversal returns a structured failure", () => {
+  const repo = makeRepo();
+  try {
+    const result = runCli(repo, ["validate", "../outside.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const failure = parseJson(result.stdout);
+    assert.equal(failure.status, "failed");
+    assert.equal(failure.requirement, "validation target path");
+    assert.match(failure.errors.join("\n"), /inside the evals repository/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("invalid fixture fields fail schema and policy validation", () => {
   const repo = makeRepo();
   try {
@@ -121,6 +136,63 @@ test("invalid fixture fields fail schema and policy validation", () => {
     assert.equal(failure.requirement, "case validation");
     assert.match(failure.errors.join("\n"), /case_id/);
     assert.match(failure.errors.join("\n"), /synthetic/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects traversal in latest.json artifact pointers", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.result_path = "../../outside-result.json";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest\.result_path: path must not contain traversal segments/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects absolute paths in latest.json artifact pointers", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.result_path = join(repo, output.result_path);
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /latest\.result_path: path must be repository-relative/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects traversal in manifest artifact paths before hashing", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const manifestPath = join(repo, output.manifest_path);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    manifest.artifacts[0].path = "../../outside-result.json";
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /manifest artifact path: path must not contain traversal segments/);
   } finally {
     cleanup(repo);
   }

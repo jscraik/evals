@@ -34,3 +34,35 @@ This review is evidence-only. Reverting this artifact update has no runtime effe
 ## Residual Risk
 
 The main cleanup risk is documentation truth drift after follow-up commits. Durable closure evidence now avoids current-head claims; keep it that way unless the document is updated in the same final commit.
+
+## 2026-05-19 Reviewer-Hardening Pass
+
+schema_version: 1
+execution_mode: scoped_cleanup_audit
+
+cleanup_ledger:
+
+| Surface | Classification | Evidence | Recommendation |
+| --- | --- | --- | --- |
+| Stale --latest help flag | implemented now | pnpm evals --help now lists 'pnpm evals check [--json]' and src/cli.js no longer filters --latest as a pseudo-flag. | Keep command docs aligned with actual CLI options. |
+| Unstructured validation target failure | implemented now | pnpm evals validate ../outside.json --json returns a structured failure envelope with requirement 'validation target path'. | Preserve structured failure behavior for damaged or out-of-scope artifacts. |
+| Artifact pointer path traversal | implemented now | test/cli.test.js covers traversal and absolute paths in latest.json and traversal in manifest artifact paths. | Treat new artifact pointer fields as repo-relative by default. |
+| Over-literal docs regression suite | simplified now | tests/docs-pr-changes.test.js now checks durable documentation invariants instead of PR-snapshot wording. | Keep docs tests focused on contracts and boundaries. |
+
+evidence:
+- pass: rg found --latest only in this review explanation of the removed flag,
+  not in CLI help or user-facing command docs.
+- pass: rg found no unfinished draft-marker language requiring replacement.
+- pass: pnpm test.
+- pass: pnpm evals check --json.
+
+rollback_notes:
+Runtime rollback is limited to src/cli.js and test/cli.test.js. The review
+artifact and glossary edits are explanatory; reverting them has no runtime
+effect but would remove the vocabulary and audit trail for the path-boundary
+decision.
+
+residual_risk:
+The next likely cleanup risk is artifact retention growth once consumer suites
+start producing many runs. Do not add pruning until retention policy is defined
+in a later ADR/spec.

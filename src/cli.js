@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -36,7 +36,7 @@ function usage(exitCode = 1) {
     "Usage:",
     "  pnpm evals run <case-file> [--json]",
     "  pnpm evals validate <case-file|latest.json> [--json]",
-    "  pnpm evals check [--latest] [--json]"
+    "  pnpm evals check [--json]"
   ].join("\n");
   if (exitCode === 0) console.log(message);
   else console.error(message);
@@ -95,6 +95,27 @@ function insideRepo(path) {
     throw new Error("path must be inside the evals repository: " + path);
   }
   return absolutePath;
+}
+
+function repoRelativePath(path, label, errors) {
+  if (typeof path !== "string" || path.length === 0) {
+    errors.push(label + ": path must be a non-empty string");
+    return null;
+  }
+  if (isAbsolute(path)) {
+    errors.push(label + ": path must be repository-relative: " + path);
+    return null;
+  }
+  if (path.split(/[\\/]+/).includes("..")) {
+    errors.push(label + ": path must not contain traversal segments: " + path);
+    return null;
+  }
+  try {
+    return insideRepo(path);
+  } catch (error) {
+    errors.push(label + ": " + error.message);
+    return null;
+  }
 }
 
 function emitFailure(jsonMode, failure) {
@@ -545,30 +566,38 @@ function validateLatestRun(latestPath) {
   }
 
   const requiredLatestKeys = ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path"];
+  const latestPaths = {};
   for (const key of requiredLatestKeys) {
     if (!latest[key]) errors.push("latest." + key + ": missing required path");
-    else if (!existsSync(join(repoRoot, latest[key]))) errors.push("latest." + key + ": path does not exist: " + latest[key]);
+    else {
+      const absolutePath = repoRelativePath(latest[key], "latest." + key, errors);
+      if (absolutePath) {
+        latestPaths[key] = absolutePath;
+        if (!existsSync(absolutePath)) errors.push("latest." + key + ": path does not exist: " + latest[key]);
+      }
+    }
   }
 
   const checks = [];
-  if (latest.result_path) checks.push(schemaCheck("result", join(repoRoot, latest.result_path)));
-  if (latest.manifest_path) checks.push(schemaCheck("manifest", join(repoRoot, latest.manifest_path)));
-  if (latest.scorer_results_path) checks.push(schemaCheck("scorers", join(repoRoot, latest.scorer_results_path)));
-  if (latest.baseline_result_path) checks.push(schemaCheck("baseline", join(repoRoot, latest.baseline_result_path)));
+  if (latestPaths.result_path) checks.push(schemaCheck("result", latestPaths.result_path));
+  if (latestPaths.manifest_path) checks.push(schemaCheck("manifest", latestPaths.manifest_path));
+  if (latestPaths.scorer_results_path) checks.push(schemaCheck("scorers", latestPaths.scorer_results_path));
+  if (latestPaths.baseline_result_path) checks.push(schemaCheck("baseline", latestPaths.baseline_result_path));
 
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
 
-  if (latest.manifest_path && existsSync(join(repoRoot, latest.manifest_path))) {
+  if (latestPaths.manifest_path && existsSync(latestPaths.manifest_path)) {
     let manifest;
     try {
-      manifest = readJson(join(repoRoot, latest.manifest_path));
+      manifest = readJson(latestPaths.manifest_path);
     } catch (error) {
       errors.push("artifact manifest JSON parse failed: " + error.message);
       manifest = null;
     }
     if (manifest) {
       for (const artifact of manifest.artifacts || []) {
-        const artifactPath = join(repoRoot, artifact.path);
+        const artifactPath = repoRelativePath(artifact.path, "manifest artifact path", errors);
+        if (!artifactPath) continue;
         if (!existsSync(artifactPath)) {
           errors.push("manifest artifact missing: " + artifact.path);
         } else {
@@ -607,7 +636,17 @@ function printValidation(validation, jsonMode) {
 }
 
 function validateCommand(targetPath, jsonMode) {
-  const absoluteTargetPath = insideRepo(targetPath);
+  let absoluteTargetPath;
+  try {
+    absoluteTargetPath = insideRepo(targetPath);
+  } catch (error) {
+    emitFailure(jsonMode, {
+      status: "failed",
+      requirement: "validation target path",
+      errors: [error.message],
+      recovery: "Pass a fixture or latest.json path under the repository, then rerun validation."
+    });
+  }
   let validation;
   if (absoluteTargetPath.endsWith(join(".harness", "evals", "runs", "latest.json"))) {
     validation = validateLatestRun(absoluteTargetPath);
@@ -643,7 +682,7 @@ function checkCommand(jsonMode) {
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) usage(0);
 const jsonMode = args.includes("--json");
-const positional = args.filter((arg) => arg !== "--json" && arg !== "--latest");
+const positional = args.filter((arg) => arg !== "--json");
 
 if (positional[0] === "run" && positional.length === 2) runCase(positional[1], jsonMode);
 if (positional[0] === "validate" && positional.length === 2) validateCommand(positional[1], jsonMode);

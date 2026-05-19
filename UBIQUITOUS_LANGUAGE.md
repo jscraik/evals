@@ -10,6 +10,7 @@ agents. It is intentionally small and phase-one scoped.
 | Executable spine | The smallest local eval loop that can run one synthetic fixture and produce replayable evidence. | local runner, eval spine, first command | Spec goals and README doctrine. |
 | Eval case | A JSON fixture describing one replayable evaluation input, expected deterministic evidence, selected scorers, privacy metadata, and baseline reference. | fixture, smoke case | Spec domain model and schemas/eval-case.schema.json. |
 | Artifact bundle | The local proof package for a run: result, report, command log, manifest, scorer results, baseline result, and latest pointer. | run artifacts, proof package | Spec artifact output and README local artifacts. |
+| Repo-relative artifact pointer | A path recorded in latest.json or a manifest that must stay relative to this repository and must not use absolute paths or '..' traversal segments. | artifact pointer, local artifact path, latest pointer field | src/cli.js latest-run validation and test/cli.test.js path-boundary cases. |
 | Deterministic verdict | The required pass/fail outcome computed from deterministic scorer results, not judge text or hosted telemetry. | required verdict, pass/fail | Spec invariants and schemas/eval-result.schema.json. |
 | Scorer result | One deterministic check result with inspected inputs, status, evidence, and failure reason when applicable. | scorer evidence, check result | schemas/scorer-result.schema.json. |
 | Baseline result | The explicit baseline state for a run, keeping presence, comparison, and promotion separate. | baseline state, baseline comparator output | schemas/baseline-result.schema.json. |
@@ -25,6 +26,7 @@ agents. It is intentionally small and phase-one scoped.
 | "implement the plan" | Execute EP-001 through EP-006 in order, preserving linear_blocked until Linear recovers or Jamie approves an override; after approval, record override_approved without claiming a live Linear issue exists. |
 | "local reuse lane" | Use coding-harness and agent-skills as reference evidence only; do not add runtime imports or move domain truth into evals. |
 | "artifact proof" | Produce or inspect the local artifact bundle and latest.json pointer, not dashboard, telemetry, PR comment, or judge output. |
+| "path-boundary hardening" | Validate repo-relative artifact pointers before reading, hashing, or trusting generated run evidence. |
 | "baseline" | Preserve presence_status, comparison_status, and promotion_status as separate machine-readable fields. |
 | "ready for commit and PR" | First prove this path is inside a git repository; if not, classify git add, commit, push, PR, and git-project-triage as blocked. |
 
