@@ -38,11 +38,17 @@ No blocking findings after the latest validation pass.
 - pass: lightweight credential regex returns no matches in fixtures or .harness/evals
 - blocked: git status --short --branch because this directory is not a git repository
 
+Historical note: the blocked git-status line records the state at the time this
+fallback review artifact was written. It is superseded for current delivery
+decisions by live git state on 'codex/evals-review-triage', where 'git status
+--short --branch' verifies this directory is now a git repository tracking
+'origin/codex/evals-review-triage'.
+
 ## Residual Risk
 
-There is no separate test runner yet. Phase-one proof is command-level smoke
-validation plus structured negative-path checks. A future multi-case runner
-should add a repo-owned test command around fixture validation and artifact hash
-contracts.
+The repo now has a separate 'pnpm test' runner covering fixture validation,
+structured negative-path checks, corrupted artifact validation, path traversal
+rejection, and artifact hash contracts. A future multi-case runner should expand
+that suite around fixture families and baseline-state permutations.
 
 WROTE: artifacts/reviews/testing-reviewer.md

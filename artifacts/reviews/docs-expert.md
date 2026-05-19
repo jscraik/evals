@@ -15,6 +15,7 @@ Target reader jobs:
 
 | Claim | Evidence |
 | --- | --- |
+| Regression test command exists | package.json script 'test' runs 'node --test'. |
 | Canonical smoke command exists | package.json script 'evals' runs 'node src/cli.js'; CLI help lists 'pnpm evals run <case-file> [--json]'. |
 | Canonical validation command exists | package.json script 'check' runs 'node src/cli.js check'; CLI help lists 'pnpm evals check [--latest] [--json]'. |
 | Latest artifact validation exists | CLI help lists 'pnpm evals validate <case-file|latest.json> [--json]'. |
@@ -46,6 +47,7 @@ Run after edits:
 
 - 'git diff --check'
 - pointer checks for README-linked docs
+- 'pnpm test'
 - 'pnpm evals --help'
 - 'pnpm evals check --json'
 - lightweight privacy regex over fixtures and eval artifacts

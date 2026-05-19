@@ -43,6 +43,12 @@ lifecycle authority or phase-one runtime dependencies.
 
 ## Commands
 
+Run regression tests:
+
+~~~bash
+pnpm test
+~~~
+
 Run the smoke eval:
 
 ~~~bash

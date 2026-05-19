@@ -174,8 +174,20 @@ function validateWithSchema(value, schema, path = "$") {
 }
 
 function validateDocument(schemaPath, dataPath) {
-  const schema = readJson(schemaPath);
-  const data = readJson(dataPath);
+  let schema;
+  try {
+    schema = readJson(schemaPath);
+  } catch (error) {
+    return [rel(schemaPath) + ": schema JSON parse failed: " + error.message];
+  }
+
+  let data;
+  try {
+    data = readJson(dataPath);
+  } catch (error) {
+    return [rel(dataPath) + ": JSON parse failed: " + error.message];
+  }
+
   return validateWithSchema(data, schema);
 }
 
@@ -547,14 +559,22 @@ function validateLatestRun(latestPath) {
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
 
   if (latest.manifest_path && existsSync(join(repoRoot, latest.manifest_path))) {
-    const manifest = readJson(join(repoRoot, latest.manifest_path));
-    for (const artifact of manifest.artifacts || []) {
-      const artifactPath = join(repoRoot, artifact.path);
-      if (!existsSync(artifactPath)) {
-        errors.push("manifest artifact missing: " + artifact.path);
-      } else {
-        const actual = sha256File(artifactPath);
-        if (actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
+    let manifest;
+    try {
+      manifest = readJson(join(repoRoot, latest.manifest_path));
+    } catch (error) {
+      errors.push("artifact manifest JSON parse failed: " + error.message);
+      manifest = null;
+    }
+    if (manifest) {
+      for (const artifact of manifest.artifacts || []) {
+        const artifactPath = join(repoRoot, artifact.path);
+        if (!existsSync(artifactPath)) {
+          errors.push("manifest artifact missing: " + artifact.path);
+        } else {
+          const actual = sha256File(artifactPath);
+          if (actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
+        }
       }
     }
   }

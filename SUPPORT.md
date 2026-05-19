@@ -6,6 +6,7 @@ to reproduce the smoke eval and inspect the generated artifact bundle.
 ## Reproduce
 
 ~~~bash
+pnpm test
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 pnpm evals check --json
 ~~~
@@ -23,6 +24,7 @@ baseline result, and command log.
 
 | Symptom | First Check |
 | --- | --- |
+| Regression concern | 'pnpm test' |
 | Fixture rejected | 'pnpm evals validate fixtures/smoke/pr-closeout.case.json --json' |
 | Latest run rejected | 'pnpm evals validate .harness/evals/runs/latest.json --json' |
 | Missing artifact | inspect '.harness/evals/runs/<run-id>/manifest.json' |

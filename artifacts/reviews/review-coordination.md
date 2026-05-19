@@ -16,6 +16,12 @@ Scope: evals executable spine implementation
 | artifact-review-probe | failed_artifact_verification | Fresh bounded retry completed with an instruction-surface summary and did not write artifacts/reviews/artifact-review-probe.md. |
 | git-project-triage | blocked | The directory is not a git repository. |
 
+Historical note: the git-project-triage blocker records the state at the time
+that review artifact was written. It is superseded for current delivery
+decisions by live git state on 'codex/evals-review-triage', where 'git status
+--short --branch' verifies this directory is now a git repository tracking
+'origin/codex/evals-review-triage'.
+
 Coordinator-run fallback review artifacts were then written for:
 
 - artifacts/reviews/simplify.md

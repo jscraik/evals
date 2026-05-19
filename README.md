@@ -18,6 +18,12 @@ Canonical validation command:
 pnpm evals check --json
 ```
 
+Regression test command:
+
+```bash
+pnpm test
+```
+
 ## Documentation
 
 - 'AGENTS.md': agent operating rules and scoped discovery.
@@ -117,3 +123,7 @@ smoke fixture, latest result, latest manifest, latest scorer results, latest
 baseline result, and manifest artifact hashes.
 
 Passing the command alone is not completion.
+
+`pnpm test` covers the CLI success path, structured fixture failures, path
+traversal rejection, invalid fixture policy/schema fields, manifest hash
+mismatches, and malformed generated artifact JSON.

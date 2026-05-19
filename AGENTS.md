@@ -74,6 +74,7 @@ test -f README.md
 test -f AGENTS.md
 find schemas -maxdepth 1 -type f -name "*.schema.json" -print
 test -f fixtures/smoke/pr-closeout.case.json
+pnpm test
 pnpm evals run fixtures/smoke/pr-closeout.case.json
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 pnpm evals check --json
