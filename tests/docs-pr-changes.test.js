@@ -950,30 +950,45 @@ describe('implementation-notes.html (modified)', () => {
 
   test('git log section tells agents to verify live state, not claim a specific head', () => {
     content = content ?? read('implementation-notes.html');
+    const validationSectionStart = content.indexOf('Validation Snapshot');
+    const validationSectionEnd = content.indexOf('\n## ', validationSectionStart + 1);
+    const validationSection = validationSectionEnd === -1
+      ? content.slice(validationSectionStart)
+      : content.slice(validationSectionStart, validationSectionEnd);
     assert.ok(
-      content.includes('Verify live before delivery decisions') ||
-        content.includes('Verify live'),
+      validationSection.includes('Verify live before delivery decisions') ||
+        validationSection.includes('Verify live'),
       'git log section must instruct agents to verify live git state'
     );
   });
 
   test('git log section references initial implementation commit 8029517', () => {
     content = content ?? read('implementation-notes.html');
+    const validationSectionStart = content.indexOf('Validation Snapshot');
+    const validationSectionEnd = content.indexOf('\n## ', validationSectionStart + 1);
+    const validationSection = validationSectionEnd === -1
+      ? content.slice(validationSectionStart)
+      : content.slice(validationSectionStart, validationSectionEnd);
     assert.ok(
-      content.includes('8029517'),
+      validationSection.includes('8029517'),
       'must reference initial implementation commit 8029517'
     );
     assert.ok(
-      content.includes('Initial implementation commit') ||
-        content.includes('initial implementation commit'),
+      validationSection.includes('Initial implementation commit') ||
+        validationSection.includes('initial implementation commit'),
       'must use "Initial implementation commit" label for 8029517'
     );
   });
 
   test('git log section references hardening commit 8e9f6fb', () => {
     content = content ?? read('implementation-notes.html');
+    const validationSectionStart = content.indexOf('Validation Snapshot');
+    const validationSectionEnd = content.indexOf('\n## ', validationSectionStart + 1);
+    const validationSection = validationSectionEnd === -1
+      ? content.slice(validationSectionStart)
+      : content.slice(validationSectionStart, validationSectionEnd);
     assert.ok(
-      content.includes('8e9f6fb'),
+      validationSection.includes('8e9f6fb'),
       'must reference schema-validation hardening commit 8e9f6fb'
     );
   });
@@ -1240,15 +1255,20 @@ describe('Regression: no absolute /Users/ paths in PR-changed doc files', () => 
     'artifacts/reviews/simplify.md',
     'artifacts/reviews/ubiquitous-language.md',
     'artifacts/reviews/unslopify.md',
+    'implementation-notes.html',
   ];
 
+  const absolutePathPatterns = ['/Users/', '/home/', 'C:\\Users\\'];
+
   for (const file of changedDocFiles) {
-    test(`${file} contains no /Users/jamiecraik absolute paths`, () => {
+    test(`${file} contains no absolute filesystem paths`, () => {
       const content = read(file);
-      assert.ok(
-        !content.includes('/Users/jamiecraik'),
-        `${file} must not contain /Users/jamiecraik absolute filesystem path`
-      );
+      for (const pattern of absolutePathPatterns) {
+        assert.ok(
+          !content.includes(pattern),
+          `${file} must not contain absolute filesystem path pattern "${pattern}"`
+        );
+      }
     });
   }
 });
