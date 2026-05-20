@@ -131,6 +131,48 @@ test("canonical commands are documented where contributors and support agents ne
   }
 });
 
+test("CI workflow runs the deterministic verification gate", () => {
+  assert.ok(exists(".github/workflows/ci.yml"), "CI workflow should exist");
+  const workflow = read(".github/workflows/ci.yml");
+  assert.match(workflow, /name: Deterministic Evals CI/);
+  assert.match(workflow, /pull_request:/);
+  assert.match(workflow, /push:/);
+  assert.match(workflow, /push:[\s\S]*branches:[\s\S]*- main/);
+  assert.match(workflow, /concurrency:/);
+  assert.match(workflow, /cancel-in-progress: true/);
+  assert.match(workflow, /name: deterministic-gates/);
+  assert.match(workflow, /uses: actions\/checkout@[0-9a-f]{40}/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /uses: pnpm\/action-setup@[0-9a-f]{40}/);
+  assert.match(workflow, /uses: actions\/setup-node@[0-9a-f]{40}/);
+  assert.doesNotMatch(workflow, /uses: [^\n]+@v\d+/);
+  assert.match(workflow, /node-version: "22"/);
+  assert.match(workflow, /pnpm install --frozen-lockfile/);
+  assert.match(workflow, /pnpm verify/);
+
+  const pkg = JSON.parse(read("package.json"));
+  assert.equal(pkg.packageManager, "pnpm@11.2.0");
+  assert.equal(pkg.scripts.verify, "node scripts/verify.js");
+});
+
+test("CI required check contract matches the workflow gate", () => {
+  const workflow = read(".github/workflows/ci.yml");
+  const contract = JSON.parse(read(".harness/ci-required-checks.json"));
+
+  assert.equal(contract.schema_version, 1);
+  assert.equal(contract.checks.length, 1);
+
+  const [check] = contract.checks;
+  assert.equal(check.name, "deterministic-gates");
+  assert.equal(check.workflow, "Deterministic Evals CI");
+  assert.equal(check.command, "pnpm verify");
+  assert.deepEqual(check.triggers, ["pull_request", "push:main"]);
+
+  assert.match(workflow, literal("name: " + check.workflow));
+  assert.match(workflow, literal("name: " + check.name));
+  assert.match(workflow, literal("run: " + check.command));
+});
+
 test("privacy check regex is documented consistently", () => {
   const requiredFragments = ["rg -n", "sk-", "api[_-]?key", "BEGIN (RSA|OPENSSH|PRIVATE) KEY"];
   for (const path of ["AGENTS.md", "CONTRIBUTING.md", "SECURITY.md"]) {

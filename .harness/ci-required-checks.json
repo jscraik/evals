@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "checks": [
+    {
+      "name": "deterministic-gates",
+      "provider": "github_actions",
+      "workflow": "Deterministic Evals CI",
+      "owner": "evals executable spine",
+      "command": "pnpm verify",
+      "triggers": [
+        "pull_request",
+        "push:main"
+      ],
+      "required_for": [
+        "pull_request_review",
+        "main_branch_drift_prevention"
+      ],
+      "evidence": ".harness/implementation-notes/2026-05-20-evals-trust-boundary-notes.html#mechanical-enforcement-ci"
+    }
+  ]
+}
