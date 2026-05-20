@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { schemaCheck } from "../src/lib/schema.js";
+import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
 import { verdictFor } from "../src/lib/scoring.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -88,6 +88,142 @@ test("run writes a valid local artifact bundle", () => {
     const validation = parseJson(checkResult.stdout);
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports ready runtime packet for the latest proof bundle", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "ready");
+    assert.equal(state.latest.status, "present");
+    assert.equal(state.latest.run_id, output.run_id);
+    assert.equal(state.validation.status, "passed");
+    assert.ok(state.recommended_commands.includes("pnpm evals check --json"));
+    assert.ok(state.artifacts.every((artifact) => artifact.status === "present"));
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports missing runtime packet without failing the command", () => {
+  const repo = makeRepo();
+  try {
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "missing");
+    assert.equal(state.latest.status, "missing");
+    assert.equal(state.validation.status, "not_run");
+    assert.ok(state.recommended_commands.includes("pnpm evals run fixtures/smoke/pr-closeout.case.json --json"));
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports stale runtime packet when latest artifacts are missing", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    rmSync(join(repo, output.result_path));
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "stale");
+    assert.equal(state.latest.run_id, output.run_id);
+    assert.equal(state.validation.status, "failed");
+    const resultArtifact = state.artifacts.find((artifact) => artifact.key === "result_path");
+    assert.ok(resultArtifact);
+    assert.equal(resultArtifact.status, "missing");
+    assert.match(resultArtifact.reason, /path does not exist/);
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports invalid runtime packet for unsafe latest artifact paths", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.result_path = "../outside.json";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "invalid");
+    assert.equal(state.validation.status, "failed");
+    const resultArtifact = state.artifacts.find((artifact) => artifact.key === "result_path");
+    assert.ok(resultArtifact);
+    assert.equal(resultArtifact.status, "invalid");
+    assert.match(resultArtifact.reason, /must not contain traversal segments/);
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports invalid runtime packet for malformed latest JSON", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "{", "utf8");
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "invalid");
+    assert.equal(state.latest.status, "invalid");
+    assert.equal(state.validation.status, "failed");
+    assert.match(state.validation.errors.join("\n"), /JSON parse failed/);
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports invalid runtime packet for schema-invalid latest pointers", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    delete latest.run_id;
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "invalid");
+    assert.equal(state.latest.status, "invalid");
+    assert.equal(state.latest.run_id, null);
+    assert.equal(state.validation.status, "failed");
+    assert.match(state.validation.errors.join("\n"), /run_id/);
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
   } finally {
     cleanup(repo);
   }

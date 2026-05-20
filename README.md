@@ -18,6 +18,12 @@ Canonical validation command:
 pnpm evals check --json
 ```
 
+Current-state command:
+
+```bash
+pnpm evals state --json
+```
+
 Regression test command:
 
 ```bash
@@ -106,6 +112,11 @@ report path, command log path, baseline result path, and scorer results path
 so agents do not have to guess the newest artifact directory or detour through
 result.json for first-order evidence.
 
+`pnpm evals state --json` reads that latest pointer and emits a schema-backed
+runtime state packet. It classifies the local proof surface as `ready`, `stale`,
+`missing`, or `invalid`, lists artifact presence, and names the next validation
+command without running hidden work.
+
 Phase-one run artifacts are retained locally. Automatic retention duration is
 not defined yet; keep committed artifact bundles only when they are part of
 cited proof or closure evidence.
@@ -121,6 +132,10 @@ security, accessibility, traceability, and implementation checks.
 Schema validation is proven by `pnpm evals check --json`, which validates the
 smoke fixture, latest result, latest manifest, latest scorer results, latest
 baseline result, and manifest artifact hashes.
+
+Runtime readiness is queried with `pnpm evals state --json`; the state packet is
+advisory evidence for humans and agents, while `pnpm evals check --json` remains
+the deterministic validation gate.
 
 Passing the command alone is not completion.
 
