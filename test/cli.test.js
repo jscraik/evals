@@ -23,7 +23,9 @@ function cleanup(repo) {
 function runCli(repo, args) {
   return spawnSync(process.execPath, [join(repo, "src", "cli.js"), ...args], {
     cwd: repo,
-    encoding: "utf8"
+    encoding: "utf8",
+    timeout: 30_000,
+    killSignal: "SIGKILL"
   });
 }
 

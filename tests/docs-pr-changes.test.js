@@ -33,7 +33,8 @@ const docs = [
   "SUPPORT.md",
   "LICENSE.md",
   "UBIQUITOUS_LANGUAGE.md",
-  "artifacts/reviews/docs-expert.md"
+  "artifacts/reviews/docs-expert.md",
+  "implementation-notes.html"
 ];
 
 test("README documentation map points to existing docs", () => {
@@ -147,10 +148,20 @@ test("tracker docs preserve override status without claiming a live issue", () =
 });
 
 test("public docs avoid machine-specific absolute paths", () => {
+  const absolutePathPatterns = [
+    /\/Users\/[^/\s]+/i,
+    /\/home\/[^/\s]+/i,
+    /[A-Za-z]:\\Users\\[^\\\s]+/i
+  ];
   for (const path of docs) {
     const content = read(path);
-    assert.doesNotMatch(content, /\/Users\/jamiecraik/);
-    assert.doesNotMatch(content, /\/home\//);
+    for (const pattern of absolutePathPatterns) {
+      assert.doesNotMatch(
+        content,
+        pattern,
+        path + " must not contain absolute local filesystem paths"
+      );
+    }
   }
 });
 
