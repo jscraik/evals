@@ -7,10 +7,11 @@ Primary skill: improve-codebase-architecture
 Reviewer coverage: agent-native-reviewer, api-contract-reviewer, adversarial-reviewer, coordinator runtime inspection
 
 Snapshot scope: this audit is a historical pre-fix planning artifact captured
-before the current PR's CLI module split. Code evidence that names
-src/cli.js line ranges should be read as original gap evidence, not current
-line-accurate implementation mapping; current runtime owners are src/commands/*
-and src/lib/*.
+before the current PR's CLI module split was completed in commit f8dfc36.
+Code evidence that names src/cli.js line ranges is frozen historical gap
+evidence, not current line-accurate implementation mapping. Current runtime
+owners are src/commands/* and src/lib/*; use
+.harness/refactors/2026-05-20-layered-module-map.md for the current module map.
 
 ## 1. Executive Summary
 
@@ -39,9 +40,9 @@ Top 5 risks:
 Strongest existing foundations:
 
 - Local artifact bundle exists and is documented in README.md:94-107.
-- CLI validates latest run artifacts and manifest hashes in src/cli.js:558-617.
-- Path boundary checks exist in src/cli.js:92-119 and are covered in test/cli.test.js:95-199.
-- Deterministic scorer results include inspected inputs, evidence, and failure_reason in src/cli.js:257-296 and schemas/scorer-result.schema.json:15-23.
+- CLI validates latest run artifacts and manifest hashes in current modules src/lib/latest-run.js and src/lib/schema.js.
+- Path boundary checks exist in current module src/lib/paths.js and are covered in test/cli.test.js.
+- Deterministic scorer results include inspected inputs, evidence, and failure_reason in current module src/lib/scoring.js and schemas/scorer-result.schema.json.
 - Phase-one doctrine is consistent: README.md:37-43, AGENTS.md:11-14, and .harness/core/2026-05-18-evals-core.md:7-18.
 
 Highest-leverage next fixes:
