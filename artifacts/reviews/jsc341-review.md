@@ -10,13 +10,20 @@ trust boundary.
 
 ## Findings And Disposition
 
-| Reviewer | Finding | Disposition |
+Reviewer provenance: Architecture, Simplicity, and Testing are AI-assisted
+development review aspects recorded during implementation; Codex Review and
+CodeRabbit rows are automated PR review systems on PR #8. Evidence sources are
+the changed runtime files, generated artifact bundle, validation commands, and
+GitHub review comments.
+
+| Review Aspect / Source | Finding | Disposition |
 | --- | --- | --- |
 | Architecture | Expected artifact paths were reconstructed independently in the validator and could drift from the run producer. | Fixed by adding `src/lib/artifact-bundle.js` and routing both `src/commands/run.js` and `src/lib/latest-run.js` through the same artifact layout contract. |
 | Simplicity | Repeated filtered contract iteration and implicit duplicate artifact behavior increased ambiguity. | Fixed by exporting pre-split manifest/result-ref contracts and making duplicate artifact types fail explicitly. |
 | Testing | Metadata drift, result artifact-ref hash drift, and baseline command-log linkage drift were not covered. | Fixed by adding focused seam tests in `test/cli.test.js`. |
 | Codex Review | Baseline consistency assumed every baseline ref was a command-log ref, which would reject valid present-baseline artifacts. | Fixed by validating `baseline.current_artifact_ref` by declared type: command-log refs must match latest command-log evidence; baseline-artifact refs must be repo-relative, present, and SHA-matched. |
 | Codex Review | Latest/manifest/result artifact path comparisons were separator-sensitive and could false-fail on Windows-style paths. | Fixed by normalizing artifact path separators before consistency comparisons. |
+| CodeRabbit | Review disposition provenance was ambiguous because the table used `Reviewer` for review dimensions and automated systems without identifying source type. | Fixed by adding this provenance note and renaming the table header to `Review Aspect / Source`. |
 
 ## Validation
 
