@@ -10,11 +10,15 @@ agents. It is intentionally small and phase-one scoped.
 | Executable spine | The smallest local eval loop that can run one synthetic fixture and produce replayable evidence. | local runner, eval spine, first command | Spec goals and README doctrine. |
 | Eval case | A JSON fixture describing one replayable evaluation input, expected deterministic evidence, selected scorers, privacy metadata, and baseline reference. | fixture, smoke case | Spec domain model and schemas/eval-case.schema.json. |
 | Artifact bundle | The local proof package for a run: result, report, command log, manifest, scorer results, baseline result, and latest pointer. | run artifacts, proof package | Spec artifact output and README local artifacts. |
+| Local observability loop | The repo-local feedback loop where command logs, scorer results, baseline results, manifests, reports, and future trace events explain a failure so Codex can patch, rerun, and verify. | observability stack, feedback loop, query/correlate/reason | .harness/refactors/2026-05-20-local-observability-feedback-loop.md. |
 | Repo-relative artifact pointer | A path recorded in latest.json or a manifest that must stay relative to this repository and must not use absolute paths or '..' traversal segments. | artifact pointer, local artifact path, latest pointer field | src/cli.js latest-run validation and test/cli.test.js path-boundary cases. |
 | Deterministic verdict | The required pass/fail outcome computed from deterministic scorer results, not judge text or hosted telemetry. | required verdict, pass/fail | Spec invariants and schemas/eval-result.schema.json. |
 | Scorer result | One deterministic check result with inspected inputs, status, evidence, and failure reason when applicable. | scorer evidence, check result | schemas/scorer-result.schema.json. |
 | Baseline result | The explicit baseline state for a run, keeping presence, comparison, and promotion separate. | baseline state, baseline comparator output | schemas/baseline-result.schema.json. |
+| Deep module fix packet | The required implementation packet for turning an audit gap into a change: owner module, public interface, hidden implementation rule, caller contract, seam test, tracer proof, rollback path, and validation gate. | deep module format, fix mechanics, module packet | .harness/refactors/2026-05-20-deep-module-fix-mechanics.md. |
+| Tracer proof | The smallest production-like route through real wiring that proves a changed interface or runtime rule works. | thin proof, smoke proof, production-like path | Deep module fix mechanics and eval artifact proof rules. |
 | Local prior-art reuse | Borrowing field patterns and vocabulary from sibling repos as design evidence without importing their runtime or domain authority. | reuse map, reference-only reuse | .harness/references/local-reuse-map.md. |
+| Collector prior art | Reusing patterns from local ~/.agents/session-collector and ~/.agents/otel-collector for telemetry shape, freshness, provenance, and verification without adding runtime dependencies. | local collectors, collector reuse | .harness/refactors/2026-05-20-local-observability-feedback-loop.md. |
 | Tracker blocked | The delivery state where Linear issue creation is unavailable and no Jamie-approved override exists. | linear_blocked, tracker blocked | Spec tracker override contract and Linear retry evidence. |
 | Tracker override approved | The exceptional delivery state where Jamie approves closure without a live Linear issue after recovery paths fail, while preserving the condition to create or link the issue later. | override_approved, approved override | .harness/linear/2026-05-18-evals-tracker-override-approved.md. |
 | Closure eval | The .harness/evals artifact that cites command output, artifact paths, validation, scorer verdicts, baseline fields, drift, rollback, and tracker state. | closure evidence, eval closeout | Plan EP-006 and AGENTS.md closure evidence. |
@@ -25,9 +29,12 @@ agents. It is intentionally small and phase-one scoped.
 | --- | --- |
 | "implement the plan" | Execute EP-001 through EP-006 in order, preserving linear_blocked until Linear recovers or Jamie approves an override; after approval, record override_approved without claiming a live Linear issue exists. |
 | "local reuse lane" | Use coding-harness and agent-skills as reference evidence only; do not add runtime imports or move domain truth into evals. |
+| "use the collectors" | Adapt ~/.agents/session-collector and ~/.agents/otel-collector patterns as prior art; keep evals locally runnable without them. |
 | "artifact proof" | Produce or inspect the local artifact bundle and latest.json pointer, not dashboard, telemetry, PR comment, or judge output. |
+| "observability stack" | Build or inspect local evidence and query/correlation surfaces first; do not add external telemetry authority during phase one. |
 | "path-boundary hardening" | Validate repo-relative artifact pointers before reading, hashing, or trusting generated run evidence. |
 | "baseline" | Preserve presence_status, comparison_status, and promotion_status as separate machine-readable fields. |
+| "deep module format" | Create or follow a deep module fix packet before implementation; do not spread behavior across caller choreography or prose-only rules. |
 | "ready for commit and PR" | First prove this path is inside a git repository; if not, classify git add, commit, push, PR, and git-project-triage as blocked. |
 
 ## Flagged Ambiguities

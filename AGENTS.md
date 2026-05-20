@@ -29,6 +29,9 @@ Load the deeper planning surfaces only when the task touches their scope:
   sequencing, validation expansion, or delivery-state edits.
 - '.harness/references/local-reuse-map.md' when borrowing concepts from
   'coding-harness' or 'agent-skills'.
+- '.harness/refactors/2026-05-20-deep-module-fix-mechanics.md' before
+  implementing fixes from evidence-led audits or changing runner, schema,
+  validation, artifact, baseline, trace, state, or governance mechanics.
 
 ## Canonical Command
 
@@ -55,6 +58,27 @@ Until a later ADR or spec explicitly opens the next phase, do not add:
 Local prior-art reuse from sibling repos is allowed only as documented evidence
 and schema inspiration. It must not become hidden lifecycle authority or a
 runtime dependency.
+
+## Deep Module Fix Mechanics
+
+When implementing audit findings, preserve deep module format:
+
+- define the owner module, public interface, hidden implementation rule,
+  caller contract, seam test, tracer proof, rollback path, and validation gate
+  before editing runtime code;
+- prefer one deep owner module over spreading choreography across callers,
+  docs, tests, generated artifacts, or agent prompts;
+- do not count a docs-only update as a fix for runtime, validation,
+  governance, traceability, or safety gaps unless the gap is explicitly
+  documentation-only;
+- compare the smallest patch with the deeper interface move before changing
+  public CLI, schema, artifact, or validation contracts;
+- stop for a shared decision when a fix changes public interfaces, durable
+  terminology, validation strategy, or future agent workflow.
+
+Use the deep module fix mechanics file as the required checklist for these
+changes. Keep phase-one hard blocks intact unless a later ADR or spec explicitly
+opens the next phase.
 
 ## Tracker Rule
 

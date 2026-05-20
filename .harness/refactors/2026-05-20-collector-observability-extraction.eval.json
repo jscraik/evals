@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "eval_id": "collector-observability-extraction",
+  "status": "design_contract",
+  "purpose": "Define the exact local collector information evals may extract or emulate when building its own observability and feedback-loop surfaces.",
+  "phase_boundary": {
+    "runtime_dependency_allowed": false,
+    "network_ingest_allowed": false,
+    "external_backend_allowed": false,
+    "local_prior_art_allowed": true,
+    "authority_rule": "Artifacts decide. Telemetry explains."
+  },
+  "sources": [
+    {
+      "source_id": "otel-collector",
+      "path": "~/.agents/otel-collector",
+      "reuse_mode": "prior_art",
+      "patterns_to_adapt": [
+        "raw_ndjson_payload_storage",
+        "processed_stats_artifact",
+        "health_status",
+        "ingest_freshness",
+        "per_signal_counts",
+        "low_cardinality_counters",
+        "verification_script"
+      ],
+      "runtime_boundary": "Do not import, launch, call HTTP endpoints, or require this collector for phase-one eval commands."
+    },
+    {
+      "source_id": "session-collector",
+      "path": "~/.agents/session-collector",
+      "reuse_mode": "prior_art",
+      "patterns_to_adapt": [
+        "privacy_safe_session_summary",
+        "hashed_public_provenance",
+        "local_only_sensitive_provenance",
+        "session_grouping",
+        "tool_and_event_frequency",
+        "downstream_evidence_bundle"
+      ],
+      "runtime_boundary": "Do not require session collection for smoke eval execution, validation, or closure evidence."
+    }
+  ],
+  "extraction_targets": [
+    {
+      "target_id": "run_freshness",
+      "fields": [
+        "latest_run_id",
+        "last_run_at",
+        "last_artifact_validation_at",
+        "artifact_validation_status",
+        "latest_pointer_status"
+      ],
+      "intended_owner": "future src/commands/state.js",
+      "privacy_class": "public_local",
+      "validation": "state schema validates required freshness fields"
+    },
+    {
+      "target_id": "artifact_signal_counts",
+      "fields": [
+        "result_count",
+        "report_count",
+        "command_log_count",
+        "scorer_result_count",
+        "baseline_result_count",
+        "failure_artifact_count"
+      ],
+      "intended_owner": "future state/query module",
+      "privacy_class": "public_local",
+      "validation": "counts derive from repo-local artifact files only"
+    },
+    {
+      "target_id": "deterministic_scorer_metrics",
+      "fields": [
+        "scorer_id",
+        "status",
+        "failure_reason",
+        "inputs_inspected",
+        "evidence"
+      ],
+      "intended_owner": "src/lib/scoring.js",
+      "privacy_class": "public_local",
+      "validation": "scorer result schema validates each record"
+    },
+    {
+      "target_id": "failure_correlation",
+      "fields": [
+        "failure_class",
+        "requirement",
+        "errors",
+        "recovery",
+        "partial_artifacts",
+        "owning_module"
+      ],
+      "intended_owner": "src/lib/failures.js",
+      "privacy_class": "public_local",
+      "validation": "failure artifacts include actionable recovery and repo-relative artifact paths"
+    },
+    {
+      "target_id": "trace_event_outline",
+      "fields": [
+        "event_id",
+        "run_id",
+        "case_id",
+        "event_type",
+        "created_at",
+        "module",
+        "artifact_path",
+        "status"
+      ],
+      "intended_owner": "future src/lib/trace-events.js",
+      "privacy_class": "public_local",
+      "validation": "trace event JSONL validates against trace-event schema"
+    },
+    {
+      "target_id": "privacy_safe_provenance",
+      "fields": [
+        "source_kind",
+        "source_id_hash",
+        "source_path_present",
+        "redaction_status",
+        "allowed_use",
+        "sensitive_provenance_path"
+      ],
+      "intended_owner": "future promotion/trace module",
+      "privacy_class": "mixed_public_and_local_sensitive",
+      "validation": "public artifact hashes identifiers and sensitive provenance remains local-only"
+    }
+  ],
+  "query_outputs": [
+    {
+      "command": "pnpm evals state --json",
+      "status": "future",
+      "must_include_targets": [
+        "run_freshness",
+        "artifact_signal_counts",
+        "failure_correlation"
+      ]
+    },
+    {
+      "command": "pnpm evals verify --json",
+      "status": "future",
+      "must_include_targets": [
+        "run_freshness",
+        "deterministic_scorer_metrics",
+        "failure_correlation"
+      ]
+    },
+    {
+      "command": "pnpm evals promote-trace --json",
+      "status": "future_after_adr_or_spec",
+      "must_include_targets": [
+        "trace_event_outline",
+        "privacy_safe_provenance"
+      ]
+    }
+  ],
+  "privacy_rules": [
+    "Do not emit raw local transcript IDs, rollout IDs, trace IDs, tool-call IDs, or filesystem paths in public artifacts.",
+    "Hash source identifiers before writing public provenance.",
+    "Separate local-only sensitive provenance from public eval evidence.",
+    "Keep collector-derived information optional until a later ADR or spec opens an integration phase."
+  ],
+  "acceptance_criteria": [
+    "The eval names every collector-derived field before implementation.",
+    "Each extraction target has an owning module and validation method.",
+    "No phase-one command requires either collector to be running.",
+    "No external telemetry backend becomes authority for pass, fail, promote, or closure."
+  ]
+}
