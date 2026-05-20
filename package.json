@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "evals": "node src/cli.js",
-    "check": "node src/cli.js check"
+    "check": "node src/cli.js check",
+    "test": "node --test"
   },
   "dependencies": {},
   "devDependencies": {}

@@ -108,12 +108,12 @@
   <body>
     <main>
       <h1>Evals Executable Spine Implementation Notes</h1>
-      <p class="meta">Running notes for <code>/Users/jamiecraik/dev/evals</code>. Last updated: 2026-05-18 21:45 Europe/London.</p>
+      <p class="meta">Running notes for the local repository checkout. Last updated: 2026-05-19 08:45 Europe/London.</p>
 
       <section class="status" aria-label="Current status">
         <div class="tile"><strong>Local runner</strong><span class="pass">implemented and passing</span></div>
         <div class="tile"><strong>Tracker</strong><span class="blocked">Linear save_issue blocked</span></div>
-        <div class="tile"><strong>Git / PR</strong><span>pushed to origin/main; PR n/a</span></div>
+        <div class="tile"><strong>Git / PR</strong><span>draft PR #1 on codex/evals-review-triage</span></div>
         <div class="tile"><strong>Review lane</strong><span>fallback artifacts written</span></div>
       </section>
 
@@ -192,6 +192,13 @@
         <li>Retried Linear issue creation again during continuation after confirming <code>main</code> was clean and aligned with <code>origin/main</code> at <code>0fb13b2</code>; search/team lookup still works, issue creation still returns <code>unsupported call</code>.</li>
         <li>Checked fallback tracker recovery paths: no local Linear CLI/API credential was exposed, and the in-app browser reached Linear's login screen instead of an authenticated issue composer.</li>
         <li>Recorded Jamie's approved tracker override in <code>.harness/linear/2026-05-18-evals-tracker-override-approved.md</code>; this closes the spec's exceptional tracker path without claiming a live Linear issue exists.</li>
+        <li>Ran the requested simplify, unslopify, architecture, and ubiquitous-language triage pass; it found stale current-head wording in closure notes and preserved the remaining architecture/testability items as next-step review evidence.</li>
+        <li>Ran the requested docs-expert pass; added <code>CONTRIBUTING.md</code>, <code>SECURITY.md</code>, <code>SUPPORT.md</code>, and <code>LICENSE.md</code>, then aligned <code>README.md</code> with the scoped AGENTS discovery model.</li>
+        <li>Added <code>pnpm test</code> with a Node built-in test suite covering success, missing fixtures, malformed fixture JSON, path traversal rejection, invalid fixture fields, manifest hash mismatches, and malformed generated artifact JSON.</li>
+        <li>Hardened <code>pnpm evals check --json</code> and <code>pnpm evals validate .harness/evals/runs/latest.json --json</code> so corrupted generated artifacts return structured validation failures instead of stack traces.</li>
+        <li>Added historical supersession notes to <code>artifacts/reviews/review-coordination.md</code> and <code>artifacts/reviews/testing-reviewer.md</code> for earlier no-git-repo blocker text.</li>
+        <li>Ran agent-native, adversarial, and best-practices reviewer agents; they found path-boundary gaps in <code>latest.json</code> and manifest validation plus an over-literal docs test suite, so I tightened repo-relative pointer validation and replaced the docs test with stable invariant checks.</li>
+        <li>Finished with architecture, ubiquitous-language, simplify, and unslopify passes. The only new domain term added was <code>repo-relative artifact pointer</code>; the code stayed intentionally small around the tested boundary helper.</li>
       </ul>
 
       <h2>Tradeoffs</h2>
@@ -238,10 +245,10 @@ no matches
 git status --short --branch
 ## main...origin/main
 
-git log --oneline --decorate -1
-HEAD and origin/main are aligned after the delivery-state evidence refresh.
-Current head: 0fb13b2 docs: record final linear retry blocker
-Implementation commit: 8029517 feat: add phase-one evals executable spine
+Git evidence note
+Verify live before delivery decisions before using this static artifact for delivery state.
+Initial implementation commit: 8029517 feat: add phase-one evals executable spine
+Schema-validation hardening commit at triage time: 8e9f6fb fix: harden evals artifact validation
 
 Linear retry on 2026-05-18T20:16:31Z
 search: no existing issue results

@@ -21,10 +21,12 @@ override:
   mcp__codex_apps__linear_save_issue'.
 - Jamie approved the tracker override recorded at
   '.harness/linear/2026-05-18-evals-tracker-override-approved.md'.
-- Implementation commit '8029517' was pushed to 'origin/main' at
+- Initial implementation commit '8029517' was pushed to 'origin/main' at
   'https://github.com/jscraik/evals.git'.
-- A follow-up delivery-state evidence commit was also pushed; local 'main' and
-  'origin/main' are aligned.
+- Follow-up delivery-state and hardening commits were also pushed, including
+  schema-validation hardening commit '8e9f6fb'. Verify current git state live
+  with 'git status --short --branch' and
+  'git log --oneline --decorate -1'.
 - GitHub reports 'jscraik/evals' default branch as 'main' and no open PRs.
 - A PR is not associated with the current branch because the implementation was
   delivered as the initial commit on the repository default branch.
@@ -157,7 +159,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | he_linear_traceability_lint.py | blocked | Infrastructure/scripts/validation-and-linting/he_linear_traceability_lint.py is absent in this repo |
 | git status --short --branch | pass | clean branch tracking origin/main |
 | git remote -v | pass | origin is 'https://github.com/jscraik/evals.git' for fetch and push |
-| git log --oneline --decorate --max-count=3 | pass | HEAD and origin/main are aligned; history includes implementation commit 8029517 and the delivery-state evidence refresh |
+| git log --oneline --decorate --max-count=3 | pass | History includes initial implementation commit 8029517, delivery-state evidence refreshes, and schema-validation hardening commit 8e9f6fb |
 | gh repo view jscraik/evals | pass | defaultBranchRef.name is main; repo URL is https://github.com/jscraik/evals |
 | gh pr status / gh pr list | not applicable | no PR is associated with main and no open PRs exist after initial default-branch push |
 
@@ -171,7 +173,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | Security | pass with limited scope | Lightweight regex inspection found no matches in fixtures or .harness/evals. This is not full dedicated scanner coverage. |
 | Accessibility | pass | Human output is plain text and names verdict plus artifact paths; Markdown reports use headings and tables. |
 | Traceability | pass via approved override / lint blocked | Linear issue creation remains unavailable, but Jamie approved the tracker override required by the spec. Repo-local traceability lint remains blocked because the script is absent. |
-| Implementation | pass local / pushed / override approved | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, implementation commit 8029517 was pushed to origin/main, and the delivery-state evidence refresh was pushed after it. |
+| Implementation | pass local / pushed / override approved | Local runner, artifact writer, deterministic scorers, and baseline comparator are present. git-project-triage ran, initial implementation commit 8029517 was pushed to origin/main, and follow-up delivery/hardening commits were pushed after it. |
 | Review lane | partial / fallback complete | CodeRabbit mailbox findings were fixed. Initial review agents and a later artifact-review-probe failed artifact verification, so coordinator-run fallback review artifacts were written for simplify, ubiquitous-language, architecture, unslopify, testing-reviewer, and CodeRabbit; see artifacts/reviews/review-coordination.md. |
 
 ## Tracker State
@@ -201,22 +203,23 @@ origin  https://github.com/jscraik/evals.git (fetch)
 origin  https://github.com/jscraik/evals.git (push)
 ~~~
 
-Current status after commit and push:
+Default-branch status at the phase-one closure point:
 
 ~~~text
 ## main...origin/main
 ~~~
 
-Implementation commit:
+Initial implementation commit:
 
 ~~~text
 8029517 feat: add phase-one evals executable spine
 ~~~
 
-Current git status after the delivery-state evidence refresh:
+Current git state should be verified live before delivery decisions:
 
 ~~~text
-## main...origin/main
+git status --short --branch
+git log --oneline --decorate -1
 ~~~
 
 GitHub repository state:
