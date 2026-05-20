@@ -229,6 +229,20 @@ test("state reports invalid runtime packet for schema-invalid latest pointers", 
   }
 });
 
+test("state outputs human-readable format without --json flag", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const result = runCli(repo, ["state"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.ok(result.stdout.includes("status"));
+    assert.ok(result.stdout.includes(output.run_id));
+    assert.ok(result.stdout.includes("pnpm evals"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("missing fixture returns a structured failure", () => {
   const repo = makeRepo();
   try {

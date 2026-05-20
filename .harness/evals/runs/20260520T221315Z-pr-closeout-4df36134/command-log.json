@@ -1,5 +1,5 @@
 {
-  "command": "pnpm evals run fixtures/smoke/pr-closeout.case.json",
+  "command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
   "input_command": "simulate-pr-closeout",
   "execution_mode": "synthetic",
   "started_at": "2026-05-20T22:13:15.924Z",
