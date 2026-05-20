@@ -88,7 +88,7 @@ function scanCredentialPatterns(searchPaths) {
     for (const filePath of listFiles(searchPath)) {
       const lines = readFileSync(filePath, "utf8").split(/\r?\n/);
       for (const [index, line] of lines.entries()) {
-        if (pattern.test(line)) matches.push(filePath + ":" + (index + 1) + ":" + line);
+        if (pattern.test(line)) matches.push(filePath + ":" + (index + 1) + ":<redacted>");
       }
     }
   }
