@@ -287,6 +287,36 @@ test("baseline-presence scorer requires an explicit baseline contract", () => {
   }
 });
 
+test("latest validation permits present baseline artifact references", () => {
+  const repo = makeRepo();
+  try {
+    const baselinePath = join(repo, ".harness", "evals", "baselines", "present-baseline.json");
+    mkdirSync(dirname(baselinePath), { recursive: true });
+    writeFileSync(baselinePath, JSON.stringify({ status: "approved" }, null, 2) + "\n", "utf8");
+
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.baseline.expected_presence = "present";
+    fixture.baseline.artifact_path = ".harness/evals/baselines/present-baseline.json";
+    writeFileSync(join(repo, "fixtures", "smoke", "present-baseline.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/present-baseline.case.json", "--json"]);
+    assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
+    const output = parseJson(runResult.stdout);
+
+    const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
+    assert.equal(baseline.presence_status, "present");
+    assert.equal(baseline.current_artifact_ref.type, "baseline-artifact");
+    assert.equal(baseline.current_artifact_ref.path, ".harness/evals/baselines/present-baseline.json");
+
+    const checkResult = runCli(repo, ["check", "--json"]);
+    assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
+    const validation = parseJson(checkResult.stdout);
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("latest validation rejects traversal in latest.json artifact pointers", () => {
   const repo = makeRepo();
   try {

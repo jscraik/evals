@@ -120,7 +120,7 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
 
   for (const contract of latestArtifactContracts) {
     const expectedPath = expectedLatestPath(latest.run_id, contract.key);
-    if (latest[contract.key] !== expectedPath) {
+    if (!sameArtifactPath(latest[contract.key], expectedPath)) {
       errors.push("latest." + contract.key + ": expected " + expectedPath + " for run_id " + latest.run_id + ", got " + latest[contract.key]);
     }
   }
@@ -147,7 +147,7 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
       errors.push("manifest missing required artifact: " + contract.type);
       continue;
     }
-    if (artifact.path !== latest[contract.key]) {
+    if (!sameArtifactPath(artifact.path, latest[contract.key])) {
       errors.push("manifest " + contract.type + " path: expected " + latest[contract.key] + ", got " + artifact.path);
     }
     if (artifact.required !== true) errors.push("manifest " + contract.type + " required: expected true");
@@ -160,7 +160,7 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
       errors.push("result missing artifact_ref: " + contract.type);
       continue;
     }
-    if (artifact.path !== latest[contract.key]) {
+    if (!sameArtifactPath(artifact.path, latest[contract.key])) {
       errors.push("result " + contract.type + " artifact_ref path: expected " + latest[contract.key] + ", got " + artifact.path);
     }
     const manifestArtifact = manifestArtifacts.get(contract.type);
@@ -169,11 +169,40 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
     }
   }
 
-  if (baseline?.current_artifact_ref?.path !== latest.command_log_path) {
-    errors.push("baseline current_artifact_ref.path: expected " + latest.command_log_path + ", got " + baseline?.current_artifact_ref?.path);
+  const baselineRef = baseline?.current_artifact_ref;
+  if (!baselineRef || typeof baselineRef.type !== "string") {
+    errors.push("baseline current_artifact_ref: expected command-log or baseline-artifact reference");
+  } else if (baselineRef.type === "command-log") {
+    if (!sameArtifactPath(baselineRef.path, latest.command_log_path)) {
+      errors.push("baseline current_artifact_ref.path: expected " + latest.command_log_path + ", got " + baselineRef.path);
+    }
+    const commandLogArtifact = manifestArtifacts.get("command-log");
+    if (commandLogArtifact && baselineRef.sha256 !== commandLogArtifact.sha256) {
+      errors.push("baseline current_artifact_ref.sha256 does not match command-log manifest artifact");
+    }
+  } else if (baselineRef.type === "baseline-artifact") {
+    const baselinePathErrors = [];
+    const baselinePath = repoRelativePath(baselineRef.path, "baseline current_artifact_ref.path", baselinePathErrors);
+    errors.push(...baselinePathErrors);
+    if (baselinePath && existsSync(baselinePath)) {
+      const actual = sha256File(baselinePath);
+      if (baselineRef.sha256 !== actual) errors.push("baseline current_artifact_ref.sha256 does not match baseline artifact");
+    } else if (baselinePath) {
+      errors.push("baseline current_artifact_ref.path does not exist: " + baselineRef.path);
+    }
+  } else {
+    errors.push("baseline current_artifact_ref.type: expected command-log or baseline-artifact, got " + baselineRef.type);
   }
 
   return errors;
+}
+
+function sameArtifactPath(left, right) {
+  return normalizeArtifactPath(left) === normalizeArtifactPath(right);
+}
+
+function normalizeArtifactPath(path) {
+  return typeof path === "string" ? path.replace(/\\/g, "/") : path;
 }
 
 function artifactMap(artifacts, label, errors) {
