@@ -82,6 +82,11 @@ test("run writes a valid local artifact bundle", () => {
     assert.equal(latest.execution_mode, "synthetic");
     assert.ok(latest.baseline_result_path);
     assert.ok(latest.scorer_results_path);
+
+    const checkResult = runCli(repo, ["check", "--json"]);
+    assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
+    const validation = parseJson(checkResult.stdout);
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
   } finally {
     cleanup(repo);
   }
@@ -314,6 +319,88 @@ test("latest validation rejects absolute paths in latest.json artifact pointers"
     assert.equal(result.status, 1);
     const validation = parseJson(result.stdout);
     assert.match(validation.errors.join("\n"), /latest\.result_path: path must be repository-relative/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects missing latest schema fields before artifact reads", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    delete latest.result_path;
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*result_path.*missing required property/);
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "fail"));
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects additional latest schema fields", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.unexpected = "drift";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*unexpected.*additional property is not allowed/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects non-object latest roots at the schema gate", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "[]\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*expected type object/);
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects unknown execution modes before artifact reads", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.execution_mode = "pretend";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*execution_mode.*expected one of synthetic, real/);
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
   } finally {
     cleanup(repo);
   }

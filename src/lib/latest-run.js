@@ -36,20 +36,29 @@ export function validateLatestRun(latestPath) {
     return { status: "failed", errors: [error.message], checks: [] };
   }
 
+  const checks = [schemaCheck("latest", absoluteLatestPath)];
+  for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
+
+  if (errors.length > 0) {
+    return {
+      status: "failed",
+      latest_path: rel(absoluteLatestPath),
+      run_id: latest.run_id,
+      checks,
+      errors
+    };
+  }
+
   const requiredLatestKeys = ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path"];
   const latestPaths = {};
   for (const key of requiredLatestKeys) {
-    if (!latest[key]) errors.push("latest." + key + ": missing required path");
-    else {
-      const absolutePath = repoRelativePath(latest[key], "latest." + key, errors);
-      if (absolutePath) {
-        latestPaths[key] = absolutePath;
-        if (!existsSync(absolutePath)) errors.push("latest." + key + ": path does not exist: " + latest[key]);
-      }
+    const absolutePath = repoRelativePath(latest[key], "latest." + key, errors);
+    if (absolutePath) {
+      latestPaths[key] = absolutePath;
+      if (!existsSync(absolutePath)) errors.push("latest." + key + ": path does not exist: " + latest[key]);
     }
   }
 
-  const checks = [];
   if (latestPaths.result_path) checks.push(schemaCheck("result", latestPaths.result_path));
   if (latestPaths.manifest_path) checks.push(schemaCheck("manifest", latestPaths.manifest_path));
   if (latestPaths.scorer_results_path) checks.push(schemaCheck("scorers", latestPaths.scorer_results_path));

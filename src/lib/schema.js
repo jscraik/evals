@@ -23,6 +23,10 @@ export const schemaTargets = {
   baseline: {
     schema: join(schemaDir, "baseline-result.schema.json"),
     label: "baseline result"
+  },
+  latest: {
+    schema: join(schemaDir, "latest-run.schema.json"),
+    label: "latest run"
   }
 };
 
