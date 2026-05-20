@@ -1,18 +1,18 @@
 import { existsSync } from "node:fs";
 
+import { validateCaseFileContract } from "./case-contract.js";
 import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
 import { insideRepo, rel, repoRelativePath } from "./paths.js";
 import { schemaCheck } from "./schema.js";
 
 /**
- * Validate a case JSON file against the "case" schema.
- * @param {string} casePath - Path to the case file; may be repository-relative and will be resolved to an absolute repository path.
- * @returns {object} Validation result object describing schema check outcome and any validation errors.
+ * Validates a case JSON file against the "case" schema.
+ * @param {string} casePath - Repository-relative or absolute path to the case JSON file.
+ * @returns {object} Result object containing validation `status`, an array of `errors`, and `checks` with schema validation details.
  */
 export function validateCaseFile(casePath) {
-  const absoluteCasePath = insideRepo(casePath);
-  return schemaCheck("case", absoluteCasePath);
+  return validateCaseFileContract(casePath);
 }
 
 /**

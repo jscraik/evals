@@ -13,6 +13,71 @@ evidence, not current line-accurate implementation mapping. Current runtime
 owners are `src/commands/*` and `src/lib/*`; use
 .harness/refactors/2026-05-20-layered-module-map.md for the current module map.
 
+## North Star
+
+`evals` proves the proof system.
+
+Jamie mantra: Thin surface. Strong guardrails. Durable memory. Professional
+output.
+
+Use that as the design constraint for this repo:
+
+| Mantra | Evals Interpretation |
+|---|---|
+| Thin surface | Keep the CLI, schemas, fixtures, and artifacts small, explicit, and portable. Do not absorb another repo's whole workflow. |
+| Strong guardrails | Prefer deterministic schema checks, scorer contracts, privacy gates, path guards, artifact hashes, and CI gates over prose instructions. |
+| Durable memory | Preserve evidence bundles, baselines, run manifests, promotion records, and drift status so later agents can reason from facts instead of recollection. |
+| Professional output | Emit stable JSON, readable Markdown closeout evidence, clear pass/fail/block classifications, and reproducible validation commands. |
+
+It should not become the place where every project moves its local behavior,
+prompts, validators, or domain-specific judgement. Each project should prove its
+own work first. This repository should prove that reusable evidence contracts,
+schemas, scorers, artifact bundles, and failure classifications catch real
+success and failure patterns across projects.
+
+For example, `agent-skills` owns whether a specific skill behaves correctly.
+`plugin-eval` owns skill/plugin quality analysis such as discoverability,
+context budget, benchmark readiness, and package ergonomics. A local external
+review lane such as Tessl can provide an independent second opinion. This repo
+should not replace those lanes. It should receive reduced, portable contract
+cases from them and prove whether the shared scorer contract catches the
+underlying evidence problem.
+
+Short form:
+
+```text
+agent-skills asks: did this skill work?
+plugin-eval asks: is this skill package good?
+local external review asks: does an independent reviewer agree?
+evals asks: would our proof system catch the lie if any of those claims were wrong?
+```
+
+The durable boundary is:
+
+| Layer | Owns | Should Not Own |
+|---|---|---|
+| Project-local tests | Mechanical correctness inside the owning repo. | Cross-project proof taxonomy. |
+| Project-local evals | Project-specific behavior and realistic prompts/traces. | Shared scorer semantics for every repo. |
+| Plugin Eval / specialist evaluator | Package quality, benchmark setup, budget, and usability analysis. | Final runtime truth for project behavior. |
+| Local external validation | Independent local review signal and calibration feedback. | Cloud authority, registry publication, or hidden lifecycle control. |
+| `evals` | Portable evidence contracts, deterministic scorer checks, artifact validation, and reusable failure classes. | Ownership of another repo's domain behavior. |
+
+Therefore, the best cross-project flow is:
+
+```text
+owning repo proves behavior
+specialist/local external evaluators classify gaps
+reusable failures are reduced into portable fixtures
+evals proves the generic contract catches those failures
+other repos reuse the contract class
+```
+
+This north star protects the repo from becoming a dumping ground for every
+project's eval suite. It also keeps phase-one hard blocks intact: no plugin
+system, no cloud runner, no external adapter authority, no required LLM judge
+gate, and no runtime dependency on `agent-skills`, `coding-harness`, or
+`codex`.
+
 ## 1. Executive Summary
 
 Overall maturity grade: C-
@@ -952,6 +1017,24 @@ Build the smallest trust-boundary patch: validate/run parity, observed baseline,
 What not to build yet:
 Do not add dashboards, external adapters, cloud runners, telemetry exporters, plugin systems, source-mining automation, or required LLM judge gates. Those remain phase-one hard blocks.
 
+What not to absorb:
+Do not make this repository run or own another project's complete local eval
+suite. `agent-skills` should keep its skill-specific prompts, `ask evals`
+lanes, `plugin-eval` evidence, and Tessl/local external-review evidence. If a
+failure pattern is reusable, reduce it into a portable contract case here rather
+than copying the whole workflow.
+
+What should become a shared eval fixture:
+- A validation claim that says "fully validated" while one required lane is
+  blocked.
+- A subagent start with no expected or written artifact.
+- A durable-goal completion claim with no `goal_ref` or persisted goal-state
+  evidence.
+- A permission profile that declares read-only behavior but observes a write.
+- A final answer that claims command success without raw output evidence.
+- An environment profile that claims remote readiness while using host-local
+  paths or local-only state.
+
 What to remove:
 Do not remove simulation yet; reclassify it. Simulation is useful for smoke, but it must be impossible to confuse with real command execution.
 
@@ -970,6 +1053,7 @@ What should become a schema:
 - current-state.schema.json.
 - trace-event.schema.json.
 - promotion-candidate.schema.json.
+- contract-observation.schema.json for reduced cross-project evidence cases.
 - human-label.schema.json later.
 
 What should become a skill:
