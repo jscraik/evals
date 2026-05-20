@@ -57,6 +57,7 @@ export function validateCase(casePath, testCase) {
  * @param {string} casePath - Repository-relative path to the case JSON file.
  * @param {*} jsonMode - Mode passed to emitFailure that controls how failures are reported.
  * @returns {{ absoluteCasePath: string, rawCase: string, testCase: Object }} An object containing the resolved absolute path, the raw file contents, and the parsed case JSON.
+ */
 export function parseCase(casePath, jsonMode) {
   let absoluteCasePath;
   try {
