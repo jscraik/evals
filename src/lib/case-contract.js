@@ -42,6 +42,15 @@ export function validateCase(casePath, testCase) {
   if (!Array.isArray(testCase.expected?.required_output_contains)) errors.push("expected.required_output_contains must be an array");
   if (!Array.isArray(testCase.expected?.required_artifacts)) errors.push("expected.required_artifacts must be an array");
   if (!Array.isArray(testCase.scorers) || testCase.scorers.length === 0) errors.push("scorers must name at least one deterministic scorer");
+  if (Array.isArray(testCase.scorers) && testCase.scorers.includes("baseline-presence")) {
+    if (testCase.baseline === null || typeof testCase.baseline !== "object" || Array.isArray(testCase.baseline)) {
+      errors.push("baseline is required when baseline-presence scorer is enabled");
+    } else {
+      for (const key of ["expected_presence", "artifact_path"]) {
+        if (!(key in testCase.baseline)) errors.push("baseline." + key + " is required when baseline-presence scorer is enabled");
+      }
+    }
+  }
   if (testCase.fixture_source?.type === "synthetic" && testCase.input?.command !== "simulate-pr-closeout") {
     errors.push("synthetic fixtures must use input.command simulate-pr-closeout");
   }

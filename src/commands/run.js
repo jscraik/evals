@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
 import { parseCase } from "../lib/case-contract.js";
@@ -58,7 +58,7 @@ function syntheticExecution(testCase, casePath, jsonMode, startedAt) {
  * @returns {Object} A schema v1 baseline object with the following properties:
  *  - `schema_version` {number} - Fixed to 1.
  *  - `presence_status` {"present"|"missing"} - Observed presence of the baseline artifact.
- *  - `comparison_status` {"error"|"not_compared"} - `"error"` when `expected_presence` is `"present"` but the artifact was not found; otherwise `"not_compared"`.
+ *  - `comparison_status` {"error"|"not_compared"} - `"error"` when observed presence diverges from expected presence or the baseline path is invalid/unreadable.
  *  - `promotion_status` {string} - Always `"not_requested"`.
  *  - `baseline_owner` {string|undefined} - Owner from `testCase.promotion.baseline_owner`.
  *  - `comparison_evidence` {string} - Human-readable evidence describing observation or reasons for missing artifact.
@@ -71,6 +71,7 @@ function buildBaseline(testCase, commandLogPath, execution) {
   const artifactPath = testCase.baseline?.artifact_path || null;
   const expectedPresence = testCase.baseline?.expected_presence || "missing";
   const errors = [];
+  let comparisonHasError = false;
   let presenceStatus = "missing";
   let evidence = "No baseline artifact_path provided; observed baseline presence is missing.";
   let currentArtifactRef = {
@@ -81,14 +82,26 @@ function buildBaseline(testCase, commandLogPath, execution) {
 
   if (artifactPath) {
     const absoluteBaselinePath = repoRelativePath(artifactPath, "baseline.artifact_path", errors);
+    if (errors.length > 0) comparisonHasError = true;
     if (absoluteBaselinePath && existsSync(absoluteBaselinePath)) {
-      presenceStatus = "present";
-      currentArtifactRef = {
-        type: "baseline-artifact",
-        path: rel(absoluteBaselinePath),
-        sha256: sha256File(absoluteBaselinePath)
-      };
-      evidence = "Observed baseline artifact at " + rel(absoluteBaselinePath) + " with sha256 " + currentArtifactRef.sha256 + ".";
+      try {
+        const baselineStats = statSync(absoluteBaselinePath);
+        if (baselineStats.isFile()) {
+          presenceStatus = "present";
+          currentArtifactRef = {
+            type: "baseline-artifact",
+            path: rel(absoluteBaselinePath),
+            sha256: sha256File(absoluteBaselinePath)
+          };
+          evidence = "Observed baseline artifact at " + rel(absoluteBaselinePath) + " with sha256 " + currentArtifactRef.sha256 + ".";
+        } else {
+          comparisonHasError = true;
+          evidence = "Expected baseline artifact path exists but is not a readable file: " + rel(absoluteBaselinePath) + ".";
+        }
+      } catch (error) {
+        comparisonHasError = true;
+        evidence = "Expected baseline artifact path could not be read: " + rel(absoluteBaselinePath) + " (" + error.message + ").";
+      }
     } else {
       const reason = errors.length > 0 ? errors.join("; ") : "baseline artifact does not exist: " + artifactPath;
       evidence = "Expected baseline artifact path was not observed: " + reason + ".";
@@ -98,7 +111,7 @@ function buildBaseline(testCase, commandLogPath, execution) {
   return {
     schema_version: 1,
     presence_status: presenceStatus,
-    comparison_status: expectedPresence === "present" && presenceStatus !== "present" ? "error" : "not_compared",
+    comparison_status: expectedPresence !== presenceStatus || comparisonHasError ? "error" : "not_compared",
     promotion_status: "not_requested",
     baseline_owner: testCase.promotion.baseline_owner,
     comparison_evidence: evidence,

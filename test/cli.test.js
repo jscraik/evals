@@ -47,6 +47,14 @@ function runPassingSmoke(repo) {
   return parseJson(result.stdout);
 }
 
+function assertRepoRelativeArtifact(repo, output, key) {
+  const artifactPath = output[key];
+  assert.ok(artifactPath, key + " should be present in JSON output");
+  assert.equal(artifactPath.startsWith("/"), false, key + " should be repository-relative");
+  assert.equal(artifactPath.split(/[\\/]+/).includes(".."), false, key + " should not contain traversal segments");
+  assert.ok(existsSync(join(repo, artifactPath)), key + " should point to an existing artifact");
+}
+
 test("run writes a valid local artifact bundle", () => {
   const repo = makeRepo();
   try {
@@ -55,8 +63,7 @@ test("run writes a valid local artifact bundle", () => {
     assert.equal(output.verdict, "pass");
     assert.equal(output.execution_mode, "synthetic");
     for (const key of ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path"]) {
-      assert.ok(output[key], key + " should be present in JSON output");
-      assert.ok(existsSync(join(repo, output[key])), key + " should point to an existing artifact");
+      assertRepoRelativeArtifact(repo, output, key);
     }
 
     const commandLog = JSON.parse(readFileSync(join(repo, output.command_log_path), "utf8"));
@@ -72,6 +79,7 @@ test("run writes a valid local artifact bundle", () => {
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
+    assert.equal(latest.execution_mode, "synthetic");
     assert.ok(latest.baseline_result_path);
     assert.ok(latest.scorer_results_path);
   } finally {
@@ -203,6 +211,7 @@ test("baseline presence is observed from artifact state", () => {
 
     const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
     const baselineScorer = scorerResults.results.find((item) => item.scorer_id === "baseline-presence");
+    assert.ok(baselineScorer, "baseline-presence scorer should be present");
     assert.equal(baselineScorer.status, "fail");
     assert.match(baselineScorer.failure_reason, /baseline presence/);
   } finally {
@@ -221,6 +230,52 @@ test("non-object fixture roots return structured validation failures", () => {
     assert.equal(failure.status, "failed");
     assert.equal(failure.requirement, "case validation");
     assert.match(failure.errors.join("\n"), /case root must be a JSON object/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("non-file baseline artifacts produce structured scorer failures", () => {
+  const repo = makeRepo();
+  try {
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.baseline.expected_presence = "present";
+    fixture.baseline.artifact_path = ".harness/evals";
+    writeFileSync(join(repo, "fixtures", "smoke", "directory-baseline.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/directory-baseline.case.json", "--json"]);
+    assert.equal(runResult.status, 1);
+    assert.equal(runResult.stderr, "");
+    assert.doesNotMatch(runResult.stdout + runResult.stderr, /EISDIR|TypeError|Error:/);
+    const output = parseJson(runResult.stdout);
+
+    const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
+    assert.equal(baseline.presence_status, "missing");
+    assert.equal(baseline.comparison_status, "error");
+    assert.match(baseline.comparison_evidence, /not a readable file/);
+
+    const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
+    const baselineScorer = scorerResults.results.find((item) => item.scorer_id === "baseline-presence");
+    assert.ok(baselineScorer, "baseline-presence scorer should be present");
+    assert.equal(baselineScorer.status, "fail");
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("baseline-presence scorer requires an explicit baseline contract", () => {
+  const repo = makeRepo();
+  try {
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    delete fixture.baseline;
+    writeFileSync(join(repo, "fixtures", "smoke", "missing-baseline-contract.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const result = runCli(repo, ["validate", "fixtures/smoke/missing-baseline-contract.case.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /baseline is required when baseline-presence scorer is enabled/);
   } finally {
     cleanup(repo);
   }

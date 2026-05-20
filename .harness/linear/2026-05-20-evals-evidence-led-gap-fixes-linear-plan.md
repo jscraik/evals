@@ -24,20 +24,20 @@ staged_paths: []
 
 ## Command Summary
 
-BLUF: This Linear plan converts the evidence-led audit for the evals repository into the smallest useful execution slice: fix the false-success trust boundary first, then add mechanical enforcement, runtime state, and future governance only after deterministic proof is stable. The plan matters because evals is supposed to prove the proof system, not become another project's full eval runner, so the active work must preserve Jamie's operating mantra: Thin surface. Strong guardrails. Durable memory. Professional output. The recommendation is to create a small set of Feature and Governance / Policy issues under the JSC team with the verified Repo › evals label, but leave project assignment empty until Jamie confirms whether evals should get its own repo control project or route through an existing portfolio project. The main risk is issue explosion from the audit's thirteen gaps, so this plan collapses them into one Now parent, one Next parent, and later governance work instead of one issue per observation. The next action is to approve or revise the Now parent issue and first two sub-issues before any live Linear mutation.
+BLUF: This Linear plan converted the evidence-led audit for the evals repository into the smallest useful execution slice: fix the false-success trust boundary first, then add mechanical enforcement, runtime state, and future governance only after deterministic proof is stable. The plan matters because evals is supposed to prove the proof system, not become another project's full eval runner, so the active work preserves Jamie's operating mantra: Thin surface. Strong guardrails. Durable memory. Professional output. Jamie approved live Linear creation for the Now slice, and the JSC team issues were created with the verified Repo › evals label while project assignment was left empty because no exact evals project was confirmed. The main risk remains issue explosion from the audit's thirteen gaps, so this plan intentionally created only the Now parent and four child issues rather than one issue per observation.
 
-Decision Needed: approve, revise, or keep local only.
+Decision Recorded: Jamie approved live Linear creation for the Now parent and first four sub-issues.
 Top Risks:
 - False success stays possible if run artifacts can still pass without real or explicitly synthetic execution evidence.
 - Linear noise increases if every audit observation becomes its own issue instead of a bounded execution slice.
 - Phase-one boundaries drift if future trace, judge, dashboard, adapter, or plugin-system ideas are pulled into the first implementation batch.
-Next Action: Review the Now parent and sub-issues; approve live Linear creation only for the selected slice.
+Next Action: Execute JSC-332 through JSC-336 in dependency order, then decide whether the Next/Later parent groups should be promoted.
 
 ## Executive Linear Routing Summary
 
 | Field | Status |
 |---|---|
-| Recommended action | Create a small Linear issue set only after confirmation. |
+| Recommended action | Created the confirmed Now issue set only. |
 | Active slice | Phase 1 critical trust-boundary fixes from the audit. |
 | Linear destination | JSC team with Repo › evals label. |
 | Project assignment | Empty / blocked pending Jamie confirmation. |
@@ -326,8 +326,8 @@ Validation Gates:
 
 | Bucket | Work | Linear Action |
 |---|---|---|
-| Now | Parent 1 and NOW-1 through NOW-4. | Create after confirmation. |
-| Next | Parent 2 mechanical enforcement. | Create only if Jamie wants a separate tracking parent now. |
+| Now | Parent 1 and NOW-1 through NOW-4. | Created after Jamie's confirmation. |
+| Next | Parent 2 mechanical enforcement. | Not created; promote only if Jamie wants a separate tracking parent after the Now slice lands. |
 | Later | Parent 3 runtime memory loop. | Keep local until trust boundary and mechanical enforcement land. |
 | Later | Parent 4 governance expansion. | Keep local unless scorer/promotion work starts. |
 | Do Not Create | One issue for every audit gap. | Collapse into parents/sub-issues. |

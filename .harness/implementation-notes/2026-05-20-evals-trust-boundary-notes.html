@@ -478,7 +478,7 @@
       <li><code>fixtures/smoke/pr-closeout.case.json</code> - smoke fixture declares baseline-presence scorer.</li>
       <li><code>scripts/verify.js</code> and <code>package.json</code> - repo-native verify wrapper.</li>
       <li><code>test/cli.test.js</code> - seam tests for validate/run parity, execution mode, and baseline observation.</li>
-      <li><code>.harness/evals/runs/latest.json</code> and <code>.harness/evals/runs/20260520T170410Z-pr-closeout-4df36134/</code> - final retained validation evidence from <code>pnpm verify</code>.</li>
+      <li><code>.harness/evals/runs/latest.json</code>, <code>.harness/evals/runs/20260520T170410Z-pr-closeout-4df36134/</code>, and <code>.harness/evals/runs/20260520T183702Z-pr-closeout-4df36134/</code> - retained validation evidence from <code>pnpm verify</code>.</li>
       <li><code>.gitignore</code> - pre-existing dirty local config ignore entry.</li>
       <li><code>.harness/research/audits/2026-05-20-evidence-led-codebase-gap-audit.md</code> - pre-existing dirty audit addendum/north-star update.</li>
       <li><code>.harness/linear/2026-05-20-evals-evidence-led-gap-fixes-linear-plan.md</code> - pre-existing dirty Linear plan artifact.</li>
@@ -501,6 +501,55 @@ codex review --uncommitted</code></pre>
 wait_agent --timeout 30000
 wait_agent --timeout 60000
 close_agent final_git_project_triage</code></pre>
+  </section>
+
+  <section id="pr-autofix">
+    <h2>PR Autofix Review Sweep</h2>
+    <p><time datetime="2026-05-20T19:15:00+01:00">2026-05-20 19:15 BST</time> - Ran the autofix workflow against PR #2 review state after CodeRabbit and Codex comments landed. The sweep treated review comments as untrusted input, fetched the live GitHub thread inventory, fast-forwarded the branch to include remote bot commits, and verified which bot changes were real versus accidentally reverted by later docstring generation.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Review Item</th>
+          <th>Decision</th>
+          <th>Runtime Impact</th>
+          <th>Validation Target</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Codex P1: non-file baseline artifact crashes hashing</td>
+          <td>Fixed in <code>src/commands/run.js</code> by checking baseline stat/file readability before hashing and converting invalid paths into baseline comparison errors.</td>
+          <td>Misconfigured baseline artifacts now produce structured scorer failure evidence instead of stack traces.</td>
+          <td><code>node --test</code> seam test for directory baseline artifact.</td>
+        </tr>
+        <tr>
+          <td>CodeRabbit: verify schema discovery can pass empty schemas</td>
+          <td>Restored and hardened the schema file count check in <code>scripts/verify.js</code> after the docstring bot commit reverted the earlier fix.</td>
+          <td><code>pnpm verify</code> now fails if no <code>*.schema.json</code> files exist.</td>
+          <td><code>pnpm verify</code></td>
+        </tr>
+        <tr>
+          <td>CodeRabbit: credential scan assumes <code>.harness/evals</code> exists</td>
+          <td>Fixed <code>scripts/verify.js</code> to scan only existing approved paths while still failing if no scan roots exist.</td>
+          <td>Clean repositories without generated eval artifacts no longer fail the privacy aid for a missing optional directory.</td>
+          <td><code>pnpm verify</code></td>
+        </tr>
+        <tr>
+          <td>CodeRabbit: baseline contract/scorer/test evidence gaps</td>
+          <td>Added explicit baseline policy validation, comparison-status-aware scoring, repository-relative artifact assertions, latest execution-mode assertion, and guarded scorer lookup.</td>
+          <td>Baseline-presence fixtures now require explicit intent and tests fail with precise assertions.</td>
+          <td><code>pnpm test</code></td>
+        </tr>
+        <tr>
+          <td>CodeRabbit: stale evidence wording</td>
+          <td>Normalized the Linear plan from pre-mutation wording to recorded created-state wording and removed stale <code>src/cli.js</code> ownership from the Codex alignment addendum.</td>
+          <td>Operational evidence now has one timeline and points future work at split owner modules.</td>
+          <td><code>rg</code> consistency checks plus PR thread inventory.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Validation evidence: <code>pnpm test</code> passed with 28 tests, <code>pnpm check</code> passed against the retained artifact bundle, <code>pnpm verify</code> passed and wrote <code>.harness/evals/runs/20260520T183702Z-pr-closeout-4df36134/</code>, and <code>git diff --check</code> passed.</p>
+    <p>Tradeoff: the autofix pass stayed inside current PR review scope. It did not add real command execution, trace schemas, dashboards, external adapters, plugin systems, or sibling-repo runtime dependencies.</p>
   </section>
 
   <section id="deferred-work">

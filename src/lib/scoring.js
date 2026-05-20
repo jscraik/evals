@@ -78,14 +78,14 @@ export function scoreArtifactCompleteness(testCase, plannedArtifactNames) {
 export function scoreBaselinePresence(testCase, baseline) {
   if (!testCase.scorers.includes("baseline-presence")) return [];
   const expected = testCase.baseline?.expected_presence || "missing";
-  const passed = baseline.presence_status === expected;
+  const passed = baseline.presence_status === expected && baseline.comparison_status !== "error";
   return [{
     scorer_id: "baseline-presence",
     scorer_version: "1.0.0",
     status: passed ? "pass" : "fail",
-    inputs_inspected: ["baseline.presence_status", "baseline.expected_presence", "baseline.artifact_path"],
+    inputs_inspected: ["baseline.presence_status", "testCase.baseline.expected_presence", "testCase.baseline.artifact_path", "baseline.comparison_status"],
     evidence: "observed=" + baseline.presence_status + "; expected=" + expected + "; " + baseline.comparison_evidence,
-    failure_reason: passed ? null : "observed baseline presence did not match expected presence"
+    failure_reason: passed ? null : "observed baseline presence or comparison status did not match expected baseline contract"
   }];
 }
 

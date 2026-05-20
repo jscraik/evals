@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const checks = [
@@ -13,7 +13,11 @@ const checks = [
   },
   {
     command: "find schemas -maxdepth 1 -type f -name \"*.schema.json\" -print",
-    run: () => runCommand("find", ["schemas", "-maxdepth", "1", "-type", "f", "-name", "*.schema.json", "-print"])
+    run: () => {
+      if (!existsSync("schemas")) return fail("schemas directory is missing");
+      const schemaFiles = readdirSync("schemas").filter((name) => name.endsWith(".schema.json"));
+      return schemaFiles.length > 0 ? pass(schemaFiles.join("\n")) : fail("no *.schema.json files found under schemas/");
+    }
   },
   {
     command: "test -f fixtures/smoke/pr-closeout.case.json",
@@ -37,17 +41,20 @@ const checks = [
   },
   {
     command: "rg -n \"sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY\" fixtures .harness/evals",
-    run: () => runCommand("rg", [
-      "-n",
-      "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY",
-      "fixtures",
-      ".harness/evals"
-    ], {
-      passStatuses: [1],
-      statusMessages: {
-        1: "no credential-like patterns found"
-      }
-    })
+    run: () => {
+      const searchPaths = ["fixtures", ".harness/evals"].filter((path) => existsSync(path));
+      if (searchPaths.length === 0) return fail("no credential-scan paths exist");
+      return runCommand("rg", [
+        "-n",
+        "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY",
+        ...searchPaths
+      ], {
+        passStatuses: [1],
+        statusMessages: {
+          1: "no credential-like patterns found"
+        }
+      });
+    }
   }
 ];
 

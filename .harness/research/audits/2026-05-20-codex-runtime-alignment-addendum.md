@@ -368,7 +368,6 @@ Acceptance:
 ### P1: Current-State Packet
 
 Files likely to change:
-- `src/cli.js`
 - `src/commands/state.js`
 - `src/lib/state.js`
 - `schemas/current-state.schema.json`
