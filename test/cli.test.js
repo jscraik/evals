@@ -235,9 +235,11 @@ test("state outputs human-readable format without --json flag", () => {
     const output = runPassingSmoke(repo);
     const result = runCli(repo, ["state"]);
     assert.equal(result.status, 0, result.stderr || result.stdout);
-    assert.ok(result.stdout.includes("status"));
-    assert.ok(result.stdout.includes(output.run_id));
-    assert.ok(result.stdout.includes("pnpm evals"));
+    assert.match(result.stdout, /^status:\s+ready$/m);
+    assert.match(result.stdout, /^latest:\s+\.harness\/evals\/runs\/latest\.json$/m);
+    assert.match(result.stdout, new RegExp(`^run_id:\\s+${output.run_id}$`, "m"));
+    assert.match(result.stdout, /^validation:\s+passed$/m);
+    assert.match(result.stdout, /^next:\s+pnpm evals check --json$/m);
   } finally {
     cleanup(repo);
   }
