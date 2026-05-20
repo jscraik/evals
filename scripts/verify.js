@@ -13,13 +13,7 @@ const checks = [
   },
   {
     command: "find schemas -maxdepth 1 -type f -name \"*.schema.json\" -print",
-    run: () => {
-      if (!existsSync("schemas")) return fail("schemas directory is missing");
-      const schemaFiles = readdirSync("schemas").filter((name) => name.endsWith(".schema.json"));
-      return schemaFiles.length > 0
-        ? pass(schemaFiles.join("\n"))
-        : fail("no *.schema.json files found under schemas/");
-    }
+    run: () => runCommand("find", ["schemas", "-maxdepth", "1", "-type", "f", "-name", "*.schema.json", "-print"])
   },
   {
     command: "test -f fixtures/smoke/pr-closeout.case.json",
@@ -57,14 +51,33 @@ const checks = [
   }
 ];
 
+/**
+ * Create a result object representing a successful check.
+ * @param {string} output - Message or combined stdout/stderr associated with the successful check; may be an empty string.
+ * @returns {{status: "pass", output: string}} An object with `status` set to `"pass"` and the provided `output`.
+ */
 function pass(output) {
   return { status: "pass", output };
 }
 
+/**
+ * Create a standardized failure result object containing a failure status and associated output.
+ * @param {string} output - Message or data describing the failure.
+ * @returns {{status: "fail", output: string}} An object with `status` set to `"fail"` and the provided `output`.
+ */
 function fail(output) {
   return { status: "fail", output };
 }
 
+/**
+ * Execute a command synchronously and classify its outcome as a pass or fail.
+ * @param {string} command - The executable to run.
+ * @param {string[]} args - Array of arguments to pass to the command.
+ * @param {Object} [options] - Behavioural options.
+ * @param {number[]} [options.passStatuses] - Exit codes treated as success; defaults to `[0]`.
+ * @param {Object.<number,string>} [options.statusMessages] - Mapping from exit code to a message that overrides command output.
+ * @returns {{status: "pass" | "fail", output: string}} An object with `status` set to `"pass"` when the process exit code is in `options.passStatuses`, otherwise `"fail"`. `output` contains the combined stdout/stderr or a status/message; if the child process failed to spawn, `output` contains the error message.
+ */
 function runCommand(command, args, options = {}) {
   const passStatuses = options.passStatuses || [0];
   const statusMessages = options.statusMessages || {};

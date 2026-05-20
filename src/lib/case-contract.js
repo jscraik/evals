@@ -5,13 +5,13 @@ import { insideRepo } from "./paths.js";
 import { schemaCheck, schemaTargets, validateDocument } from "./schema.js";
 
 /**
- * Validate that a parsed case object conforms to the repository's case contract and that the referenced case file exists.
+ * Validate a parsed case object against the repository's case contract and confirm the referenced file exists.
  *
- * Checks for required top-level and nested fields, enforces specific field constraints (for example `schema_version === 1`, kebab-case `case_id`, `fixture_source.type === "synthetic"`, and `privacy` flags set to `false`), verifies `expected` and `scorers` formats and allowed scorers, and confirms the provided `casePath` exists on disk.
+ * Performs policy checks for required top-level and nested fields, specific field constraints (for example `schema_version === 1`, kebab-case `case_id`, synthetic fixture requirements, and `privacy` flags), verifies `expected` and `scorers` shapes, and checks that the provided `casePath` points to an existing file.
  *
- * @param {string} casePath - Filesystem path to the case JSON file (used only to verify existence).
+ * @param {string} casePath - Filesystem path to the case JSON file; used to verify the file exists.
  * @param {object} testCase - Parsed case JSON object to validate.
- * @returns {string[]} An array of error messages describing any contract or existence violations; empty if the case is valid.
+ * @returns {string[]} An array of error messages describing contract or existence violations; empty if the case is valid.
  */
 export function validateCase(casePath, testCase) {
   const errors = [];
@@ -50,10 +50,10 @@ export function validateCase(casePath, testCase) {
 }
 
 /**
- * Validate a parsed case against both the JSON schema and the local phase-one policy contract.
+ * Validate a parsed case against the JSON schema and the local phase-one policy contract.
  * @param {string} casePath - Absolute or repository-relative path to the case file.
  * @param {object} testCase - Parsed case object.
- * @returns {string[]} Schema and policy validation errors.
+ * @returns {string[]} An array of validation error messages; empty when the case passes both schema and policy checks.
  */
 export function validateCaseContract(casePath, testCase) {
   return validateDocument(schemaTargets.case.schema, casePath).concat(validateCase(casePath, testCase));
