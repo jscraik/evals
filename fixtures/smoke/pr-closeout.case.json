@@ -36,5 +36,5 @@
     "expected_presence": "missing",
     "artifact_path": null
   },
-  "scorers": ["exit-code", "artifact-completeness", "required-output"]
+  "scorers": ["exit-code", "artifact-completeness", "required-output", "baseline-presence"]
 }

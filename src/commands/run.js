@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
 import { parseCase } from "../lib/case-contract.js";
@@ -6,9 +6,64 @@ import { clearActiveRunContext, emitFailure, setActiveRunContext } from "../lib/
 import { sha256File, sha256Text } from "../lib/hash.js";
 import { writeJson } from "../lib/json.js";
 import { validateLatestRun } from "../lib/latest-run.js";
-import { rel, repoRoot, utcBasic } from "../lib/paths.js";
+import { rel, repoRelativePath, repoRoot, utcBasic } from "../lib/paths.js";
 import { buildReport } from "../lib/report.js";
-import { scoreArtifactCompleteness, scoreRuntime, simulatedRunOutput, verdictFor } from "../lib/scoring.js";
+import { scoreArtifactCompleteness, scoreBaselinePresence, scoreRuntime, simulatedRunOutput, verdictFor } from "../lib/scoring.js";
+
+function syntheticExecution(testCase, casePath, jsonMode, startedAt) {
+  const finishedAt = new Date();
+  return {
+    command: "pnpm evals run " + casePath + (jsonMode ? " --json" : ""),
+    input_command: testCase.input.command,
+    execution_mode: "synthetic",
+    started_at: startedAt.toISOString(),
+    finished_at: finishedAt.toISOString(),
+    duration_ms: finishedAt.getTime() - startedAt.getTime(),
+    exit_code: 0,
+    stdout: simulatedRunOutput(testCase),
+    stderr: "",
+    failure_class: null
+  };
+}
+
+function buildBaseline(testCase, commandLogPath, execution) {
+  const artifactPath = testCase.baseline?.artifact_path || null;
+  const expectedPresence = testCase.baseline?.expected_presence || "missing";
+  const errors = [];
+  let presenceStatus = "missing";
+  let evidence = "No baseline artifact_path provided; observed baseline presence is missing.";
+  let currentArtifactRef = {
+    type: "command-log",
+    path: rel(commandLogPath),
+    sha256: sha256Text(JSON.stringify(execution, null, 2) + "\n")
+  };
+
+  if (artifactPath) {
+    const absoluteBaselinePath = repoRelativePath(artifactPath, "baseline.artifact_path", errors);
+    if (absoluteBaselinePath && existsSync(absoluteBaselinePath)) {
+      presenceStatus = "present";
+      currentArtifactRef = {
+        type: "baseline-artifact",
+        path: rel(absoluteBaselinePath),
+        sha256: sha256File(absoluteBaselinePath)
+      };
+      evidence = "Observed baseline artifact at " + rel(absoluteBaselinePath) + " with sha256 " + currentArtifactRef.sha256 + ".";
+    } else {
+      const reason = errors.length > 0 ? errors.join("; ") : "baseline artifact does not exist: " + artifactPath;
+      evidence = "Expected baseline artifact path was not observed: " + reason + ".";
+    }
+  }
+
+  return {
+    schema_version: 1,
+    presence_status: presenceStatus,
+    comparison_status: expectedPresence === "present" && presenceStatus !== "present" ? "error" : "not_compared",
+    promotion_status: "not_requested",
+    baseline_owner: testCase.promotion.baseline_owner,
+    comparison_evidence: evidence,
+    current_artifact_ref: currentArtifactRef
+  };
+}
 
 /**
  * Execute a single evaluation case: generate run identifiers and artifacts, write all artifact files (report, result, manifest, scorer and baseline results, command log), update the latest run index, validate the latest artifact schema, print a summary, clear run context and terminate the process with a pass/fail exit code.
@@ -41,36 +96,12 @@ export function runCase(casePath, jsonMode) {
     artifactPaths
   });
 
-  const execution = {
-    command: "pnpm evals run " + casePath + (jsonMode ? " --json" : ""),
-    simulated_command: testCase.input.command,
-    started_at: startedAt.toISOString(),
-    finished_at: null,
-    duration_ms: null,
-    exit_code: 0,
-    stdout: simulatedRunOutput(testCase),
-    stderr: "",
-    failure_class: null
-  };
-  const finishedAt = new Date();
-  execution.finished_at = finishedAt.toISOString();
-  execution.duration_ms = finishedAt.getTime() - startedAt.getTime();
+  const execution = syntheticExecution(testCase, casePath, jsonMode, startedAt);
+  const baseline = buildBaseline(testCase, commandLogPath, execution);
 
-  const baseline = {
-    schema_version: 1,
-    presence_status: testCase.baseline?.expected_presence || "missing",
-    comparison_status: "not_compared",
-    promotion_status: "not_requested",
-    baseline_owner: testCase.promotion.baseline_owner,
-    comparison_evidence: "No phase-one baseline is present; missing baseline is explicit and not treated as a fake match.",
-    current_artifact_ref: {
-      type: "command-log",
-      path: rel(commandLogPath),
-      sha256: sha256Text(JSON.stringify(execution, null, 2) + "\n")
-    }
-  };
-
-  const scorerResults = scoreRuntime(testCase, execution).concat(scoreArtifactCompleteness(testCase, artifactNames));
+  const scorerResults = scoreRuntime(testCase, execution)
+    .concat(scoreArtifactCompleteness(testCase, artifactNames))
+    .concat(scoreBaselinePresence(testCase, baseline));
   const deterministicVerdict = verdictFor(scorerResults);
   const status = deterministicVerdict === "pass" ? "passed" : "failed";
   const scorerEnvelope = { schema_version: 1, results: scorerResults };
@@ -100,6 +131,7 @@ export function runCase(casePath, jsonMode) {
     run_id: runId,
     case_id: testCase.case_id,
     suite_id: testCase.suite_id,
+    execution_mode: execution.execution_mode,
     status,
     deterministic_verdict: deterministicVerdict,
     scorer_results_path: rel(scorerResultsPath),
@@ -139,6 +171,7 @@ export function runCase(casePath, jsonMode) {
   const latest = {
     run_id: runId,
     case_id: testCase.case_id,
+    execution_mode: execution.execution_mode,
     manifest_path: rel(manifestPath),
     result_path: rel(resultPath),
     report_path: rel(reportPath),
@@ -163,6 +196,7 @@ export function runCase(casePath, jsonMode) {
     status,
     run_id: runId,
     case_id: testCase.case_id,
+    execution_mode: execution.execution_mode,
     manifest_path: rel(manifestPath),
     result_path: rel(resultPath),
     report_path: rel(reportPath),
@@ -177,6 +211,7 @@ export function runCase(casePath, jsonMode) {
   } else {
     console.log("verdict: " + output.verdict);
     console.log("run_id: " + output.run_id);
+    console.log("execution_mode: " + output.execution_mode);
     console.log("manifest: " + output.manifest_path);
     console.log("result: " + output.result_path);
     console.log("report: " + output.report_path);

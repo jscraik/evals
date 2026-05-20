@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "scorer_id": "exit-code",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "execution.exit_code",
+        "expected.exit_code"
+      ],
+      "evidence": "actual=0; expected=0",
+      "failure_reason": null
+    },
+    {
+      "scorer_id": "required-output",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "execution.stdout",
+        "expected.required_output_contains"
+      ],
+      "evidence": "all required output fragments found",
+      "failure_reason": null
+    },
+    {
+      "scorer_id": "artifact-completeness",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "expected.required_artifacts",
+        "planned_final_artifact_set"
+      ],
+      "evidence": "all required artifact names are planned for the final bundle",
+      "failure_reason": null
+    },
+    {
+      "scorer_id": "baseline-presence",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "baseline.presence_status",
+        "baseline.expected_presence",
+        "baseline.artifact_path"
+      ],
+      "evidence": "observed=missing; expected=missing; No baseline artifact_path provided; observed baseline presence is missing.",
+      "failure_reason": null
+    }
+  ]
+}

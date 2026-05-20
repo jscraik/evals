@@ -70,6 +70,26 @@ export function scoreArtifactCompleteness(testCase, plannedArtifactNames) {
 }
 
 /**
+ * Score whether observed baseline presence matches the fixture expectation.
+ * @param {Object} testCase - Test case object containing scorer configuration and optional baseline expectation.
+ * @param {Object} baseline - Observed baseline result.
+ * @returns {Object[]} Baseline-presence scorer result when enabled.
+ */
+export function scoreBaselinePresence(testCase, baseline) {
+  if (!testCase.scorers.includes("baseline-presence")) return [];
+  const expected = testCase.baseline?.expected_presence || "missing";
+  const passed = baseline.presence_status === expected;
+  return [{
+    scorer_id: "baseline-presence",
+    scorer_version: "1.0.0",
+    status: passed ? "pass" : "fail",
+    inputs_inspected: ["baseline.presence_status", "baseline.expected_presence", "baseline.artifact_path"],
+    evidence: "observed=" + baseline.presence_status + "; expected=" + expected + "; " + baseline.comparison_evidence,
+    failure_reason: passed ? null : "observed baseline presence did not match expected presence"
+  }];
+}
+
+/**
  * Determine the overall verdict from a list of scorer results.
  *
  * If `scorerResults` is not a non-empty array the verdict is `"fail"`. Otherwise the verdict

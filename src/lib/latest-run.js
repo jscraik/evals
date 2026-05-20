@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { validateCaseFileContract } from "./case-contract.js";
 import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
 import { insideRepo, rel, repoRelativePath } from "./paths.js";
@@ -11,8 +12,7 @@ import { schemaCheck } from "./schema.js";
  * @returns {object} Validation result object describing schema check outcome and any validation errors.
  */
 export function validateCaseFile(casePath) {
-  const absoluteCasePath = insideRepo(casePath);
-  return schemaCheck("case", absoluteCasePath);
+  return validateCaseFileContract(casePath);
 }
 
 /**

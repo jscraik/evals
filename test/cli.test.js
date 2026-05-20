@@ -53,10 +53,22 @@ test("run writes a valid local artifact bundle", () => {
     const output = runPassingSmoke(repo);
     assert.equal(output.status, "passed");
     assert.equal(output.verdict, "pass");
+    assert.equal(output.execution_mode, "synthetic");
     for (const key of ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path"]) {
       assert.ok(output[key], key + " should be present in JSON output");
       assert.ok(existsSync(join(repo, output[key])), key + " should point to an existing artifact");
     }
+
+    const commandLog = JSON.parse(readFileSync(join(repo, output.command_log_path), "utf8"));
+    assert.equal(commandLog.execution_mode, "synthetic");
+    assert.equal(commandLog.input_command, "simulate-pr-closeout");
+    assert.equal("simulated_command" in commandLog, false);
+
+    const result = JSON.parse(readFileSync(join(repo, output.result_path), "utf8"));
+    assert.equal(result.execution_mode, "synthetic");
+
+    const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
+    assert.ok(scorerResults.results.some((item) => item.scorer_id === "baseline-presence" && item.status === "pass"));
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
@@ -141,6 +153,58 @@ test("invalid fixture fields fail schema and policy validation", () => {
     assert.equal(failure.requirement, "case validation");
     assert.match(failure.errors.join("\n"), /case_id/);
     assert.match(failure.errors.join("\n"), /synthetic/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("validate enforces the same phase-one policy contract as run", () => {
+  const repo = makeRepo();
+  try {
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.input.command = "echo should-not-run";
+    writeFileSync(join(repo, "fixtures", "smoke", "policy-invalid.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const validateResult = runCli(repo, ["validate", "fixtures/smoke/policy-invalid.case.json", "--json"]);
+    assert.equal(validateResult.status, 1);
+    assert.equal(validateResult.stderr, "");
+    const validation = parseJson(validateResult.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /synthetic fixtures must use input.command simulate-pr-closeout/);
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/policy-invalid.case.json", "--json"]);
+    assert.equal(runResult.status, 1);
+    const failure = parseJson(runResult.stdout);
+    assert.equal(failure.status, "failed");
+    assert.equal(failure.requirement, "case validation");
+    assert.match(failure.errors.join("\n"), /synthetic fixtures must use input.command simulate-pr-closeout/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("baseline presence is observed from artifact state", () => {
+  const repo = makeRepo();
+  try {
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.baseline.expected_presence = "present";
+    fixture.baseline.artifact_path = ".harness/evals/baselines/missing-baseline.json";
+    writeFileSync(join(repo, "fixtures", "smoke", "missing-baseline.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/missing-baseline.case.json", "--json"]);
+    assert.equal(runResult.status, 1);
+    const output = parseJson(runResult.stdout);
+    assert.equal(output.status, "failed");
+
+    const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
+    assert.equal(baseline.presence_status, "missing");
+    assert.equal(baseline.comparison_status, "error");
+    assert.match(baseline.comparison_evidence, /not observed/);
+
+    const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
+    const baselineScorer = scorerResults.results.find((item) => item.scorer_id === "baseline-presence");
+    assert.equal(baselineScorer.status, "fail");
+    assert.match(baselineScorer.failure_reason, /baseline presence/);
   } finally {
     cleanup(repo);
   }

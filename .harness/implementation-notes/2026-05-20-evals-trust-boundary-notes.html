@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSC-332 Evals Trust Boundary Implementation Notes</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --fg: #172033;
+      --muted: #526071;
+      --panel: #ffffff;
+      --border: #d9e1ec;
+      --accent: #0f766e;
+      --risk: #b45309;
+      --fail: #b91c1c;
+      --pass: #15803d;
+      --block: #6d28d9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --fg: #e5e7eb;
+        --muted: #aeb8c7;
+        --panel: #162033;
+        --border: #334155;
+        --accent: #2dd4bf;
+      }
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    header {
+      margin-bottom: 24px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+    h1 {
+      font-size: 2rem;
+    }
+    h2 {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    p {
+      margin: 0 0 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      overflow: auto;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--panel) 82%, var(--bg));
+    }
+    details {
+      margin: 12px 0;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+    }
+    .phase { color: var(--accent); }
+    .pass { color: var(--pass); }
+    .fail { color: var(--fail); }
+    .blocked { color: var(--block); }
+    .risk { color: var(--risk); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>JSC-332 Evals Trust Boundary Implementation Notes</h1>
+    <p><strong>Started:</strong> 2026-05-20 Europe/London</p>
+    <p><strong>Branch:</strong> <code>jscraik/jsc-332-evals-trust-boundary</code></p>
+    <p><strong>North star:</strong> Thin surface. Strong guardrails. Durable memory. Professional output.</p>
+    <p><strong>Scope:</strong> Implement the approved evidence-led audit fixes for the phase-one false-success trust boundary while preserving the local executable spine boundary.</p>
+  </header>
+
+  <section id="executive-summary">
+    <h2>Executive Summary</h2>
+    <p>The implementation lane is active. The first phase targets trust-boundary fixes from JSC-333 through JSC-336: validate/run policy parity, explicit execution mode, observed baseline presence, and a repo-native verify wrapper.</p>
+    <p>Phase-one hard blocks remain binding: no dashboards, external adapters, cloud runners, plugin systems, source-mining automation, required LLM judge gates, telemetry exporters as authority, or runtime dependencies on sibling repos.</p>
+  </section>
+
+  <section id="current-phase">
+    <h2>Current Phase</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Status</th>
+          <th>Issue</th>
+          <th>Owner Module</th>
+          <th>Validation Gate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Phase 1 - Trust Boundary Fixes</td>
+          <td><span class="badge pass">implemented, validation passing</span></td>
+          <td>JSC-333, JSC-334, JSC-335, JSC-336</td>
+          <td><code>src/lib/case-contract.js</code>, <code>src/commands/run.js</code>, <code>src/lib/latest-run.js</code>, <code>package.json</code></td>
+          <td><code>pnpm test</code>, <code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code>, <code>pnpm evals check --json</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="decisions">
+    <h2>Decisions</h2>
+    <details open>
+      <summary>2026-05-20 - Use one trust-boundary batch with per-gap owner modules</summary>
+      <p><strong>Decision:</strong> Implement JSC-333 through JSC-336 in dependency order as one coherent trust-boundary lane, but keep each gap mapped to a single owner module and exact seam test.</p>
+      <p><strong>Why:</strong> The audit says false success is the highest-risk class. The deep-module contract requires each fix to hide coordination behind the owning module instead of distributing rules across callers and docs.</p>
+      <p><strong>Rejected:</strong> Creating a broad orchestration layer or moving behavior into prompt instructions. That would violate phase-one scope and Jamie's mantra.</p>
+    </details>
+    <details open>
+      <summary>2026-05-20 - Keep simulation only as explicit synthetic execution</summary>
+      <p><strong>Decision:</strong> Preserve the existing synthetic smoke fixture, but make synthetic execution explicit in artifacts and keep real command execution as the default future boundary.</p>
+      <p><strong>Why:</strong> The current smoke fixture is intentionally synthetic, but artifacts must not look like real execution evidence when no subprocess ran.</p>
+      <p><strong>Rejected:</strong> Removing synthetic smoke immediately. That would expand scope and break phase-one bootstrap proof before replacement fixtures exist.</p>
+    </details>
+    <details open>
+      <summary>2026-05-20 - Add baseline-presence as a deterministic scorer</summary>
+      <p><strong>Decision:</strong> Add <code>baseline-presence</code> to the explicit scorer contract instead of hiding baseline mismatch handling in report prose or result status side effects.</p>
+      <p><strong>Why:</strong> Baseline presence is a claim-vs-evidence check and should participate in deterministic verdicts with inspected inputs, evidence, and failure reason.</p>
+      <p><strong>Rejected:</strong> Recording observed baseline state without letting it fail the run. That would preserve a false-success path for fixtures that claim a present baseline while the artifact is missing.</p>
+    </details>
+    <details open>
+      <summary>2026-05-20 - Use a small Node verify wrapper</summary>
+      <p><strong>Decision:</strong> Add <code>scripts/verify.js</code> and expose it as <code>pnpm verify</code>.</p>
+      <p><strong>Why:</strong> The wrapper owns the AGENTS minimum validation lane and treats the credential-pattern check correctly: no matches is pass, matches is fail.</p>
+      <p><strong>Rejected:</strong> A shell-only command chain in <code>package.json</code>. It would make result classification and regex exit-code semantics harder for agents to trust.</p>
+    </details>
+    <details open>
+      <summary>2026-05-20 - Address review feedback before PR delivery</summary>
+      <p><strong>Decision:</strong> Treat the post-phase review pass as part of the implementation, not an optional polish step.</p>
+      <p><strong>Why:</strong> The requested workflow requires architecture, simplify, unslopify, Codex review, and testing checks after each phase. The reviewer pass found small but real contract-drift risks before commit.</p>
+      <p><strong>Changes made from review:</strong> Removed duplicate <code>simulated_command</code> evidence, simplified baseline comparison branching, removed a runtime scorer allowlist that duplicated schema authority, and simplified the verify wrapper's command runner.</p>
+      <p><strong>Rejected:</strong> Adding a larger latest-run schema migration in this patch. That belongs with the later trace/runtime artifact hardening phase, because this phase is scoped to false-success trust boundaries.</p>
+    </details>
+  </section>
+
+  <section id="fix-packets">
+    <h2>Deep Module Fix Packets</h2>
+    <details open>
+      <summary>JSC-333 / GAP-002 - validate/run policy parity</summary>
+      <table>
+        <tr><th>Source gap</th><td>GAP-002 validate and run enforce different fixture contracts.</td></tr>
+        <tr><th>Owner module</th><td><code>src/lib/case-contract.js</code> owns fixture schema and policy validation. <code>src/lib/latest-run.js</code> should delegate to it.</td></tr>
+        <tr><th>Public interface</th><td><code>pnpm evals validate &lt;case-file&gt; --json</code> and <code>pnpm evals run &lt;case-file&gt; --json</code>.</td></tr>
+        <tr><th>Hidden implementation</th><td>Callers no longer need to remember separate schema-only and policy validation paths.</td></tr>
+        <tr><th>Caller contract</th><td>Policy-invalid fixtures fail both validate and run with structured errors.</td></tr>
+        <tr><th>Seam test</th><td>Policy-invalid fixture fails <code>validate</code> and <code>run</code>.</td></tr>
+        <tr><th>Tracer proof</th><td><code>pnpm evals validate fixtures/smoke/pr-closeout.case.json --json</code>.</td></tr>
+        <tr><th>Rollback path</th><td>Revert validation delegation to schema-only in <code>src/lib/latest-run.js</code>.</td></tr>
+        <tr><th>Phase-one check</th><td>No new external authority or runtime dependency.</td></tr>
+        <tr><th>Validation gate</th><td><code>pnpm test</code>.</td></tr>
+      </table>
+    </details>
+    <details open>
+      <summary>JSC-334 / GAP-001 - explicit execution mode</summary>
+      <table>
+        <tr><th>Source gap</th><td>GAP-001 simulated runs can produce false success.</td></tr>
+        <tr><th>Owner module</th><td><code>src/commands/run.js</code> owns execution artifacts; a small execution helper may hide real vs synthetic behavior.</td></tr>
+        <tr><th>Public interface</th><td><code>command-log.json.execution_mode</code>, run JSON output, and eval result artifact references.</td></tr>
+        <tr><th>Hidden implementation</th><td>Callers do not infer mode from command names or stdout.</td></tr>
+        <tr><th>Caller contract</th><td>Synthetic execution is explicit; unsupported or real execution failures cannot appear as silent pass evidence.</td></tr>
+        <tr><th>Seam test</th><td>Synthetic smoke writes <code>execution_mode: synthetic</code>; non-synthetic fixture cannot use synthetic command invisibly.</td></tr>
+        <tr><th>Tracer proof</th><td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code> then inspect command-log.</td></tr>
+        <tr><th>Rollback path</th><td>Remove mode fields and helper, restoring previous command-log shape.</td></tr>
+        <tr><th>Phase-one check</th><td>No external adapter or required judge introduced.</td></tr>
+        <tr><th>Validation gate</th><td><code>pnpm test</code> and canonical smoke run.</td></tr>
+      </table>
+    </details>
+    <details open>
+      <summary>JSC-335 / GAP-003 - observed baseline presence</summary>
+      <table>
+        <tr><th>Source gap</th><td>GAP-003 baseline presence is fixture-declared, not observed.</td></tr>
+        <tr><th>Owner module</th><td><code>src/commands/run.js</code> currently builds baseline result; extract if needed only when complexity justifies it.</td></tr>
+        <tr><th>Public interface</th><td><code>baseline-result.json.presence_status</code> and <code>comparison_evidence</code>.</td></tr>
+        <tr><th>Hidden implementation</th><td>Presence is derived from artifact path existence and hash evidence, not copied from fixture expectation.</td></tr>
+        <tr><th>Caller contract</th><td>Expected presence is an assertion; observed presence is artifact truth.</td></tr>
+        <tr><th>Seam test</th><td>A fixture claiming a present baseline with a missing artifact records missing evidence and fails when appropriate.</td></tr>
+        <tr><th>Tracer proof</th><td>Smoke run records missing because <code>baseline.artifact_path</code> is null.</td></tr>
+        <tr><th>Rollback path</th><td>Restore fixture-declared presence assignment.</td></tr>
+        <tr><th>Phase-one check</th><td>No baseline promotion automation added.</td></tr>
+        <tr><th>Validation gate</th><td><code>pnpm test</code>.</td></tr>
+      </table>
+    </details>
+    <details open>
+      <summary>JSC-336 / GAP-005 - repo-native verify wrapper</summary>
+      <table>
+        <tr><th>Source gap</th><td>GAP-005 documented validation lane is not wired as a single command.</td></tr>
+        <tr><th>Owner module</th><td><code>package.json</code> script plus a small script only if command composition needs ownership.</td></tr>
+        <tr><th>Public interface</th><td><code>pnpm verify</code>.</td></tr>
+        <tr><th>Hidden implementation</th><td>Agents do not manually reconstruct the AGENTS minimum lane for every closeout.</td></tr>
+        <tr><th>Caller contract</th><td>Wrapper exits non-zero on any required gate failure and reports exact command ownership.</td></tr>
+        <tr><th>Seam test</th><td><code>pnpm verify</code> invokes tests, smoke run, JSON check, and lightweight credential regex.</td></tr>
+        <tr><th>Tracer proof</th><td><code>pnpm verify</code>.</td></tr>
+        <tr><th>Rollback path</th><td>Remove wrapper script from <code>package.json</code>.</td></tr>
+        <tr><th>Phase-one check</th><td>No CI/cloud runner required to land this wrapper.</td></tr>
+        <tr><th>Validation gate</th><td><code>pnpm verify</code>.</td></tr>
+      </table>
+    </details>
+  </section>
+
+  <section id="tradeoffs">
+    <h2>Tradeoffs</h2>
+    <table>
+      <thead><tr><th>Time</th><th>Tradeoff</th><th>Decision</th><th>Risk</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>2026-05-20</td>
+          <td>Real execution now vs explicit synthetic mode first.</td>
+          <td>Start by making synthetic mode explicit and policy-enforced, then add real execution only if the fixture contract supports it safely in phase one.</td>
+          <td>Real command execution remains a follow-on trust-boundary hardening item if not completed in this batch.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td>Public scorer schema change vs hidden baseline status mutation.</td>
+          <td>Make <code>baseline-presence</code> a declared scorer and fixture entry so the deterministic verdict explains the baseline decision.</td>
+          <td>Fixture scorers changed, but the public surface remains small and schema-backed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="runtime-discoveries">
+    <h2>Runtime Discoveries</h2>
+    <table>
+      <thead><tr><th>Time</th><th>Discovery</th><th>Impact</th><th>Classification</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>2026-05-20</td>
+          <td>Git branch creation initially failed because sandbox permissions blocked writes under <code>.git/refs/heads</code>.</td>
+          <td>Requested narrow <code>.git</code> write permission and created the implementation branch normally.</td>
+          <td>environment/tooling</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td>The codebase already has a post-audit module split: runtime owners are under <code>src/commands/*</code> and <code>src/lib/*</code>, not the historical monolithic <code>src/cli.js</code>.</td>
+          <td>Fixes must use current owner modules and treat old audit line numbers as historical evidence only.</td>
+          <td>runtime-discovered</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td>Direct Browser rendering of the notes through <code>file://</code> was blocked by the browser URL policy.</td>
+          <td>Served the repo over <code>127.0.0.1:8765</code> and validated the notes through Browser without weakening the policy boundary.</td>
+          <td>environment/tooling</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>codex review --uncommitted</code> could not complete cleanly because the local Codex review runtime hit system-skill installation, rollout recording, and MCP token-refresh errors.</td>
+          <td>The code review lane is classified as blocked by local Codex runtime/auth state, not by a patch failure. Architecture, simplify, cleanup, and testing lenses were still applied through targeted reviewer agents and local validation.</td>
+          <td>environment/tooling</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>git-project-triage</code> was spawned for final PR delivery review but timed out twice without returning a report.</td>
+          <td>The agent was closed to avoid a dangling background reviewer. Local diff inspection, final validation, and Linear evidence sync continued; this is recorded as a blocked reviewer lane, not as approval.</td>
+          <td>reviewer-runtime</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td>Multiple smoke runs generated duplicate run bundles while validation was being repeated.</td>
+          <td>Kept the final <code>pnpm verify</code> run bundle as the latest evidence and removed superseded duplicate untracked run bundles before staging.</td>
+          <td>artifact hygiene</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="review-pass">
+    <h2>Review Pass</h2>
+    <table>
+      <thead><tr><th>Lens</th><th>Status</th><th>Finding</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Architecture</td>
+          <td><span class="badge pass">accepted</span></td>
+          <td>Verify wrapper repeats the documented validation lane; future drift should be solved with a machine-readable validation contract.</td>
+          <td>Recorded as deferred work. The small wrapper is acceptable for JSC-336 because it makes the existing lane executable without adding a new runtime authority.</td>
+        </tr>
+        <tr>
+          <td>Simplify</td>
+          <td><span class="badge pass">addressed</span></td>
+          <td>Duplicate command-log fields, nested baseline comparison branching, and special-case verify logic added avoidable noise.</td>
+          <td>Removed the duplicate field, simplified comparison selection, and consolidated verify command execution through one runner helper.</td>
+        </tr>
+        <tr>
+          <td>Unslopify</td>
+          <td><span class="badge pass">addressed</span></td>
+          <td>Runtime scorer allowlist duplicated schema authority and could drift from the public scorer contract.</td>
+          <td>Removed the runtime allowlist; schema validation remains the single scorer enumeration boundary.</td>
+        </tr>
+        <tr>
+          <td>Codex review</td>
+          <td><span class="badge blocked">blocked</span></td>
+          <td><code>codex review --uncommitted</code> produced local runtime/auth errors before a usable review result.</td>
+          <td>Classified as environment/tooling blocked and kept exact blocker evidence in this notes file. Did not treat the blocked review as approval.</td>
+        </tr>
+        <tr>
+          <td>Git project triage</td>
+          <td><span class="badge blocked">blocked</span></td>
+          <td>The final delivery triage agent timed out twice and was closed while still running.</td>
+          <td>Recorded as a blocked reviewer lane. Continued with deterministic local validation and explicit final diff review.</td>
+        </tr>
+        <tr>
+          <td>Testing</td>
+          <td><span class="badge pass">passed</span></td>
+          <td>Needed seam coverage for validate/run parity, execution-mode evidence, and baseline observation.</td>
+          <td>Added CLI tests and reran <code>pnpm test</code>, smoke run, latest check, and <code>pnpm verify</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="validation-evidence">
+    <h2>Validation Evidence</h2>
+    <table>
+      <thead><tr><th>Time</th><th>Command</th><th>Status</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>git checkout -b jscraik/jsc-332-evals-trust-boundary</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Created branch after narrow <code>.git</code> write permission was granted.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>Browser render check for http://127.0.0.1:8765/.harness/implementation-notes/2026-05-20-evals-trust-boundary-notes.html</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Browser observed the expected title, one H1, the Phase 1 marker, and collapsible summaries; refreshed after notes update and observed the implemented phase marker.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>pnpm test</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>26 tests passed, including validate/run policy parity, explicit synthetic execution mode, and observed baseline presence seams.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>pnpm evals validate fixtures/smoke/pr-closeout.case.json --json</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Smoke fixture passed schema and phase-one policy validation through the shared contract.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Run passed and emitted <code>execution_mode: synthetic</code> in JSON output.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>pnpm evals check --json</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Latest result, manifest, scorer results, and baseline result all passed schema/hash validation.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>pnpm verify</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Wrapper ran README/AGENTS existence checks, schema inventory, smoke fixture existence, tests, smoke run, JSON smoke run, latest check, and credential-pattern scan. Latest retained run bundle: <code>.harness/evals/runs/20260520T170410Z-pr-closeout-4df36134/</code>.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>git diff --check</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>No whitespace errors were reported before closeout validation.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>codex review --uncommitted</code></td>
+          <td><span class="badge blocked">blocked</span></td>
+          <td>Blocked by local Codex runtime/auth state: system skill install permission errors, rollout recording permission errors, and MCP token refresh <code>invalid_grant</code>. No clean Codex review verdict was produced.</td>
+        </tr>
+        <tr>
+          <td>2026-05-20</td>
+          <td><code>git-project-triage</code> final delivery review</td>
+          <td><span class="badge blocked">blocked</span></td>
+          <td>Timed out twice without a report and was closed while still running. No triage approval is claimed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="risks">
+    <h2>Risks</h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Risk</th><th>Mitigation</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge risk">high</span></td>
+          <td>Artifact output may still imply real execution while using a synthetic fixture.</td>
+          <td>Add explicit execution mode and test the command-log shape.</td>
+          <td>mitigated for synthetic mode; real execution remains future hardening</td>
+        </tr>
+        <tr>
+          <td><span class="badge risk">medium</span></td>
+          <td>A verify wrapper can become ceremony if it only shells together undocumented assumptions.</td>
+          <td>Keep it small, repo-native, and aligned to AGENTS minimum commands.</td>
+          <td>mitigated by <code>scripts/verify.js</code> and <code>pnpm verify</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge risk">medium</span></td>
+          <td><code>latest.json</code> now carries <code>execution_mode</code>, but a dedicated latest-run schema migration was not added in this phase.</td>
+          <td>Keep <code>pnpm evals check --json</code> as the active artifact gate and handle latest-run schema hardening in the trace/runtime artifact phase.</td>
+          <td>deferred with explicit validation guard</td>
+        </tr>
+        <tr>
+          <td><span class="badge risk">medium</span></td>
+          <td>Real command execution remains intentionally deferred; synthetic execution is now honest but remains synthetic.</td>
+          <td>Treat this as the next execution trust-boundary phase, after the fixture contract defines real command safety and rollback behavior.</td>
+          <td>deferred; false-success risk reduced by explicit mode and policy gates</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="files-changed">
+    <h2>Files Changed</h2>
+    <ul>
+      <li><code>.harness/implementation-notes/2026-05-20-evals-trust-boundary-notes.html</code> - live implementation journal.</li>
+      <li><code>src/lib/case-contract.js</code> - shared case schema/policy validation and synthetic command policy.</li>
+      <li><code>src/lib/latest-run.js</code> - validate/check now use the shared case contract.</li>
+      <li><code>src/commands/run.js</code> - explicit synthetic execution mode and observed baseline result construction.</li>
+      <li><code>src/lib/scoring.js</code> - deterministic baseline-presence scorer.</li>
+      <li><code>schemas/eval-case.schema.json</code>, <code>schemas/eval-result.schema.json</code>, <code>schemas/scorer-result.schema.json</code> - schema-backed scorer and execution-mode contract.</li>
+      <li><code>fixtures/smoke/pr-closeout.case.json</code> - smoke fixture declares baseline-presence scorer.</li>
+      <li><code>scripts/verify.js</code> and <code>package.json</code> - repo-native verify wrapper.</li>
+      <li><code>test/cli.test.js</code> - seam tests for validate/run parity, execution mode, and baseline observation.</li>
+      <li><code>.harness/evals/runs/latest.json</code> and <code>.harness/evals/runs/20260520T170410Z-pr-closeout-4df36134/</code> - final retained validation evidence from <code>pnpm verify</code>.</li>
+      <li><code>.gitignore</code> - pre-existing dirty local config ignore entry.</li>
+      <li><code>.harness/research/audits/2026-05-20-evidence-led-codebase-gap-audit.md</code> - pre-existing dirty audit addendum/north-star update.</li>
+      <li><code>.harness/linear/2026-05-20-evals-evidence-led-gap-fixes-linear-plan.md</code> - pre-existing dirty Linear plan artifact.</li>
+      <li><code>.harness/research/audits/2026-05-20-codex-runtime-alignment-addendum.md</code> - pre-existing dirty Codex alignment artifact.</li>
+    </ul>
+  </section>
+
+  <section id="commands-executed">
+    <h2>Commands Executed</h2>
+    <pre><code>git status --short --branch
+git checkout -b jscraik/jsc-332-evals-trust-boundary
+pnpm test
+pnpm evals validate fixtures/smoke/pr-closeout.case.json --json
+pnpm evals run fixtures/smoke/pr-closeout.case.json --json
+pnpm evals check --json
+pnpm verify
+git diff --check
+codex review --uncommitted</code></pre>
+    <pre><code>spawn git-project-triage final delivery review
+wait_agent --timeout 30000
+wait_agent --timeout 60000
+close_agent final_git_project_triage</code></pre>
+  </section>
+
+  <section id="deferred-work">
+    <h2>Deferred Work</h2>
+    <ul>
+      <li>Trace-event schemas, runtime-card state command, and promotion governance remain later phases unless required to close the current trust-boundary issues.</li>
+      <li>Real external suite import from agent-skills, Tessl, plugin-eval, or coding-harness remains out of scope; only portable contract cases belong here.</li>
+      <li>Replace the duplicated documentation-to-verify command list with a machine-readable validation contract once the validation surface grows beyond this first wrapper.</li>
+      <li>Add latest-run schema hardening when the trace/runtime artifact phase starts.</li>
+    </ul>
+  </section>
+
+  <section id="follow-up-recommendations">
+    <h2>Follow-up Recommendations</h2>
+    <p>After Phase 1 lands, move to the trace/runtime artifact phase: explicit trace-event schemas, latest-run schema hardening, replayable failure classification, and a real-execution contract only when the safe command boundary is defined.</p>
+  </section>
+</main>
+</body>
+</html>

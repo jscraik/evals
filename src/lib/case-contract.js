@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { emitFailure } from "./failures.js";
 import { insideRepo } from "./paths.js";
-import { schemaTargets, validateDocument } from "./schema.js";
+import { schemaCheck, schemaTargets, validateDocument } from "./schema.js";
 
 /**
  * Validate that a parsed case object conforms to the repository's case contract and that the referenced case file exists.
@@ -42,12 +42,44 @@ export function validateCase(casePath, testCase) {
   if (!Array.isArray(testCase.expected?.required_output_contains)) errors.push("expected.required_output_contains must be an array");
   if (!Array.isArray(testCase.expected?.required_artifacts)) errors.push("expected.required_artifacts must be an array");
   if (!Array.isArray(testCase.scorers) || testCase.scorers.length === 0) errors.push("scorers must name at least one deterministic scorer");
-  const allowedScorers = new Set(["exit-code", "artifact-completeness", "required-output"]);
-  for (const scorer of testCase.scorers || []) {
-    if (!allowedScorers.has(scorer)) errors.push("unsupported scorer: " + scorer);
+  if (testCase.fixture_source?.type === "synthetic" && testCase.input?.command !== "simulate-pr-closeout") {
+    errors.push("synthetic fixtures must use input.command simulate-pr-closeout");
   }
   if (!existsSync(casePath)) errors.push("case file does not exist: " + casePath);
   return errors;
+}
+
+/**
+ * Validate a parsed case against both the JSON schema and the local phase-one policy contract.
+ * @param {string} casePath - Absolute or repository-relative path to the case file.
+ * @param {object} testCase - Parsed case object.
+ * @returns {string[]} Schema and policy validation errors.
+ */
+export function validateCaseContract(casePath, testCase) {
+  return validateDocument(schemaTargets.case.schema, casePath).concat(validateCase(casePath, testCase));
+}
+
+/**
+ * Validate a case file using the same schema and policy contract enforced by the run command.
+ * @param {string} casePath - Absolute or repository-relative path to the case file.
+ * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[]}} Validation check.
+ */
+export function validateCaseFileContract(casePath) {
+  const absoluteCasePath = insideRepo(casePath);
+  const check = schemaCheck("case", absoluteCasePath);
+  let testCase;
+  try {
+    testCase = JSON.parse(readFileSync(absoluteCasePath, "utf8"));
+  } catch {
+    return check;
+  }
+  const policyErrors = validateCase(absoluteCasePath, testCase);
+  const errors = check.errors.concat(policyErrors);
+  return {
+    ...check,
+    status: errors.length === 0 ? "pass" : "fail",
+    errors
+  };
 }
 
 /**
@@ -100,9 +132,7 @@ export function parseCase(casePath, jsonMode) {
       recovery: "Fix the fixture JSON syntax, then rerun the same command."
     });
   }
-  const schemaErrors = validateDocument(schemaTargets.case.schema, absoluteCasePath);
-  const validationErrors = validateCase(absoluteCasePath, testCase);
-  const errors = schemaErrors.concat(validationErrors);
+  const errors = validateCaseContract(absoluteCasePath, testCase);
   if (errors.length > 0) {
     emitFailure(jsonMode, {
       status: "failed",
