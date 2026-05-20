@@ -1,3 +1,11 @@
+/**
+ * Produce the simulated stdout output for a run of the given test case.
+ * @param {Object} testCase - Test case object; only `case_id` is read to populate the first line.
+ * @returns {string} A three-line string:
+ *   1. `case <case_id> wrote artifact bundle`
+ *   2. `deterministic scorers completed`
+ *   3. `baseline missing: presence_status=missing comparison_status=not_compared promotion_status=not_requested`
+ */
 export function simulatedRunOutput(testCase) {
   return [
     "case " + testCase.case_id + " wrote artifact bundle",
@@ -6,6 +14,13 @@ export function simulatedRunOutput(testCase) {
   ].join("\n");
 }
 
+/**
+ * Generate scorer results for the runtime-related checks configured on a test case.
+ *
+ * @param {Object} testCase - Test case configuration. Must include `scorers` (array of enabled scorer ids) and `expected` (object that may contain `exit_code` and `required_output_contains`).
+ * @param {Object} execution - Execution outcome to evaluate. Expected properties: `exit_code` (number) and `stdout` (string).
+ * @returns {Array<Object>} An array of scorer result objects. Each object contains `scorer_id`, `scorer_version`, `status` (`"pass"` or `"fail"`), `inputs_inspected` (array of inspected input paths), `evidence` (summary of observed vs expected), and `failure_reason` (null when passing, otherwise a short message).
+ */
 export function scoreRuntime(testCase, execution) {
   const results = [];
   if (testCase.scorers.includes("exit-code")) {
@@ -33,6 +48,13 @@ export function scoreRuntime(testCase, execution) {
   return results;
 }
 
+/**
+ * Produce an artifact-completeness scorer result when the test case enables that scorer.
+ *
+ * @param {Object} testCase - Test case object containing `scorers` and `expected.required_artifacts`.
+ * @param {string[]} plannedArtifactNames - Names planned for the final artifact bundle.
+ * @returns {Object[]} An empty array if the `artifact-completeness` scorer is not enabled; otherwise a single-element array with a scorer result object whose `status` is `pass` when every name in `expected.required_artifacts` is present in `plannedArtifactNames`, and `fail` otherwise. The result object includes `scorer_id`, `scorer_version`, `inputs_inspected`, `evidence`, and `failure_reason`.
+ */
 export function scoreArtifactCompleteness(testCase, plannedArtifactNames) {
   if (!testCase.scorers.includes("artifact-completeness")) return [];
   const planned = new Set(plannedArtifactNames);
@@ -47,6 +69,14 @@ export function scoreArtifactCompleteness(testCase, plannedArtifactNames) {
   }];
 }
 
+/**
+ * Determine the overall verdict from a list of scorer results.
+ *
+ * If `scorerResults` is not a non-empty array the verdict is `"fail"`. Otherwise the verdict
+ * is `"pass"` only when every element has `status === "pass"`, and `"fail"` if any element does not.
+ * @param {Array<Object>} scorerResults - Array of scorer result objects, each expected to have a `status` property.
+ * @returns {string} `"pass"` if every scorer result has `status === "pass"`, `"fail"` otherwise.
+ */
 export function verdictFor(scorerResults) {
   if (!Array.isArray(scorerResults) || scorerResults.length === 0) return "fail";
   return scorerResults.every((item) => item.status === "pass") ? "pass" : "fail";

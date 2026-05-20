@@ -10,6 +10,11 @@ import { rel, repoRoot, utcBasic } from "../lib/paths.js";
 import { buildReport } from "../lib/report.js";
 import { scoreArtifactCompleteness, scoreRuntime, simulatedRunOutput, verdictFor } from "../lib/scoring.js";
 
+/**
+ * Execute a single evaluation case: generate run identifiers and artifacts, write all artifact files (report, result, manifest, scorer and baseline results, command log), update the latest run index, validate the latest artifact schema, print a summary, clear run context and terminate the process with a pass/fail exit code.
+ * @param {string} casePath - Filesystem path identifying the test case to run (file or directory accepted by the case parser).
+ * @param {boolean} jsonMode - When true, print machine-readable JSON summary output; when false, print a human-readable summary.
+ */
 export function runCase(casePath, jsonMode) {
   const { rawCase, testCase } = parseCase(casePath, jsonMode);
 

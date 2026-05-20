@@ -26,10 +26,22 @@ export const schemaTargets = {
   }
 };
 
+/**
+ * Append a formatted error message to an errors array.
+ * @param {string[]} errors - Array that will receive the error string.
+ * @param {string} path - Document path or location identifier for the error.
+ * @param {string} message - Human-readable description of the error.
+ */
 function addError(errors, path, message) {
   errors.push(path + ": " + message);
 }
 
+/**
+ * Determine whether a value matches a specified type token.
+ * @param {*} value - The value to test.
+ * @param {string} type - The type token to check against. Supported tokens: standard `typeof` results (e.g. `"string"`, `"number"`, `"boolean"`, `"function"`, `"undefined"`), and special tokens `"array"`, `"integer"`, `"null"`, `"object"` (where `"object"` means a non-null, non-array object).
+ * @returns {boolean} `true` if `value` matches the specified type, `false` otherwise.
+ */
 function isType(value, type) {
   if (type === "array") return Array.isArray(value);
   if (type === "integer") return Number.isInteger(value);
@@ -38,6 +50,16 @@ function isType(value, type) {
   return typeof value === type;
 }
 
+/**
+ * Validate a value against a simplified JSON Schema and collect any validation errors.
+ *
+ * Performs type checks, `const`/`enum` constraints, string and date-time formats, object property requirements and additionalProperties rules, and array constraints including minItems, uniqueItems and item validation; recurses into nested objects and arrays, using `path` to locate errors.
+ *
+ * @param {*} value - The value to validate.
+ * @param {object} schema - The schema object describing expected structure and constraints.
+ * @param {string} [path="$"] - Dot/bracket notation path used to identify the location of validation errors.
+ * @returns {string[]} Array of validation error messages; empty if the value conforms to the schema.
+ */
 export function validateWithSchema(value, schema, path = "$") {
   const errors = [];
   if (Array.isArray(schema.type)) {
@@ -95,6 +117,12 @@ export function validateWithSchema(value, schema, path = "$") {
   return errors;
 }
 
+/**
+ * Validate a JSON data file against a JSON schema file.
+ * @param {string} schemaPath - Filesystem path to the JSON schema.
+ * @param {string} dataPath - Filesystem path to the JSON data to validate.
+ * @returns {string[]} An array of validation error messages; empty if validation passed. If the schema or data file cannot be parsed, returns a single-element array containing a message of the form "`<relative path>`: <parse error message>".
+ */
 export function validateDocument(schemaPath, dataPath) {
   let schema;
   try {
@@ -113,6 +141,13 @@ export function validateDocument(schemaPath, dataPath) {
   return validateWithSchema(data, schema);
 }
 
+/**
+ * Validate a JSON file against a named schema target and report the result.
+ *
+ * @param {string} schemaKey - Key identifying a schema in `schemaTargets`.
+ * @param {string} dataPath - Filesystem path to the JSON data file to validate.
+ * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[]}} An object summarising the check: `label` is the target's human-readable name (or the provided `schemaKey` for unknown targets), `schema_path` and `data_path` are the relative paths to the schema and data, `status` is `"pass"` when there are no validation errors and `"fail"` otherwise, and `errors` is the list of validation or lookup error messages.
+ */
 export function schemaCheck(schemaKey, dataPath) {
   const target = schemaTargets[schemaKey];
   if (!target) {

@@ -4,6 +4,15 @@ import { emitFailure } from "./failures.js";
 import { insideRepo } from "./paths.js";
 import { schemaTargets, validateDocument } from "./schema.js";
 
+/**
+ * Validate that a parsed case object conforms to the repository's case contract and that the referenced case file exists.
+ *
+ * Checks for required top-level and nested fields, enforces specific field constraints (for example `schema_version === 1`, kebab-case `case_id`, `fixture_source.type === "synthetic"`, and `privacy` flags set to `false`), verifies `expected` and `scorers` formats and allowed scorers, and confirms the provided `casePath` exists on disk.
+ *
+ * @param {string} casePath - Filesystem path to the case JSON file (used only to verify existence).
+ * @param {object} testCase - Parsed case JSON object to validate.
+ * @returns {string[]} An array of error messages describing any contract or existence violations; empty if the case is valid.
+ */
 export function validateCase(casePath, testCase) {
   const errors = [];
   if (testCase === null || typeof testCase !== "object" || Array.isArray(testCase)) {
@@ -41,6 +50,13 @@ export function validateCase(casePath, testCase) {
   return errors;
 }
 
+/**
+ * Resolve a repository-relative case path, read and parse the case JSON, and validate it against the schema and local contract.
+ *
+ * Emits failure reports via emitFailure for path resolution, file existence, read, parse or validation errors. On success, returns the absolute path, raw file contents and parsed case object.
+ * @param {string} casePath - Repository-relative path to the case JSON file.
+ * @param {*} jsonMode - Mode passed to emitFailure that controls how failures are reported.
+ * @returns {{ absoluteCasePath: string, rawCase: string, testCase: Object }} An object containing the resolved absolute path, the raw file contents, and the parsed case JSON.
 export function parseCase(casePath, jsonMode) {
   let absoluteCasePath;
   try {

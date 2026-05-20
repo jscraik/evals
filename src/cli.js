@@ -2,6 +2,12 @@
 import { runCase } from "./commands/run.js";
 import { checkCommand, validateCommand } from "./commands/validation.js";
 
+/**
+ * Print CLI usage instructions and terminate the process with the given exit code.
+ *
+ * If `exitCode` is 0 the message is written to stdout; otherwise it is written to stderr.
+ * @param {number} [exitCode=1] - Exit code with which the process will terminate.
+ */
 function usage(exitCode = 1) {
   const message = [
     "Usage:",

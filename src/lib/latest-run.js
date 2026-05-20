@@ -5,11 +5,27 @@ import { readJson } from "./json.js";
 import { insideRepo, rel, repoRelativePath } from "./paths.js";
 import { schemaCheck } from "./schema.js";
 
+/**
+ * Validate a case JSON file against the "case" schema.
+ * @param {string} casePath - Path to the case file; may be repository-relative and will be resolved to an absolute repository path.
+ * @returns {object} Validation result object describing schema check outcome and any validation errors.
+ */
 export function validateCaseFile(casePath) {
   const absoluteCasePath = insideRepo(casePath);
   return schemaCheck("case", absoluteCasePath);
 }
 
+/**
+ * Validate a "latest" run JSON file and the files it references inside the repository.
+ * @param {string} latestPath - Path to the "latest" JSON (repo-relative or user-provided path resolved into the repo).
+ * @returns {{status: ("passed"|"failed"), latest_path: string, run_id: (string|undefined), checks: Array, errors: string[]}}
+ *   An object with:
+ *   - `status`: `"passed"` when no validation errors were found, `"failed"` otherwise.
+ *   - `latest_path`: repository-relative path to the validated "latest" file.
+ *   - `run_id`: the `run_id` value extracted from the parsed "latest" JSON, or `undefined` if absent.
+ *   - `checks`: array of schema check results produced for any referenced files (e.g. result, manifest, scorers, baseline).
+ *   - `errors`: list of human-readable validation error messages collected during processing.
+ */
 export function validateLatestRun(latestPath) {
   const absoluteLatestPath = insideRepo(latestPath);
   const errors = [];
