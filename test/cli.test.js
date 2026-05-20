@@ -317,6 +317,33 @@ test("latest validation permits present baseline artifact references", () => {
   }
 });
 
+test("latest validation rejects baseline-artifact hash drift", () => {
+  const repo = makeRepo();
+  try {
+    const baselinePath = join(repo, ".harness", "evals", "baselines", "present-baseline.json");
+    mkdirSync(dirname(baselinePath), { recursive: true });
+    writeFileSync(baselinePath, JSON.stringify({ status: "approved" }, null, 2) + "\n", "utf8");
+
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.baseline.expected_presence = "present";
+    fixture.baseline.artifact_path = ".harness/evals/baselines/present-baseline.json";
+    writeFileSync(join(repo, "fixtures", "smoke", "present-baseline-hash-drift.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/present-baseline-hash-drift.case.json", "--json"]);
+    assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
+
+    writeFileSync(baselinePath, JSON.stringify({ status: "tampered" }, null, 2) + "\n", "utf8");
+
+    const checkResult = runCli(repo, ["check", "--json"]);
+    assert.equal(checkResult.status, 1);
+    const validation = parseJson(checkResult.stdout);
+    assert.match(validation.errors.join("\n"), /baseline current_artifact_ref\.sha256 does not match baseline artifact/);
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("latest validation rejects traversal in latest.json artifact pointers", () => {
   const repo = makeRepo();
   try {

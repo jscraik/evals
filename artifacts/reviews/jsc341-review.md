@@ -24,12 +24,13 @@ GitHub review comments.
 | Codex Review | Baseline consistency assumed every baseline ref was a command-log ref, which would reject valid present-baseline artifacts. | Fixed by validating `baseline.current_artifact_ref` by declared type: command-log refs must match latest command-log evidence; baseline-artifact refs must be repo-relative, present, and SHA-matched. |
 | Codex Review | Latest/manifest/result artifact path comparisons were separator-sensitive and could false-fail on Windows-style paths. | Fixed by normalizing artifact path separators before consistency comparisons. |
 | CodeRabbit | Review disposition provenance was ambiguous because the table used `Reviewer` for review dimensions and automated systems without identifying source type. | Fixed by adding this provenance note and renaming the table header to `Review Aspect / Source`. |
+| CodeRabbit | Baseline-artifact SHA validation had a happy-path seam but no negative tamper seam. | Fixed by adding `latest validation rejects baseline-artifact hash drift`, which mutates a present baseline after run and requires `closure latest consistency` to fail closed. |
 
 ## Validation
 
 | Command | Outcome |
 | --- | --- |
-| `pnpm test` | pass, 61 tests |
+| `pnpm test` | pass, 62 tests |
 | `pnpm evals check --json` | pass, includes `closure latest consistency` |
 | `pnpm verify` | pass, refreshed latest proof at `.harness/evals/runs/20260520T213437Z-pr-closeout-4df36134/` |
 | `git diff --check` | pass |
