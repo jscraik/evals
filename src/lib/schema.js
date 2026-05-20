@@ -172,3 +172,46 @@ export function schemaCheck(schemaKey, dataPath) {
     errors
   };
 }
+
+/**
+ * Validate an already-parsed object against a named schema target and report the result.
+ *
+ * @param {string} schemaKey - Key identifying a schema in `schemaTargets`.
+ * @param {*} data - The already-parsed data object to validate.
+ * @param {string} dataPath - Logical path identifier for error reporting (e.g., the original file path).
+ * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[]}} An object summarising the check: `label` is the target's human-readable name (or the provided `schemaKey` for unknown targets), `schema_path` and `data_path` are the relative paths to the schema and data, `status` is `"pass"` when there are no validation errors and `"fail"` otherwise, and `errors` is the list of validation or lookup error messages.
+ */
+export function schemaCheckFromObject(schemaKey, data, dataPath) {
+  const target = schemaTargets[schemaKey];
+  if (!target) {
+    return {
+      label: schemaKey,
+      schema_path: "unknown schema target",
+      data_path: rel(dataPath),
+      status: "fail",
+      errors: ["unknown schema target: " + schemaKey]
+    };
+  }
+
+  let schema;
+  try {
+    schema = readJson(target.schema);
+  } catch (error) {
+    return {
+      label: target.label,
+      schema_path: rel(target.schema),
+      data_path: rel(dataPath),
+      status: "fail",
+      errors: [rel(target.schema) + ": schema JSON parse failed: " + error.message]
+    };
+  }
+
+  const errors = validateWithSchema(data, schema);
+  return {
+    label: target.label,
+    schema_path: rel(target.schema),
+    data_path: rel(dataPath),
+    status: errors.length === 0 ? "pass" : "fail",
+    errors
+  };
+}

@@ -4,7 +4,7 @@ import { validateCaseFileContract } from "./case-contract.js";
 import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
 import { insideRepo, rel, repoRelativePath } from "./paths.js";
-import { schemaCheck } from "./schema.js";
+import { schemaCheck, schemaCheckFromObject } from "./schema.js";
 
 /**
  * Validates a case JSON file against the "case" schema.
@@ -36,7 +36,7 @@ export function validateLatestRun(latestPath) {
     return { status: "failed", errors: [error.message], checks: [] };
   }
 
-  const checks = [schemaCheck("latest", absoluteLatestPath)];
+  const checks = [schemaCheckFromObject("latest", latest, absoluteLatestPath)];
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
 
   if (errors.length > 0) {
