@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 
 import { writeJson } from "./json.js";
-import { rel } from "./paths.js";
+import { insideRepo, rel } from "./paths.js";
 
 let activeRunContext = null;
 
@@ -18,14 +18,21 @@ export function writeFailureArtifact(failure) {
   try {
     const partialArtifacts = activeRunContext.artifactPaths
       .filter((path) => existsSync(path))
-      .map((path) => rel(path));
+      .map((path) => {
+        try {
+          return rel(insideRepo(path));
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
     writeJson(activeRunContext.failurePath, {
       schema_version: 1,
       run_id: activeRunContext.runId,
       case_id: activeRunContext.caseId,
       status: "failed",
       failure_class: "post_start",
-      errors: failure.errors || ["unknown post-start failure"],
+      errors: failureErrors(failure),
       recovery: failure.recovery || "Inspect partial artifacts, fix the failure, then rerun the same case.",
       partial_artifacts: partialArtifacts
     });
@@ -34,9 +41,17 @@ export function writeFailureArtifact(failure) {
   }
 }
 
+function failureErrors(failure) {
+  if (Array.isArray(failure.errors)) return failure.errors;
+  if (failure.errors) return [String(failure.errors)];
+  return ["unknown failure"];
+}
+
 export function emitFailure(jsonMode, failure) {
+  const errors = failureErrors(failure);
+  const normalizedFailure = { ...failure, errors };
   writeFailureArtifact(failure);
-  if (jsonMode) console.log(JSON.stringify(failure, null, 2));
-  else console.error("failed: " + failure.errors.join("; "));
+  if (jsonMode) console.log(JSON.stringify(normalizedFailure, null, 2));
+  else console.error("failed: " + errors.join("; "));
   process.exit(1);
 }

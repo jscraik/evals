@@ -34,7 +34,10 @@ const docs = [
   "LICENSE.md",
   "UBIQUITOUS_LANGUAGE.md",
   "artifacts/reviews/docs-expert.md",
-  "implementation-notes.html"
+  "implementation-notes.html",
+  ".harness/refactors/2026-05-20-local-observability-feedback-loop.md",
+  ".harness/research/2026-05-19-mastering-ai-evaluation-playground-production-evidence.md",
+  ".harness/research/audits/2026-05-20-evidence-led-codebase-gap-audit.md"
 ];
 
 test("README documentation map points to existing docs", () => {

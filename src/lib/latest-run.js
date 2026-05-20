@@ -50,7 +50,10 @@ export function validateLatestRun(latestPath) {
       manifest = null;
     }
     if (manifest) {
-      for (const artifact of manifest.artifacts || []) {
+      if (!Array.isArray(manifest.artifacts)) {
+        errors.push("artifact manifest $.artifacts: expected type array");
+      }
+      for (const artifact of Array.isArray(manifest.artifacts) ? manifest.artifacts : []) {
         const artifactPath = repoRelativePath(artifact.path, "manifest artifact path", errors);
         if (!artifactPath) continue;
         if (!existsSync(artifactPath)) {

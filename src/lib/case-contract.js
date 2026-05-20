@@ -6,6 +6,9 @@ import { schemaTargets, validateDocument } from "./schema.js";
 
 export function validateCase(casePath, testCase) {
   const errors = [];
+  if (testCase === null || typeof testCase !== "object" || Array.isArray(testCase)) {
+    return ["case root must be a JSON object"];
+  }
   const requiredTop = ["schema_version", "case_id", "suite_id", "owner", "fixture_source", "privacy", "promotion", "input", "expected", "scorers"];
   for (const key of requiredTop) {
     if (!(key in testCase)) errors.push("missing required field: " + key);

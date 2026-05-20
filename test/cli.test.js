@@ -6,6 +6,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
+import { schemaCheck } from "../src/lib/schema.js";
+import { verdictFor } from "../src/lib/scoring.js";
+
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
 function makeRepo() {
@@ -143,6 +146,22 @@ test("invalid fixture fields fail schema and policy validation", () => {
   }
 });
 
+test("non-object fixture roots return structured validation failures", () => {
+  const repo = makeRepo();
+  try {
+    writeFileSync(join(repo, "fixtures", "smoke", "array.case.json"), "[]\n", "utf8");
+    const result = runCli(repo, ["run", "fixtures/smoke/array.case.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const failure = parseJson(result.stdout);
+    assert.equal(failure.status, "failed");
+    assert.equal(failure.requirement, "case validation");
+    assert.match(failure.errors.join("\n"), /case root must be a JSON object/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("latest validation rejects traversal in latest.json artifact pointers", () => {
   const repo = makeRepo();
   try {
@@ -250,4 +269,34 @@ test("latest validation reports malformed manifest JSON without a stack trace", 
   } finally {
     cleanup(repo);
   }
+});
+
+test("latest validation reports malformed manifest artifact lists without a stack trace", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const manifestPath = join(repo, output.manifest_path);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    manifest.artifacts = {};
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /artifact manifest .*expected type array/);
+    assert.doesNotMatch(result.stdout + result.stderr, /TypeError:/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("unknown schema keys and empty scorer sets fail closed", () => {
+  const schemaResult = schemaCheck("missing-schema", "fixtures/smoke/pr-closeout.case.json");
+  assert.equal(schemaResult.status, "fail");
+  assert.match(schemaResult.errors.join("\n"), /unknown schema target/);
+
+  assert.equal(verdictFor([]), "fail");
+  assert.equal(verdictFor(null), "fail");
 });

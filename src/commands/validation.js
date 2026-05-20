@@ -33,7 +33,7 @@ export function validateCommand(targetPath, jsonMode) {
   if (absoluteTargetPath.endsWith(join(".harness", "evals", "runs", "latest.json"))) {
     validation = validateLatestRun(absoluteTargetPath);
   } else {
-    const check = validateCaseFile(targetPath);
+    const check = validateCaseFile(absoluteTargetPath);
     validation = {
       status: check.status === "pass" ? "passed" : "failed",
       checks: [check],

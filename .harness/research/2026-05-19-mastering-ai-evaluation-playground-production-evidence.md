@@ -8,21 +8,21 @@
 - Duration: 01:25:08
 - Retrieved: 2026-05-19
 - Transcript source: YouTube captions downloaded with yt-dlp
-- Local raw caption artifact: /private/tmp/evals-video-transcript/9iN-cPnp7xg.en.vtt
-- Local metadata artifact: /private/tmp/evals-video-transcript/9iN-cPnp7xg.info.json
+- Local raw caption artifact: [transient transcript workspace]/9iN-cPnp7xg.en.vtt
+- Local metadata artifact: [transient transcript workspace]/9iN-cPnp7xg.info.json
 
 ## Retrieval Evidence
 
 Command:
 
 ```bash
-yt-dlp --skip-download --write-auto-subs --write-subs --sub-langs "en.*" --sub-format vtt --write-info-json --output "/private/tmp/evals-video-transcript/%(id)s.%(ext)s" "https://youtu.be/9iN-cPnp7xg?si=E95BbKU82QdxRHks"
+yt-dlp --skip-download --write-auto-subs --write-subs --sub-langs "en.*" --sub-format vtt --write-info-json --output "[transient transcript workspace]/%(id)s.%(ext)s" "https://youtu.be/9iN-cPnp7xg?si=E95BbKU82QdxRHks"
 ```
 
 Result:
 
-- Downloaded caption file: /private/tmp/evals-video-transcript/9iN-cPnp7xg.en.vtt
-- Downloaded metadata file: /private/tmp/evals-video-transcript/9iN-cPnp7xg.info.json
+- Downloaded caption file: [transient transcript workspace]/9iN-cPnp7xg.en.vtt
+- Downloaded metadata file: [transient transcript workspace]/9iN-cPnp7xg.info.json
 - Video download skipped.
 
 ## Transcript Notes

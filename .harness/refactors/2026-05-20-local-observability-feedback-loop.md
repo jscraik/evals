@@ -4,8 +4,8 @@ Date: 2026-05-20
 Status: phase-one observability architecture map
 Source image: Codex observability stack reference
 Reusable local prior art:
-- /Users/jamiecraik/.agents/otel-collector
-- /Users/jamiecraik/.agents/session-collector
+- ~/.agents/otel-collector
+- ~/.agents/session-collector
 
 ## Purpose
 

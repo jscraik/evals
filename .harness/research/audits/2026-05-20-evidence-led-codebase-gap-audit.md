@@ -1,10 +1,16 @@
 # Evidence-Led Codebase Gap Audit
 
 Date: 2026-05-20
-Target codebase: /Users/jamiecraik/dev/evals
+Target codebase: [REPO_ROOT]
 Evidence document: .harness/research/deep/2026-05-19-doug-carlos-braintrust-evidence.md
 Primary skill: improve-codebase-architecture
 Reviewer coverage: agent-native-reviewer, api-contract-reviewer, adversarial-reviewer, coordinator runtime inspection
+
+Snapshot scope: this audit is a historical pre-fix planning artifact captured
+before the current PR's CLI module split. Code evidence that names
+src/cli.js line ranges should be read as original gap evidence, not current
+line-accurate implementation mapping; current runtime owners are src/commands/*
+and src/lib/*.
 
 ## 1. Executive Summary
 

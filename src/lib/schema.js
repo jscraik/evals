@@ -115,6 +115,15 @@ export function validateDocument(schemaPath, dataPath) {
 
 export function schemaCheck(schemaKey, dataPath) {
   const target = schemaTargets[schemaKey];
+  if (!target) {
+    return {
+      label: schemaKey,
+      schema_path: "unknown schema target",
+      data_path: rel(dataPath),
+      status: "fail",
+      errors: ["unknown schema target: " + schemaKey]
+    };
+  }
   const errors = validateDocument(target.schema, dataPath);
   return {
     label: target.label,

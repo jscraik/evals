@@ -48,5 +48,6 @@ export function scoreArtifactCompleteness(testCase, plannedArtifactNames) {
 }
 
 export function verdictFor(scorerResults) {
+  if (!Array.isArray(scorerResults) || scorerResults.length === 0) return "fail";
   return scorerResults.every((item) => item.status === "pass") ? "pass" : "fail";
 }
