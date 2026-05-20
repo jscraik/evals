@@ -30,6 +30,28 @@ export const schemaTargets = {
   }
 };
 
+export const supportedSchemaKeywords = new Set([
+  "$id",
+  "$schema",
+  "additionalProperties",
+  "const",
+  "description",
+  "enum",
+  "format",
+  "items",
+  "minItems",
+  "minLength",
+  "pattern",
+  "properties",
+  "required",
+  "title",
+  "type",
+  "uniqueItems"
+]);
+
+const supportedFormats = new Set(["date-time"]);
+const supportedTypes = new Set(["array", "boolean", "integer", "null", "number", "object", "string"]);
+
 /**
  * Append a formatted error message to an errors array.
  * @param {string[]} errors - Array that will receive the error string.
@@ -38,6 +60,58 @@ export const schemaTargets = {
  */
 function addError(errors, path, message) {
   errors.push(path + ": " + message);
+}
+
+function isSchemaObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isDateTime(value) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) && !Number.isNaN(Date.parse(value));
+}
+
+function validateSchemaContract(schema, path = "$schema") {
+  const errors = [];
+  if (!isSchemaObject(schema)) {
+    addError(errors, path, "schema must be a JSON object");
+    return errors;
+  }
+
+  for (const key of Object.keys(schema)) {
+    if (!supportedSchemaKeywords.has(key)) {
+      addError(errors, path + "." + key, "unsupported JSON Schema keyword");
+    }
+  }
+
+  if (Array.isArray(schema.type)) {
+    for (const type of schema.type) {
+      if (!supportedTypes.has(type)) addError(errors, path + ".type", "unsupported type " + JSON.stringify(type));
+    }
+  } else if (schema.type !== undefined && !supportedTypes.has(schema.type)) {
+    addError(errors, path + ".type", "unsupported type " + JSON.stringify(schema.type));
+  }
+
+  if (schema.format !== undefined && !supportedFormats.has(schema.format)) {
+    addError(errors, path + ".format", "unsupported format " + JSON.stringify(schema.format));
+  }
+
+  for (const [key, childSchema] of Object.entries(schema.properties || {})) {
+    if (!isSchemaObject(childSchema)) {
+      addError(errors, path + ".properties." + key, "property schema must be a JSON object");
+      continue;
+    }
+    errors.push(...validateSchemaContract(childSchema, path + ".properties." + key));
+  }
+
+  if (schema.items !== undefined) {
+    if (!isSchemaObject(schema.items)) {
+      addError(errors, path + ".items", "items schema must be a JSON object");
+    } else {
+      errors.push(...validateSchemaContract(schema.items, path + ".items"));
+    }
+  }
+
+  return errors;
 }
 
 /**
@@ -54,6 +128,10 @@ function isType(value, type) {
   return typeof value === type;
 }
 
+function schemaAllowsType(schema, type) {
+  return Array.isArray(schema.type) ? schema.type.includes(type) : schema.type === type;
+}
+
 /**
  * Validate a value against a simplified JSON Schema and collect any validation errors.
  *
@@ -64,7 +142,7 @@ function isType(value, type) {
  * @param {string} [path="$"] - Dot/bracket notation path used to identify the location of validation errors.
  * @returns {string[]} Array of validation error messages; empty if the value conforms to the schema.
  */
-export function validateWithSchema(value, schema, path = "$") {
+function validateValueWithSchema(value, schema, path) {
   const errors = [];
   if (Array.isArray(schema.type)) {
     if (!schema.type.some((type) => isType(value, type))) {
@@ -84,11 +162,11 @@ export function validateWithSchema(value, schema, path = "$") {
   if (schema.pattern && typeof value === "string" && !new RegExp(schema.pattern).test(value)) {
     addError(errors, path, "must match pattern " + schema.pattern);
   }
-  if (schema.format === "date-time" && typeof value === "string" && Number.isNaN(Date.parse(value))) {
+  if (schema.format === "date-time" && typeof value === "string" && !isDateTime(value)) {
     addError(errors, path, "must be a date-time string");
   }
 
-  if (schema.type === "object" && value && typeof value === "object" && !Array.isArray(value)) {
+  if (schemaAllowsType(schema, "object") && value && typeof value === "object" && !Array.isArray(value)) {
     for (const key of schema.required || []) {
       if (!(key in value)) addError(errors, path + "." + key, "missing required property");
     }
@@ -99,11 +177,11 @@ export function validateWithSchema(value, schema, path = "$") {
       }
     }
     for (const [key, childSchema] of Object.entries(schema.properties || {})) {
-      if (key in value) errors.push(...validateWithSchema(value[key], childSchema, path + "." + key));
+      if (key in value) errors.push(...validateValueWithSchema(value[key], childSchema, path + "." + key));
     }
   }
 
-  if (schema.type === "array" && Array.isArray(value)) {
+  if (schemaAllowsType(schema, "array") && Array.isArray(value)) {
     if (schema.minItems !== undefined && value.length < schema.minItems) {
       addError(errors, path, "must contain at least " + schema.minItems + " items");
     }
@@ -113,12 +191,31 @@ export function validateWithSchema(value, schema, path = "$") {
     }
     if (schema.items) {
       value.forEach((item, index) => {
-        errors.push(...validateWithSchema(item, schema.items, path + "[" + index + "]"));
+        errors.push(...validateValueWithSchema(item, schema.items, path + "[" + index + "]"));
       });
     }
   }
 
   return errors;
+}
+
+/**
+ * Validate a value against the repository's explicit JSON Schema subset.
+ *
+ * This is not a full JSON Schema implementation. It first validates that the
+ * schema only uses supported local keywords, then validates the supplied value.
+ * Unsupported schema semantics fail closed so schema-backed checks cannot imply
+ * draft support the repo does not enforce.
+ *
+ * @param {*} value - The value to validate.
+ * @param {object} schema - The schema object describing expected structure and constraints.
+ * @param {string} [path="$"] - Dot/bracket notation path used to identify validation errors.
+ * @returns {string[]} Array of validation errors; empty if the value conforms to the supported schema.
+ */
+export function validateWithSchema(value, schema, path = "$") {
+  const contractErrors = validateSchemaContract(schema);
+  if (contractErrors.length > 0) return contractErrors;
+  return validateValueWithSchema(value, schema, path);
 }
 
 /**

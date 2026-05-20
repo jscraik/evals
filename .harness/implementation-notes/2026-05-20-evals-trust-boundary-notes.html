@@ -623,7 +623,7 @@ close_agent final_git_project_triage</code></pre>
       <li>Trace-event schemas, runtime-card state command, and promotion governance remain later phases unless required to close the current trust-boundary issues.</li>
       <li>Real external suite import from agent-skills, Tessl, plugin-eval, or coding-harness remains out of scope; only portable contract cases belong here.</li>
       <li>Replace the duplicated documentation-to-verify command list with a machine-readable validation contract once the validation surface grows beyond this first wrapper.</li>
-      <li>Extend mechanical enforcement with the JSON Schema subset decision, closure/latest consistency checks, and CI once the latest-run schema PR lands.</li>
+      <li>Extend mechanical enforcement with closure/latest consistency checks and CI now that the latest-run schema and JSON Schema subset guard are in place.</li>
     </ul>
   </section>
 
@@ -661,6 +661,79 @@ close_agent final_git_project_triage</code></pre>
       </tbody>
     </table>
     <p>Decision: future PR review, CodeRabbit, GitHub, Linear child issue, or heartbeat closeout must return to the parent implementation loop unless the parent queue is explicitly reconciled as complete.</p>
+  </section>
+
+  <section id="mechanical-enforcement-validator-contract">
+    <h2>Mechanical Enforcement: Validator Contract</h2>
+    <p><time datetime="2026-05-20T20:15:00+01:00">2026-05-20 20:15 BST</time> - Reconciled the parent queue after the parent/child loop correction. Runtime truth showed <code>JSC-337</code> was marked Done even though its own scope still included JSON Schema validator-boundary, CI, and closure/latest consistency work. Reopened <code>JSC-337</code>, created <code>JSC-339</code>, <code>JSC-340</code>, and <code>JSC-341</code>, and started <code>JSC-339</code>.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Deep Module Field</th>
+          <th>Decision</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Source gap</td>
+          <td><code>GAP-007</code>: custom JSON Schema validator is partial.</td>
+          <td>Audit warns that draft-style schemas can be overtrusted when the local validator only enforces a subset.</td>
+        </tr>
+        <tr>
+          <td>Owner module</td>
+          <td><code>src/lib/schema.js</code> owns schema support claims and unsupported-feature handling.</td>
+          <td>All current schema-backed checks route through this module before CLI output.</td>
+        </tr>
+        <tr>
+          <td>Public interface</td>
+          <td><code>validateWithSchema(...)</code>, <code>schemaCheck(...)</code>, and <code>pnpm evals check --json</code>.</td>
+          <td>Callers should not need to know which JSON Schema keywords are locally enforced.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>The validator should classify unsupported schema keywords instead of silently pretending full draft support.</td>
+          <td>This preserves a thin CLI surface while strengthening the guardrail behind it.</td>
+        </tr>
+        <tr>
+          <td>Caller contract</td>
+          <td>Schema validation returns deterministic pass/fail evidence and never claims support for unimplemented schema semantics.</td>
+          <td>Unsupported schema features must fail as a contract issue, not pass as unvalidated intent.</td>
+        </tr>
+        <tr>
+          <td>Seam test</td>
+          <td>Add a schema-engine test that proves an unsupported keyword is detected before instance validation can pass.</td>
+          <td>This directly tests the old overclaim failure mode.</td>
+        </tr>
+        <tr>
+          <td>Tracer proof</td>
+          <td><code>pnpm evals check --json</code> remains the production-like route through schema validation.</td>
+          <td>The smoke/latest artifact route should keep passing after the validator contract is narrowed or enforced.</td>
+        </tr>
+        <tr>
+          <td>Rollback path</td>
+          <td>Revert <code>src/lib/schema.js</code> and associated schema tests.</td>
+          <td>No public artifact migration is expected for this slice.</td>
+        </tr>
+        <tr>
+          <td>Phase-one check</td>
+          <td>Choose an explicit local subset guard rather than adding a new dependency unless inspection proves dependency adoption is necessary.</td>
+          <td>This keeps the repo within phase-one hard blocks and the mantra: thin surface, strong guardrails, durable memory, professional output.</td>
+        </tr>
+        <tr>
+          <td>Validation gate</td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, and <code>pnpm verify</code>.</td>
+          <td>Final outcomes will be recorded in this section after implementation.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Rejected approach: immediately adding a full third-party JSON Schema engine before inspecting the local validator. That may be warranted later, but the smallest mechanical fix is to make unsupported local semantics impossible to mistake for enforced semantics.</p>
+    <p>Implementation: <code>src/lib/schema.js</code> now exposes the local supported keyword set, validates schema contracts before instance data, rejects unsupported nested keywords, rejects unsupported formats, and tightens <code>date-time</code> to require an explicit timestamp. This keeps the public surface thin while making the guardrail deterministic.</p>
+    <p>Validation evidence: <code>pnpm test</code> passed with 53 tests, including new schema-contract seam tests and reviewer-requested malformed-schema branch tests. <code>pnpm evals check --json</code> passed through the production-like latest-run route. <code>pnpm verify</code> passed and refreshed retained evidence at <code>.harness/evals/runs/20260520T202048Z-pr-closeout-4df36134/</code>.</p>
+    <p>Files changed in this slice: <code>src/lib/schema.js</code>, <code>test/schema.test.js</code>, <code>.harness/evals/runs/latest.json</code>, <code>.harness/evals/runs/20260520T202048Z-pr-closeout-4df36134/</code>, and this implementation notes file.</p>
+    <p>Review evidence: project-standards and maintainability reported no blocking findings. Testing review found missing seam coverage for malformed schema roots, malformed property schemas, malformed item schemas, and unsupported union type tokens; those tests were added before the final validation rerun.</p>
+    <p>Residual risk: the repository still intentionally uses a local JSON Schema subset rather than a full JSON Schema implementation. The risk is now explicit and fail-closed: new unsupported schema keywords fail validation until the owner module supports them or a later issue adopts a full validator.</p>
+    <p>Delivery recovery note: the first <code>gh pr create</code> command passed Markdown with backticks through a double-quoted shell argument, which triggered command substitution and generated an unintended extra proof bundle. The PR body was repaired with a single-quoted <code>gh pr edit</code> fallback, the stray generated bundle was removed, and <code>latest.json</code> was restored to the committed proof bundle. Future PR body updates should use connector mutation or a shell-safe body file/single-quoted argument, not double-quoted Markdown.</p>
   </section>
 
   <section id="follow-up-recommendations">
