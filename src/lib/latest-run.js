@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { expectedLatestPath, latestArtifactContracts, manifestArtifactContracts, requiredLatestKeys, resultArtifactRefContracts } from "./artifact-bundle.js";
 import { validateCaseFileContract } from "./case-contract.js";
 import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
@@ -49,7 +50,6 @@ export function validateLatestRun(latestPath) {
     };
   }
 
-  const requiredLatestKeys = ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path"];
   const latestPaths = {};
   for (const key of requiredLatestKeys) {
     const absolutePath = repoRelativePath(latest[key], "latest." + key, errors);
@@ -66,27 +66,32 @@ export function validateLatestRun(latestPath) {
 
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
 
-  if (latestPaths.manifest_path && existsSync(latestPaths.manifest_path)) {
-    let manifest;
-    try {
-      manifest = readJson(latestPaths.manifest_path);
-    } catch (error) {
-      errors.push("artifact manifest JSON parse failed: " + error.message);
-      manifest = null;
+  const manifest = readArtifactJson("artifact manifest", latestPaths.manifest_path, errors);
+  const result = readArtifactJson("eval result", latestPaths.result_path, errors);
+  const baseline = readArtifactJson("baseline result", latestPaths.baseline_result_path, errors);
+
+  if (manifest) {
+    const consistencyErrors = latestConsistencyErrors(latest, manifest, result, baseline);
+    errors.push(...consistencyErrors);
+    checks.push({
+      label: "closure latest consistency",
+      schema_path: "latest-run consistency",
+      data_path: rel(absoluteLatestPath),
+      status: consistencyErrors.length === 0 ? "pass" : "fail",
+      errors: consistencyErrors
+    });
+
+    if (!Array.isArray(manifest.artifacts)) {
+      errors.push("artifact manifest $.artifacts: expected type array");
     }
-    if (manifest) {
-      if (!Array.isArray(manifest.artifacts)) {
-        errors.push("artifact manifest $.artifacts: expected type array");
-      }
-      for (const artifact of Array.isArray(manifest.artifacts) ? manifest.artifacts : []) {
-        const artifactPath = repoRelativePath(artifact.path, "manifest artifact path", errors);
-        if (!artifactPath) continue;
-        if (!existsSync(artifactPath)) {
-          errors.push("manifest artifact missing: " + artifact.path);
-        } else {
-          const actual = sha256File(artifactPath);
-          if (actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
-        }
+    for (const artifact of Array.isArray(manifest.artifacts) ? manifest.artifacts : []) {
+      const artifactPath = repoRelativePath(artifact.path, "manifest artifact path", errors);
+      if (!artifactPath) continue;
+      if (!existsSync(artifactPath)) {
+        errors.push("manifest artifact missing: " + artifact.path);
+      } else {
+        const actual = sha256File(artifactPath);
+        if (actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
       }
     }
   }
@@ -98,4 +103,88 @@ export function validateLatestRun(latestPath) {
     checks,
     errors
   };
+}
+
+function readArtifactJson(label, path, errors) {
+  if (!path || !existsSync(path)) return null;
+  try {
+    return readJson(path);
+  } catch (error) {
+    errors.push(label + " JSON parse failed: " + error.message);
+    return null;
+  }
+}
+
+function latestConsistencyErrors(latest, manifest, result, baseline) {
+  const errors = [];
+
+  for (const contract of latestArtifactContracts) {
+    const expectedPath = expectedLatestPath(latest.run_id, contract.key);
+    if (latest[contract.key] !== expectedPath) {
+      errors.push("latest." + contract.key + ": expected " + expectedPath + " for run_id " + latest.run_id + ", got " + latest[contract.key]);
+    }
+  }
+
+  if (manifest.run_id !== latest.run_id) errors.push("manifest.run_id: expected " + latest.run_id + ", got " + manifest.run_id);
+  if (manifest.case_id !== latest.case_id) errors.push("manifest.case_id: expected " + latest.case_id + ", got " + manifest.case_id);
+
+  if (result) {
+    if (result.run_id !== latest.run_id) errors.push("result.run_id: expected " + latest.run_id + ", got " + result.run_id);
+    if (result.case_id !== latest.case_id) errors.push("result.case_id: expected " + latest.case_id + ", got " + result.case_id);
+    if (result.execution_mode !== latest.execution_mode) errors.push("result.execution_mode: expected " + latest.execution_mode + ", got " + result.execution_mode);
+    if (result.scorer_results_path !== latest.scorer_results_path) {
+      errors.push("result.scorer_results_path: expected " + latest.scorer_results_path + ", got " + result.scorer_results_path);
+    }
+    if (result.baseline_result_path !== latest.baseline_result_path) {
+      errors.push("result.baseline_result_path: expected " + latest.baseline_result_path + ", got " + result.baseline_result_path);
+    }
+  }
+
+  const manifestArtifacts = artifactMap(manifest.artifacts, "manifest", errors);
+  for (const contract of manifestArtifactContracts) {
+    const artifact = manifestArtifacts.get(contract.type);
+    if (!artifact) {
+      errors.push("manifest missing required artifact: " + contract.type);
+      continue;
+    }
+    if (artifact.path !== latest[contract.key]) {
+      errors.push("manifest " + contract.type + " path: expected " + latest[contract.key] + ", got " + artifact.path);
+    }
+    if (artifact.required !== true) errors.push("manifest " + contract.type + " required: expected true");
+  }
+
+  const resultArtifacts = artifactMap(result?.artifact_refs, "result", errors);
+  for (const contract of resultArtifactRefContracts) {
+    const artifact = resultArtifacts.get(contract.type);
+    if (!artifact) {
+      errors.push("result missing artifact_ref: " + contract.type);
+      continue;
+    }
+    if (artifact.path !== latest[contract.key]) {
+      errors.push("result " + contract.type + " artifact_ref path: expected " + latest[contract.key] + ", got " + artifact.path);
+    }
+    const manifestArtifact = manifestArtifacts.get(contract.type);
+    if (manifestArtifact && artifact.sha256 !== manifestArtifact.sha256) {
+      errors.push("result " + contract.type + " artifact_ref sha256 does not match manifest");
+    }
+  }
+
+  if (baseline?.current_artifact_ref?.path !== latest.command_log_path) {
+    errors.push("baseline current_artifact_ref.path: expected " + latest.command_log_path + ", got " + baseline?.current_artifact_ref?.path);
+  }
+
+  return errors;
+}
+
+function artifactMap(artifacts, label, errors) {
+  const map = new Map();
+  for (const artifact of Array.isArray(artifacts) ? artifacts : []) {
+    if (!artifact || typeof artifact.type !== "string") continue;
+    if (map.has(artifact.type)) {
+      errors.push(label + " duplicate artifact type: " + artifact.type);
+    } else {
+      map.set(artifact.type, artifact);
+    }
+  }
+  return map;
 }
