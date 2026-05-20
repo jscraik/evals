@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
+import { expectedLatestPath } from "../lib/artifact-bundle.js";
 import { parseCase } from "../lib/case-contract.js";
 import { clearActiveRunContext, emitFailure, setActiveRunContext } from "../lib/failures.js";
 import { sha256File, sha256Text } from "../lib/hash.js";
@@ -133,12 +134,12 @@ export function runCase(casePath, jsonMode) {
   const runDir = join(repoRoot, ".harness", "evals", "runs", runId);
   mkdirSync(runDir, { recursive: true });
 
-  const resultPath = join(runDir, "result.json");
-  const reportPath = join(runDir, "report.md");
-  const commandLogPath = join(runDir, "command-log.json");
-  const manifestPath = join(runDir, "manifest.json");
-  const scorerResultsPath = join(runDir, "scorer-results.json");
-  const baselineResultPath = join(runDir, "baseline-result.json");
+  const resultPath = join(repoRoot, expectedLatestPath(runId, "result_path"));
+  const reportPath = join(repoRoot, expectedLatestPath(runId, "report_path"));
+  const commandLogPath = join(repoRoot, expectedLatestPath(runId, "command_log_path"));
+  const manifestPath = join(repoRoot, expectedLatestPath(runId, "manifest_path"));
+  const scorerResultsPath = join(repoRoot, expectedLatestPath(runId, "scorer_results_path"));
+  const baselineResultPath = join(repoRoot, expectedLatestPath(runId, "baseline_result_path"));
   const failurePath = join(runDir, "failure.json");
   const artifactPaths = [resultPath, reportPath, commandLogPath, manifestPath, scorerResultsPath, baselineResultPath];
   const artifactRelPaths = artifactPaths.map(rel);

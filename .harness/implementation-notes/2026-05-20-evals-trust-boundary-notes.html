@@ -812,6 +812,82 @@ close_agent final_git_project_triage</code></pre>
     <p>Residual risk: <code>JSC-340</code> remains open until the amended PR branch runs the deterministic GitHub gate again and CodeRabbit has no unresolved actionable findings. The parent loop remains active and must continue to <code>JSC-341</code> after this child issue is merged and closed.</p>
   </section>
 
+  <section id="mechanical-enforcement-closure-latest-consistency">
+    <h2>Mechanical Enforcement: Closure / Latest Consistency</h2>
+    <p><time datetime="2026-05-20T22:05:00+01:00">2026-05-20 22:05 BST</time> - Continued the parent implementation loop after <code>JSC-340</code> merged. <code>JSC-341</code> is the next phase-ordered child: prove that <code>latest.json</code>, manifest, result, and baseline evidence describe one coherent artifact bundle before completion claims rely on it.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Deep Module Field</th>
+          <th>Decision</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Source gap</td>
+          <td><code>JSC-341</code> / mechanical enforcement follow-up: closure evidence can drift from the current proof bundle.</td>
+          <td>The audit calls for closure/latest consistency tests and AGENTS requires completion claims to cite command output, artifact paths, schema validation, deterministic scorer verdicts, baseline state, drift, rollback, and tracker state.</td>
+        </tr>
+        <tr>
+          <td>Owner module</td>
+          <td><code>src/lib/latest-run.js</code> owns latest-run pointer validation and proof-bundle consistency.</td>
+          <td><code>pnpm evals check --json</code> already routes through this module before artifact trust.</td>
+        </tr>
+        <tr>
+          <td>Public interface</td>
+          <td><code>pnpm evals check --json</code> and <code>pnpm evals validate .harness/evals/runs/latest.json --json</code>.</td>
+          <td>No new CLI surface is needed; the existing thin validation surface should become stronger.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>The module now checks that latest pointer paths, manifest metadata, result metadata, result artifact refs, manifest artifacts, and baseline command-log ref all agree on the same <code>run_id</code> bundle.</td>
+          <td>Callers no longer need to manually compare artifact paths across JSON files.</td>
+        </tr>
+        <tr>
+          <td>Caller contract</td>
+          <td>A mismatched latest bundle fails with machine-readable <code>closure latest consistency</code> evidence.</td>
+          <td>This preserves artifact authority and avoids prompt-only or Markdown-only closeout trust.</td>
+        </tr>
+        <tr>
+          <td>Seam test</td>
+          <td>Add tests where <code>latest.result_path</code> points outside the active run bundle and where the manifest omits a required closure artifact.</td>
+          <td>Both cases should fail through the same public validation command.</td>
+        </tr>
+        <tr>
+          <td>Tracer proof</td>
+          <td><code>pnpm evals check --json</code> on the current smoke run should include a passing <code>closure latest consistency</code> check.</td>
+          <td>The proof uses live generated artifacts, not static documentation.</td>
+        </tr>
+        <tr>
+          <td>Rollback path</td>
+          <td>Revert the consistency helper and seam tests in <code>src/lib/latest-run.js</code> and <code>test/cli.test.js</code>.</td>
+          <td>No durable schema migration is required for this slice.</td>
+        </tr>
+        <tr>
+          <td>Phase-one check</td>
+          <td>This is local artifact validation only; it adds no dashboard, external adapter, plugin system, telemetry authority, cloud runner, or judge gate.</td>
+          <td>The mantra remains: thin surface, strong guardrails, durable memory, professional output.</td>
+        </tr>
+        <tr>
+          <td>Validation gate</td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, and <code>pnpm verify</code>.</td>
+          <td>Outcomes will be recorded after implementation.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Decision: do not require the historical closure Markdown file to track every newly generated <code>latest.json</code>. The verify wrapper intentionally refreshes <code>latest.json</code>, so binding a static closeout document to the newest run would create a self-breaking workflow. The enforceable rule lives inside the current latest artifact bundle instead.</p>
+    <p>Implementation: <code>src/lib/latest-run.js</code> gained a <code>closure latest consistency</code> check; <code>test/cli.test.js</code> gained seam coverage for current-run path drift and missing manifest closure artifacts.</p>
+    <p>Validation evidence: <code>pnpm test</code> passed with 60 tests, including latest/closure seams for current-run path drift, missing manifest closure artifacts, manifest/result metadata drift, result artifact-ref hash drift, and baseline command-log linkage drift. <code>pnpm evals check --json</code> passed and emitted a passing <code>closure latest consistency</code> check. <code>pnpm verify</code> passed, refreshed latest proof at <code>.harness/evals/runs/20260520T212617Z-pr-closeout-4df36134/</code>, and the refreshed check still emitted <code>closure latest consistency: pass</code>.</p>
+    <p>Files changed in this slice: <code>src/lib/artifact-bundle.js</code>, <code>src/commands/run.js</code>, <code>src/lib/latest-run.js</code>, <code>test/cli.test.js</code>, <code>.harness/evals/runs/latest.json</code>, <code>.harness/evals/runs/20260520T212151Z-pr-closeout-4df36134/</code>, <code>.harness/evals/runs/20260520T212152Z-pr-closeout-4df36134/</code>, <code>.harness/evals/runs/20260520T212617Z-pr-closeout-4df36134/</code>, and this implementation notes file.</p>
+    <p>Review follow-up: architecture review flagged duplicated artifact layout assumptions between the run producer and latest validator. The correction added <code>src/lib/artifact-bundle.js</code> as the shared contract source and updated both <code>src/commands/run.js</code> and <code>src/lib/latest-run.js</code> to consume it. Testing review also requested seams for metadata drift, result artifact-ref drift, and baseline command-log linkage drift; those tests were added before final validation.</p>
+    <p><time datetime="2026-05-20T22:34:00+01:00">2026-05-20 22:34 BST</time> - PR review follow-up: Codex Review found that the first consistency check treated every baseline reference as a command-log reference, which would fail valid <code>baseline-artifact</code> refs when a real baseline file exists. It also found that path comparisons were POSIX-only and could falsely fail on Windows separators. The durable fix stayed inside the owner module: <code>src/lib/latest-run.js</code> now normalizes artifact path separators before comparing paths and validates <code>baseline.current_artifact_ref</code> by declared type. <code>command-log</code> refs must match the latest command log and manifest hash; <code>baseline-artifact</code> refs must stay repo-relative, exist on disk, and match their recorded SHA. <code>test/cli.test.js</code> now includes a real present-baseline seam so future changes cannot reintroduce the false failure.</p>
+    <p>PR review validation evidence: <code>pnpm test</code> passed with 61 tests. <code>pnpm evals check --json</code> passed before the refreshed proof run. <code>pnpm verify</code> passed, refreshed latest proof at <code>.harness/evals/runs/20260520T213437Z-pr-closeout-4df36134/</code>, and emitted <code>closure latest consistency: pass</code>. <code>git diff --check</code> passed. This resolves the actionable review findings without widening the CLI surface or adding a phase-one hard-blocked dependency.</p>
+    <p><time datetime="2026-05-20T22:41:00+01:00">2026-05-20 22:41 BST</time> - CodeRabbit follow-up: CodeRabbit correctly flagged that <code>artifacts/reviews/jsc341-review.md</code> used <code>Reviewer</code> for a mixture of internal review aspects and automated PR review systems. The durable correction is documentation-level because the affected artifact is the audit trail itself: the review disposition now states reviewer provenance, names AI-assisted development review aspects separately from automated PR review systems, and renames the table header to <code>Review Aspect / Source</code>. This keeps the evidence trail professional without adding a new runtime surface.</p>
+    <p><time datetime="2026-05-20T22:44:00+01:00">2026-05-20 22:44 BST</time> - CodeRabbit seam follow-up: CodeRabbit found that the new <code>baseline-artifact</code> SHA check had a happy-path seam but no tamper seam. The fix strengthens the same trust boundary rather than adding a new surface: <code>test/cli.test.js</code> now mutates a present baseline artifact after <code>run</code> and requires <code>pnpm evals check --json</code> behavior to fail closed with <code>baseline current_artifact_ref.sha256 does not match baseline artifact</code> under <code>closure latest consistency</code>.</p>
+    <p>Residual risk: this closes consistency inside the latest proof bundle. It intentionally does not make the historical closure Markdown file a moving latest pointer because the normal verify loop creates fresh run evidence. A later documentation-closeout issue can decide whether to regenerate the closure eval document from latest evidence.</p>
+  </section>
+
   <section id="follow-up-recommendations">
     <h2>Follow-up Recommendations</h2>
     <p>After Phase 1 lands, move to the trace/runtime artifact phase: explicit trace-event schemas, latest-run schema hardening, replayable failure classification, and a real-execution contract only when the safe command boundary is defined.</p>

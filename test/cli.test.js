@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -87,6 +87,7 @@ test("run writes a valid local artifact bundle", () => {
     assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
     const validation = parseJson(checkResult.stdout);
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
   } finally {
     cleanup(repo);
   }
@@ -286,6 +287,63 @@ test("baseline-presence scorer requires an explicit baseline contract", () => {
   }
 });
 
+test("latest validation permits present baseline artifact references", () => {
+  const repo = makeRepo();
+  try {
+    const baselinePath = join(repo, ".harness", "evals", "baselines", "present-baseline.json");
+    mkdirSync(dirname(baselinePath), { recursive: true });
+    writeFileSync(baselinePath, JSON.stringify({ status: "approved" }, null, 2) + "\n", "utf8");
+
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.baseline.expected_presence = "present";
+    fixture.baseline.artifact_path = ".harness/evals/baselines/present-baseline.json";
+    writeFileSync(join(repo, "fixtures", "smoke", "present-baseline.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/present-baseline.case.json", "--json"]);
+    assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
+    const output = parseJson(runResult.stdout);
+
+    const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
+    assert.equal(baseline.presence_status, "present");
+    assert.equal(baseline.current_artifact_ref.type, "baseline-artifact");
+    assert.equal(baseline.current_artifact_ref.path, ".harness/evals/baselines/present-baseline.json");
+
+    const checkResult = runCli(repo, ["check", "--json"]);
+    assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
+    const validation = parseJson(checkResult.stdout);
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects baseline-artifact hash drift", () => {
+  const repo = makeRepo();
+  try {
+    const baselinePath = join(repo, ".harness", "evals", "baselines", "present-baseline.json");
+    mkdirSync(dirname(baselinePath), { recursive: true });
+    writeFileSync(baselinePath, JSON.stringify({ status: "approved" }, null, 2) + "\n", "utf8");
+
+    const fixture = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    fixture.baseline.expected_presence = "present";
+    fixture.baseline.artifact_path = ".harness/evals/baselines/present-baseline.json";
+    writeFileSync(join(repo, "fixtures", "smoke", "present-baseline-hash-drift.case.json"), JSON.stringify(fixture, null, 2), "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/present-baseline-hash-drift.case.json", "--json"]);
+    assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
+
+    writeFileSync(baselinePath, JSON.stringify({ status: "tampered" }, null, 2) + "\n", "utf8");
+
+    const checkResult = runCli(repo, ["check", "--json"]);
+    assert.equal(checkResult.status, 1);
+    const validation = parseJson(checkResult.stdout);
+    assert.match(validation.errors.join("\n"), /baseline current_artifact_ref\.sha256 does not match baseline artifact/);
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("latest validation rejects traversal in latest.json artifact pointers", () => {
   const repo = makeRepo();
   try {
@@ -436,6 +494,116 @@ test("latest validation reports manifest hash mismatches", () => {
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
     assert.match(validation.errors.join("\n"), /manifest hash mismatch/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects artifact paths outside the current run bundle", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    const foreignRunDir = join(repo, ".harness", "evals", "runs", "foreign-" + latest.run_id);
+    mkdirSync(foreignRunDir, { recursive: true });
+    cpSync(join(repo, output.result_path), join(foreignRunDir, "result.json"));
+    latest.result_path = ".harness/evals/runs/foreign-" + latest.run_id + "/result.json";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest\.result_path: expected .*\/result\.json for run_id/);
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects manifests missing required closure artifacts", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const manifestPath = join(repo, output.manifest_path);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    manifest.artifacts = manifest.artifacts.filter((artifact) => artifact.type !== "command-log");
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /manifest missing required artifact: command-log/);
+    assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects manifest and result metadata drift", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const manifestPath = join(repo, output.manifest_path);
+    const resultPath = join(repo, output.result_path);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    const resultArtifact = JSON.parse(readFileSync(resultPath, "utf8"));
+    manifest.run_id = "different-run";
+    resultArtifact.execution_mode = "real";
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+    writeFileSync(resultPath, JSON.stringify(resultArtifact, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /manifest\.run_id: expected/);
+    assert.match(validation.errors.join("\n"), /result\.execution_mode: expected synthetic, got real/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects result artifact ref hash drift", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const resultPath = join(repo, output.result_path);
+    const resultArtifact = JSON.parse(readFileSync(resultPath, "utf8"));
+    resultArtifact.artifact_refs.find((artifact) => artifact.type === "report").sha256 = "0".repeat(64);
+    writeFileSync(resultPath, JSON.stringify(resultArtifact, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /result report artifact_ref sha256 does not match manifest/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects baseline command-log linkage drift", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const baselinePath = join(repo, output.baseline_result_path);
+    const baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
+    baseline.current_artifact_ref.path = output.report_path;
+    writeFileSync(baselinePath, JSON.stringify(baseline, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /baseline current_artifact_ref\.path: expected/);
   } finally {
     cleanup(repo);
   }
