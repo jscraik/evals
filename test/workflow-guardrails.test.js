@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 const repoRoot = new URL("..", import.meta.url);
+const repoRootPath = fileURLToPath(repoRoot);
 
 function readRepoFile(path) {
-  return readFileSync(join(repoRoot.pathname, path), "utf8");
+  return readFileSync(join(repoRootPath, path), "utf8");
 }
 
 test("parent-child implementation loop guardrail is documented and discoverable", () => {
