@@ -13,7 +13,13 @@ const checks = [
   },
   {
     command: "find schemas -maxdepth 1 -type f -name \"*.schema.json\" -print",
-    run: () => runCommand("find", ["schemas", "-maxdepth", "1", "-type", "f", "-name", "*.schema.json", "-print"])
+    run: () => {
+      if (!existsSync("schemas")) return fail("schemas directory is missing");
+      const schemaFiles = readdirSync("schemas").filter((name) => name.endsWith(".schema.json"));
+      return schemaFiles.length > 0
+        ? pass(schemaFiles.join("\n"))
+        : fail("no *.schema.json files found under schemas/");
+    }
   },
   {
     command: "test -f fixtures/smoke/pr-closeout.case.json",
