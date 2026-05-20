@@ -736,6 +736,79 @@ close_agent final_git_project_triage</code></pre>
     <p>Delivery recovery note: the first <code>gh pr create</code> command passed Markdown with backticks through a double-quoted shell argument, which triggered command substitution and generated an unintended extra proof bundle. The PR body was repaired with a single-quoted <code>gh pr edit</code> fallback, the stray generated bundle was removed, and <code>latest.json</code> was restored to the committed proof bundle. Future PR body updates should use connector mutation or a shell-safe body file/single-quoted argument, not double-quoted Markdown.</p>
   </section>
 
+  <section id="mechanical-enforcement-ci">
+    <h2>Mechanical Enforcement: CI Gate</h2>
+    <p><time datetime="2026-05-20T20:35:00+01:00">2026-05-20 20:35 BST</time> - Continued the parent implementation loop after closing <code>JSC-339</code>. <code>JSC-340</code> is the next phase-ordered child: make deterministic validation run in CI without adding a new eval runner, adapter, dashboard, plugin, or judge authority.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Deep Module Field</th>
+          <th>Decision</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Source gap</td>
+          <td><code>GAP-012</code>: no CI workflow.</td>
+          <td>The audit marks CI/CD enforcement missing and calls for the fast deterministic lane to run on pull requests and pushes.</td>
+        </tr>
+        <tr>
+          <td>Owner module</td>
+          <td><code>scripts/verify.js</code> remains the validation owner; <code>.github/workflows/ci.yml</code> is only the remote invocation surface.</td>
+          <td>This avoids duplicating command choreography in YAML and keeps validation logic locally runnable.</td>
+        </tr>
+        <tr>
+          <td>Public interface</td>
+          <td><code>pnpm verify</code> and CI job <code>deterministic-gates</code>.</td>
+          <td>Humans, agents, and CI use the same repo-native command contract.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>File existence checks, tests, smoke runs, latest-artifact validation, and lightweight credential scanning stay hidden behind <code>pnpm verify</code>.</td>
+          <td>CI should not become a second source of truth for the validation lane.</td>
+        </tr>
+        <tr>
+          <td>Caller contract</td>
+          <td>CI installs with the lockfile and fails if <code>pnpm verify</code> fails.</td>
+          <td>The workflow rejects validation drift without requiring humans to remember every subcommand.</td>
+        </tr>
+        <tr>
+          <td>Seam test</td>
+          <td><code>tests/docs-pr-changes.test.js</code> should assert that CI continues to call <code>pnpm verify</code> and exposes the stable job name.</td>
+          <td>This keeps the CI enforcement surface machine-checkable.</td>
+        </tr>
+        <tr>
+          <td>Tracer proof</td>
+          <td><code>pnpm verify</code> locally exercises the same command invoked remotely; PR checks will provide remote proof after push.</td>
+          <td>The local proof remains authoritative for implementation, while CI becomes rejection enforcement.</td>
+        </tr>
+        <tr>
+          <td>Rollback path</td>
+          <td>Remove <code>.github/workflows/ci.yml</code> and the package-manager pin if CI bootstrap assumptions are wrong.</td>
+          <td>The runtime CLI and artifact shape are unchanged.</td>
+        </tr>
+        <tr>
+          <td>Phase-one check</td>
+          <td>This is CI enforcement for the existing local deterministic lane, not a cloud eval runner or telemetry authority.</td>
+          <td>The workflow does not add dashboards, external adapters, plugin systems, hosted eval state, or LLM judge gates.</td>
+        </tr>
+        <tr>
+          <td>Validation gate</td>
+          <td><code>pnpm test</code>, <code>pnpm verify</code>, and PR CI checks after push.</td>
+          <td>Final outcomes will be recorded after implementation and review.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Decision: pin <code>packageManager</code> to the local <code>pnpm</code> version so Corepack and GitHub Actions bootstrap the same package manager family the repo was validated with.</p>
+    <p>Implementation: added <code>.github/workflows/ci.yml</code> with a single stable job, <code>deterministic-gates</code>, that installs from <code>pnpm-lock.yaml</code> and runs <code>pnpm verify</code>. Added a machine-checkable repo test so the workflow must keep the stable job name, pull request and main push triggers, Node version, frozen install, and verification command.</p>
+    <p>Validation evidence: <code>pnpm test</code> passed with 54 tests, including <code>CI workflow runs the deterministic verification gate</code>. <code>EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 pnpm verify</code> passed and refreshed retained proof at <code>.harness/evals/runs/20260520T204355Z-pr-closeout-4df36134/</code>.</p>
+    <p>Files changed in this slice: <code>.github/workflows/ci.yml</code>, <code>package.json</code>, <code>scripts/verify.js</code>, <code>tests/docs-pr-changes.test.js</code>, <code>artifacts/reviews/jsc340-architecture.md</code>, <code>artifacts/reviews/jsc340-simplify-unslopify.md</code>, <code>artifacts/reviews/jsc340-testing-codex.md</code>, <code>.harness/evals/runs/latest.json</code>, <code>.harness/evals/runs/20260520T204355Z-pr-closeout-4df36134/</code>, and this implementation notes file.</p>
+    <p>Review evidence: architecture and simplify/unslopify reviews found duplicated package-manager authority between workflow YAML, <code>package.json</code>, and test literals. The workflow now relies on <code>packageManager</code> as the canonical <code>pnpm</code> version source, while the test asserts the action, frozen install, and verify command. The testing/codex review had no blocking findings and recorded remote CI as the remaining proof point after push.</p>
+    <p>Runtime discovery: the first PR run proved the new remote gate was wired, but failed because GitHub's Ubuntu runner did not provide <code>rg</code>. The safer correction is in the owner wrapper: <code>scripts/verify.js</code> now keeps the documented <code>rg</code> path when available and falls back to a deterministic Node credential-pattern scan when <code>rg</code> is missing. This prevents the validation contract from depending on an ambient developer-machine tool.</p>
+    <p>Residual risk: remote CI proof is not available until this branch is pushed and the pull request checks run. Local proof confirms that the remote workflow calls the same deterministic gate, but PR check results must be recorded before closing <code>JSC-340</code>.</p>
+  </section>
+
   <section id="follow-up-recommendations">
     <h2>Follow-up Recommendations</h2>
     <p>After Phase 1 lands, move to the trace/runtime artifact phase: explicit trace-event schemas, latest-run schema hardening, replayable failure classification, and a real-execution contract only when the safe command boundary is defined.</p>

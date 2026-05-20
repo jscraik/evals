@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 
 const checks = [
   {
@@ -58,16 +59,53 @@ function credentialScanCommand() {
 function credentialScan() {
   const searchPaths = credentialScanPaths();
   if (searchPaths.length === 0) return fail("no credential-scan paths exist");
-  return runCommand("rg", [
+  if (process.env.EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN === "1") {
+    const matches = scanCredentialPatterns(searchPaths);
+    return matches.length === 0 ? pass("no credential-like patterns found") : fail(matches.join("\n"));
+  }
+  const result = spawnSync("rg", [
     "-n",
     "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY",
     ...searchPaths
   ], {
-    passStatuses: [1],
-    statusMessages: {
-      1: "no credential-like patterns found"
-    }
+    encoding: "utf8"
   });
+  const output = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
+  if (!result.error) {
+    if (result.status === 1) return pass("no credential-like patterns found");
+    return result.status === 0 ? fail(output) : fail(output || "exit status " + result.status);
+  }
+  if (result.error.code !== "ENOENT") return fail(result.error.message);
+
+  const matches = scanCredentialPatterns(searchPaths);
+  return matches.length === 0 ? pass("no credential-like patterns found") : fail(matches.join("\n"));
+}
+
+function scanCredentialPatterns(searchPaths) {
+  const pattern = /sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY/;
+  const matches = [];
+  for (const searchPath of searchPaths) {
+    for (const filePath of listFiles(searchPath)) {
+      const lines = readFileSync(filePath, "utf8").split(/\r?\n/);
+      for (const [index, line] of lines.entries()) {
+        if (pattern.test(line)) matches.push(filePath + ":" + (index + 1) + ":" + line);
+      }
+    }
+  }
+  return matches;
+}
+
+function listFiles(path) {
+  const stat = statSync(path);
+  if (stat.isFile()) return [path];
+  if (!stat.isDirectory()) return [];
+  const files = [];
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) files.push(...listFiles(child));
+    if (entry.isFile()) files.push(child);
+  }
+  return files;
 }
 
 /**

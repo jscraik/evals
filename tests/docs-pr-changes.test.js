@@ -131,6 +131,24 @@ test("canonical commands are documented where contributors and support agents ne
   }
 });
 
+test("CI workflow runs the deterministic verification gate", () => {
+  assert.ok(exists(".github/workflows/ci.yml"), "CI workflow should exist");
+  const workflow = read(".github/workflows/ci.yml");
+  assert.match(workflow, /name: Deterministic Evals CI/);
+  assert.match(workflow, /pull_request:/);
+  assert.match(workflow, /push:/);
+  assert.match(workflow, /push:[\s\S]*branches:[\s\S]*- main/);
+  assert.match(workflow, /name: deterministic-gates/);
+  assert.match(workflow, /uses: pnpm\/action-setup@v4/);
+  assert.match(workflow, /node-version: "22"/);
+  assert.match(workflow, /pnpm install --frozen-lockfile/);
+  assert.match(workflow, /pnpm verify/);
+
+  const pkg = JSON.parse(read("package.json"));
+  assert.equal(pkg.packageManager, "pnpm@11.2.0");
+  assert.equal(pkg.scripts.verify, "node scripts/verify.js");
+});
+
 test("privacy check regex is documented consistently", () => {
   const requiredFragments = ["rg -n", "sk-", "api[_-]?key", "BEGIN (RSA|OPENSSH|PRIVATE) KEY"];
   for (const path of ["AGENTS.md", "CONTRIBUTING.md", "SECURITY.md"]) {
