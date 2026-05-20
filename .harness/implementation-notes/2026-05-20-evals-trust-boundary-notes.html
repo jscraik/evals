@@ -562,6 +562,42 @@ close_agent final_git_project_triage</code></pre>
     </ul>
   </section>
 
+  <section id="parent-child-loop-guardrail">
+    <h2>Parent/Child Loop Guardrail</h2>
+    <p><time datetime="2026-05-20T20:05:00+01:00">2026-05-20 20:05 BST</time> - Jamie corrected the workflow after the JSC-338 PR-review heartbeat closed cleanly but did not resume the larger evidence-led phase loop. The feedback signal is treated as operational telemetry: repeated steering means the harness failed to preserve parent workflow state.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Recorded Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Feedback signal</td>
+          <td>A child PR heartbeat consumed the parent implementation loop.</td>
+        </tr>
+        <tr>
+          <td>Root operational failure</td>
+          <td>The parent audit/Linear phase queue was not represented as a durable control surface after child closeout.</td>
+        </tr>
+        <tr>
+          <td>Failure categories</td>
+          <td>Poor workflow design, runtime ambiguity, missing guardrails, weak observability, missing decomposition.</td>
+        </tr>
+        <tr>
+          <td>Durable improvement</td>
+          <td>Added <code>.harness/refactors/2026-05-20-parent-child-loop-guardrail.md</code>, routed it through <code>AGENTS.md</code>, added shared vocabulary entries, added a deterministic test, and created parent heartbeat <code>continue-evals-audit-implementation-loop</code>.</td>
+        </tr>
+        <tr>
+          <td>Validation proof</td>
+          <td><code>pnpm test</code> includes <code>parent-child implementation loop guardrail is documented and discoverable</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Decision: future PR review, CodeRabbit, GitHub, Linear child issue, or heartbeat closeout must return to the parent implementation loop unless the parent queue is explicitly reconciled as complete.</p>
+  </section>
+
   <section id="follow-up-recommendations">
     <h2>Follow-up Recommendations</h2>
     <p>After Phase 1 lands, move to the trace/runtime artifact phase: explicit trace-event schemas, latest-run schema hardening, replayable failure classification, and a real-execution contract only when the safe command boundary is defined.</p>

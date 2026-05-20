@@ -16,6 +16,8 @@ agents. It is intentionally small and phase-one scoped.
 | Scorer result | One deterministic check result with inspected inputs, status, evidence, and failure reason when applicable. | scorer evidence, check result | schemas/scorer-result.schema.json. |
 | Baseline result | The explicit baseline state for a run, keeping presence, comparison, and promotion separate. | baseline state, baseline comparator output | schemas/baseline-result.schema.json. |
 | Deep module fix packet | The required implementation packet for turning an audit gap into a change: owner module, public interface, hidden implementation rule, caller contract, seam test, tracer proof, rollback path, and validation gate. | deep module format, fix mechanics, module packet | .harness/refactors/2026-05-20-deep-module-fix-mechanics.md. |
+| Parent implementation loop | The evidence-led program loop that owns the audit phase queue, Linear issue queue, implementation, validation, review, PR, PR triage, child issue closeout, implementation notes, and next issue selection. A child loop cannot close it. | parent loop, phase loop, overall loop, audit implementation loop | .harness/refactors/2026-05-20-parent-child-loop-guardrail.md. |
+| Child implementation loop | A bounded loop for one PR review/autofix sweep, one CodeRabbit thread cluster, one Linear child issue, one validation failure cluster, or one heartbeat resume slice. It must return control to the parent implementation loop. | child loop, PR heartbeat, review sweep, issue closeout | .harness/refactors/2026-05-20-parent-child-loop-guardrail.md. |
 | Tracer proof | The smallest production-like route through real wiring that proves a changed interface or runtime rule works. | thin proof, smoke proof, production-like path | Deep module fix mechanics and eval artifact proof rules. |
 | Local prior-art reuse | Borrowing field patterns and vocabulary from sibling repos as design evidence without importing their runtime or domain authority. | reuse map, reference-only reuse | .harness/references/local-reuse-map.md. |
 | Collector prior art | Reusing patterns from local ~/.agents/session-collector and ~/.agents/otel-collector for telemetry shape, freshness, provenance, and verification without adding runtime dependencies. | local collectors, collector reuse | .harness/refactors/2026-05-20-local-observability-feedback-loop.md. |
@@ -35,6 +37,8 @@ agents. It is intentionally small and phase-one scoped.
 | "path-boundary hardening" | Validate repo-relative artifact pointers before reading, hashing, or trusting generated run evidence. |
 | "baseline" | Preserve presence_status, comparison_status, and promotion_status as separate machine-readable fields. |
 | "deep module format" | Create or follow a deep module fix packet before implementation; do not spread behavior across caller choreography or prose-only rules. |
+| "loop through each phase" | Run the parent implementation loop, not only the current PR or child heartbeat; after a child closes, reconcile the parent queue and select the next phase-ordered issue. |
+| "continue the heartbeat" | Preserve the distinction between parent heartbeat and child PR/issue heartbeat; do not retire the parent heartbeat unless the parent queue is explicitly complete. |
 | "ready for commit and PR" | First prove this path is inside a git repository; if not, classify git add, commit, push, PR, and git-project-triage as blocked. |
 
 ## Flagged Ambiguities

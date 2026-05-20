@@ -32,6 +32,9 @@ Load the deeper planning surfaces only when the task touches their scope:
 - '.harness/refactors/2026-05-20-deep-module-fix-mechanics.md' before
   implementing fixes from evidence-led audits or changing runner, schema,
   validation, artifact, baseline, trace, state, or governance mechanics.
+- '.harness/refactors/2026-05-20-parent-child-loop-guardrail.md' before
+  continuing an evidence-led implementation program after a PR heartbeat,
+  CodeRabbit sweep, GitHub review sweep, or single Linear issue closeout.
 
 ## Canonical Command
 
@@ -79,6 +82,20 @@ When implementing audit findings, preserve deep module format:
 Use the deep module fix mechanics file as the required checklist for these
 changes. Keep phase-one hard blocks intact unless a later ADR or spec explicitly
 opens the next phase.
+
+## Parent/Child Loop Guardrail
+
+Evidence-led implementation work has two loop levels:
+
+- the parent loop owns the audit phase queue, Linear issue queue, validation,
+  review, PR, closeout, and next issue selection;
+- the child loop owns one PR, one review sweep, one CodeRabbit thread cluster,
+  one Linear child issue, or one heartbeat resume slice.
+
+A child loop cannot close the parent loop. After any child closeout, reconcile
+the parent queue before claiming the program is done: active phase, owning
+Linear parent or queue, closed child unit, validation evidence, next issue or
+queue-complete proof, and heartbeat state.
 
 ## Tracker Rule
 
