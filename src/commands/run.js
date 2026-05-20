@@ -57,7 +57,7 @@ function buildBaseline(testCase, commandLogPath, execution) {
   return {
     schema_version: 1,
     presence_status: presenceStatus,
-    comparison_status: expectedPresence === "present" && presenceStatus !== "present" ? "error" : "not_compared",
+    comparison_status: expectedPresence !== presenceStatus ? "error" : "not_compared",
     promotion_status: "not_requested",
     baseline_owner: testCase.promotion.baseline_owner,
     comparison_evidence: evidence,
