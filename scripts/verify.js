@@ -40,23 +40,35 @@ const checks = [
     run: () => runCommand("pnpm", ["evals", "check", "--json"])
   },
   {
-    command: "rg -n \"sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY\" fixtures .harness/evals",
-    run: () => {
-      const searchPaths = ["fixtures", ".harness/evals"].filter((path) => existsSync(path));
-      if (searchPaths.length === 0) return fail("no credential-scan paths exist");
-      return runCommand("rg", [
-        "-n",
-        "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY",
-        ...searchPaths
-      ], {
-        passStatuses: [1],
-        statusMessages: {
-          1: "no credential-like patterns found"
-        }
-      });
-    }
+    command: credentialScanCommand,
+    run: credentialScan
   }
 ];
+
+function credentialScanPaths() {
+  return ["fixtures", ".harness/evals"].filter((path) => existsSync(path));
+}
+
+function credentialScanCommand() {
+  const searchPaths = credentialScanPaths();
+  const suffix = searchPaths.length > 0 ? searchPaths.join(" ") : "<no existing scan paths>";
+  return 'rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" ' + suffix;
+}
+
+function credentialScan() {
+  const searchPaths = credentialScanPaths();
+  if (searchPaths.length === 0) return fail("no credential-scan paths exist");
+  return runCommand("rg", [
+    "-n",
+    "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY",
+    ...searchPaths
+  ], {
+    passStatuses: [1],
+    statusMessages: {
+      1: "no credential-like patterns found"
+    }
+  });
+}
 
 /**
  * Create a result object representing a successful check.
@@ -101,10 +113,11 @@ function runCommand(command, args, options = {}) {
 
 const results = [];
 for (const check of checks) {
+  const command = typeof check.command === "function" ? check.command() : check.command;
   const result = check.run();
-  results.push({ command: check.command, ...result });
+  results.push({ command, ...result });
   const marker = result.status === "pass" ? "PASS" : "FAIL";
-  console.log(marker + ": " + check.command);
+  console.log(marker + ": " + command);
   if (result.output) console.log(result.output);
   if (result.status !== "pass") break;
 }

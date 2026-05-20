@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "run_id": "20260520T185909Z-pr-closeout-4df36134",
+  "case_id": "pr-closeout",
+  "suite_id": "smoke",
+  "execution_mode": "synthetic",
+  "status": "passed",
+  "deterministic_verdict": "pass",
+  "scorer_results_path": ".harness/evals/runs/20260520T185909Z-pr-closeout-4df36134/scorer-results.json",
+  "baseline_result_path": ".harness/evals/runs/20260520T185909Z-pr-closeout-4df36134/baseline-result.json",
+  "artifact_refs": [
+    {
+      "type": "report",
+      "path": ".harness/evals/runs/20260520T185909Z-pr-closeout-4df36134/report.md",
+      "sha256": "d8d78d64f410c42db84115dd5f158bc7d54cee0643cfa32f56ca93158599ae4d"
+    },
+    {
+      "type": "command-log",
+      "path": ".harness/evals/runs/20260520T185909Z-pr-closeout-4df36134/command-log.json",
+      "sha256": "2e1eada2cc7f25d813326ad8baa2787a10df3c7477bd28508e54eedd395b7f6c"
+    },
+    {
+      "type": "scorer-results",
+      "path": ".harness/evals/runs/20260520T185909Z-pr-closeout-4df36134/scorer-results.json",
+      "sha256": "687369a805d3101b30090415a53a7d94f94818aab3a965e557b7d255d0bf1723"
+    },
+    {
+      "type": "baseline-result",
+      "path": ".harness/evals/runs/20260520T185909Z-pr-closeout-4df36134/baseline-result.json",
+      "sha256": "c00edc3949d457568b3813c8c4feaaf371bb62b7e6dbed0a1709864da5714a49"
+    }
+  ],
+  "errors": []
+}
