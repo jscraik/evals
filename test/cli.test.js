@@ -82,6 +82,11 @@ test("run writes a valid local artifact bundle", () => {
     assert.equal(latest.execution_mode, "synthetic");
     assert.ok(latest.baseline_result_path);
     assert.ok(latest.scorer_results_path);
+
+    const checkResult = runCli(repo, ["check", "--json"]);
+    assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
+    const validation = parseJson(checkResult.stdout);
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
   } finally {
     cleanup(repo);
   }
@@ -319,6 +324,88 @@ test("latest validation rejects absolute paths in latest.json artifact pointers"
   }
 });
 
+test("latest validation rejects missing latest schema fields before artifact reads", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    delete latest.result_path;
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*result_path.*missing required property/);
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "fail"));
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects additional latest schema fields", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.unexpected = "drift";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*unexpected.*additional property is not allowed/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects non-object latest roots at the schema gate", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "[]\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*expected type object/);
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects unknown execution modes before artifact reads", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.execution_mode = "pretend";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*execution_mode.*expected one of synthetic, real/);
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("latest validation rejects traversal in manifest artifact paths before hashing", () => {
   const repo = makeRepo();
   try {
@@ -418,4 +505,150 @@ test("unknown schema keys and empty scorer sets fail closed", () => {
 
   assert.equal(verdictFor([]), "fail");
   assert.equal(verdictFor(null), "fail");
+});
+
+// --- Unit tests for schemaCheck("latest", ...) and the latest-run.schema.json contract ---
+
+function withTempJson(data, fn) {
+  const dir = mkdtempSync(join(tmpdir(), "latest-schema-unit-"));
+  const filePath = join(dir, "latest.json");
+  try {
+    writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf8");
+    return fn(filePath);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const validLatestPointer = {
+  run_id: "20260520T191834Z-pr-closeout-4df36134",
+  case_id: "pr-closeout",
+  execution_mode: "synthetic",
+  manifest_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/manifest.json",
+  result_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/result.json",
+  report_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/report.md",
+  command_log_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/command-log.json",
+  baseline_result_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/baseline-result.json",
+  scorer_results_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/scorer-results.json"
+};
+
+test("schemaCheck latest passes for a fully valid latest pointer", () => {
+  withTempJson(validLatestPointer, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "pass");
+    assert.equal(result.label, "latest run");
+    assert.deepEqual(result.errors, []);
+  });
+});
+
+test("schemaCheck latest label is latest run (schemaTargets.latest entry)", () => {
+  withTempJson(validLatestPointer, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.label, "latest run");
+    assert.ok(result.schema_path.includes("latest-run.schema.json"));
+  });
+});
+
+test("schemaCheck latest fails for empty string run_id (minLength: 1)", () => {
+  withTempJson({ ...validLatestPointer, run_id: "" }, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "fail");
+    assert.ok(result.errors.some((e) => /run_id/.test(e) && /length/.test(e)));
+  });
+});
+
+test("schemaCheck latest fails for missing case_id required field", () => {
+  const data = { ...validLatestPointer };
+  delete data.case_id;
+  withTempJson(data, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "fail");
+    assert.ok(result.errors.some((e) => /case_id/.test(e) && /missing required property/.test(e)));
+  });
+});
+
+test("schemaCheck latest fails for missing manifest_path required field", () => {
+  const data = { ...validLatestPointer };
+  delete data.manifest_path;
+  withTempJson(data, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "fail");
+    assert.ok(result.errors.some((e) => /manifest_path/.test(e) && /missing required property/.test(e)));
+  });
+});
+
+test("schemaCheck latest passes for execution_mode real", () => {
+  withTempJson({ ...validLatestPointer, execution_mode: "real" }, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "pass");
+    assert.deepEqual(result.errors, []);
+  });
+});
+
+test("schemaCheck latest fails for non-string baseline_result_path", () => {
+  withTempJson({ ...validLatestPointer, baseline_result_path: 42 }, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "fail");
+    assert.ok(result.errors.some((e) => /baseline_result_path/.test(e) && /expected type string/.test(e)));
+  });
+});
+
+test("schemaCheck latest fails for empty string scorer_results_path (minLength: 1)", () => {
+  withTempJson({ ...validLatestPointer, scorer_results_path: "" }, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "fail");
+    assert.ok(result.errors.some((e) => /scorer_results_path/.test(e) && /length/.test(e)));
+  });
+});
+
+test("schemaCheck latest fails for null execution_mode", () => {
+  withTempJson({ ...validLatestPointer, execution_mode: null }, (filePath) => {
+    const result = schemaCheck("latest", filePath);
+    assert.equal(result.status, "fail");
+    assert.ok(result.errors.some((e) => /execution_mode/.test(e)));
+  });
+});
+
+test("latest validation schema gate fails for missing run_id before artifact reads", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    delete latest.run_id;
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*run_id.*missing required property/);
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "fail"));
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation schema gate fails for empty string path field before artifact reads", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.command_log_path = "";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /latest run .*command_log_path.*length/);
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "fail"));
+    assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
 });

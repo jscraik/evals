@@ -552,13 +552,78 @@ close_agent final_git_project_triage</code></pre>
     <p>Tradeoff: the autofix pass stayed inside current PR review scope. It did not add real command execution, trace schemas, dashboards, external adapters, plugin systems, or sibling-repo runtime dependencies.</p>
   </section>
 
+  <section id="mechanical-enforcement-latest-run">
+    <h2>Mechanical Enforcement: Latest Run Schema</h2>
+    <p><time datetime="2026-05-20T19:24:00+01:00">2026-05-20 19:24 BST</time> - Promoted the next logical Linear slice after the merged trust-boundary PR. Created <code>JSC-337</code> as the mechanical enforcement parent and <code>JSC-338</code> as the focused latest-run schema child, then started <code>JSC-338</code>.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Deep Module Field</th>
+          <th>Decision</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Source gap</td>
+          <td><code>GAP-006</code>: <code>latest.json</code> has no schema-backed contract.</td>
+          <td>Audit marks latest pointer drift as a mechanical enforcement gap.</td>
+        </tr>
+        <tr>
+          <td>Owner module</td>
+          <td><code>src/lib/latest-run.js</code> owns latest pointer validation before artifact dereference.</td>
+          <td>Caller interface remains <code>validateLatestRun(...)</code>, <code>pnpm evals validate ...</code>, and <code>pnpm evals check --json</code>.</td>
+        </tr>
+        <tr>
+          <td>Public interface</td>
+          <td><code>schemas/latest-run.schema.json</code> defines the pointer shape; <code>schemaCheck("latest", ...)</code> exposes the validation check.</td>
+          <td>No new runtime dependency, adapter, dashboard, plugin system, or judge gate added.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>Latest schema validation now happens before referenced artifact schema and manifest hash checks.</td>
+          <td>Malformed latest pointers fail closed with a <code>latest run</code> check rather than relying on ad hoc required-key logic.</td>
+        </tr>
+        <tr>
+          <td>Seam test</td>
+          <td>Added tests for valid latest schema check, missing required latest field, additional latest field drift, non-object latest roots, and unknown execution modes.</td>
+          <td><code>pnpm test</code> passed before reviewer fixes with 30 tests; reviewer-driven boundary tests are part of the final rerun.</td>
+        </tr>
+        <tr>
+          <td>Caller contract</td>
+          <td>Callers receive <code>status: failed</code>, a <code>latest run</code> check, and explicit schema errors when the pointer contract is invalid.</td>
+          <td>Downstream artifact checks are skipped when latest schema validation fails.</td>
+        </tr>
+        <tr>
+          <td>Tracer proof</td>
+          <td><code>pnpm evals check --json</code> proves the production-like validation path includes the latest schema check.</td>
+          <td>The successful check output includes <code>schemas/latest-run.schema.json</code>.</td>
+        </tr>
+        <tr>
+          <td>Rollback path</td>
+          <td>Revert <code>schemas/latest-run.schema.json</code>, the <code>schemaTargets.latest</code> entry, and the schema gate in <code>validateLatestRun</code>.</td>
+          <td>Existing path/hash validation remains localized in <code>src/lib/latest-run.js</code>.</td>
+        </tr>
+        <tr>
+          <td>Validation gate</td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, <code>pnpm verify</code>, <code>git diff --check</code>, and HTML notes structure check.</td>
+          <td>Commands are recorded below with pass/fail evidence.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Reviewer findings addressed: project-standards requested a complete deep-module packet, simplicity requested removal of the redundant post-schema required-key branch, and correctness requested explicit latest-root and execution-mode boundary tests. The follow-up testing reviewer reported no findings; the only residual note is that coverage is CLI-integration-first rather than a separate unit test for <code>validateLatestRun</code>, which matches the tracer-proof emphasis for this slice.</p>
+    <p>Validation evidence: <code>pnpm test</code> passed with 32 tests after reviewer fixes, <code>pnpm evals check --json</code> passed and included a <code>latest run</code> schema check, <code>pnpm verify</code> passed, <code>git diff --check</code> passed, and the HTML notes structure check passed. The verify wrapper refreshed retained evidence at <code>.harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/</code>.</p>
+    <p>Files changed in this slice: <code>schemas/latest-run.schema.json</code>, <code>src/lib/schema.js</code>, <code>src/lib/latest-run.js</code>, <code>test/cli.test.js</code>, <code>.harness/evals/runs/latest.json</code>, <code>.harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/</code>, and this implementation notes file.</p>
+    <p>Residual risk: the repository still uses a documented local JSON Schema subset rather than a full third-party validator. That remains a separate mechanical-enforcement decision under <code>JSC-337</code>; this patch deliberately avoids adding a dependency until the subset boundary is reviewed.</p>
+  </section>
+
   <section id="deferred-work">
     <h2>Deferred Work</h2>
     <ul>
       <li>Trace-event schemas, runtime-card state command, and promotion governance remain later phases unless required to close the current trust-boundary issues.</li>
       <li>Real external suite import from agent-skills, Tessl, plugin-eval, or coding-harness remains out of scope; only portable contract cases belong here.</li>
       <li>Replace the duplicated documentation-to-verify command list with a machine-readable validation contract once the validation surface grows beyond this first wrapper.</li>
-      <li>Add latest-run schema hardening when the trace/runtime artifact phase starts.</li>
+      <li>Extend mechanical enforcement with the JSON Schema subset decision, closure/latest consistency checks, and CI once the latest-run schema PR lands.</li>
     </ul>
   </section>
 
