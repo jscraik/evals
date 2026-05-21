@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -114,6 +114,11 @@ test("run writes a valid local artifact bundle", () => {
     assert.ok(baselineTraceEvent, "expected baseline_result trace event");
     assert.equal(baselineTraceEvent.status, baseline.comparison_status);
     assert.equal(baselineTraceEvent.detail, "Baseline comparison status: " + baseline.comparison_status + ".");
+    const validationTraceEvent = traceEvents.find((event) => event.event_type === "validation_result");
+    assert.ok(validationTraceEvent, "expected validation_result trace event");
+    assert.equal(validationTraceEvent.artifact_path, output.result_path);
+    assert.notEqual(validationTraceEvent.artifact_path, ".harness/evals/runs/latest.json");
+    assert.equal(validationTraceEvent.detail, "Run artifact validation passed.");
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
@@ -264,6 +269,339 @@ test("state reports invalid runtime packet for schema-invalid latest pointers", 
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
     assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("check validates runtime evidence contract cases", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const validation = parseJson(result.stdout);
+    const runtimeChecks = validation.checks.filter((check) => check.label.startsWith("runtime evidence: "));
+    assert.equal(runtimeChecks.length, 3);
+    assert.ok(runtimeChecks.some((check) => check.label === "runtime evidence: approval-disabled-readonly-fallback" && check.status === "pass"));
+    assert.ok(runtimeChecks.some((check) => check.label === "runtime evidence: subagent-artifact-contract" && check.status === "pass"));
+    assert.ok(runtimeChecks.some((check) => check.label === "runtime evidence: plugin-attribution-missing" && check.status === "pass"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract fails closed when the fixture suite is missing", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    rmSync(join(repo, "fixtures", "runtime-evidence"), { recursive: true, force: true });
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence fixture directory does not exist/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract fails closed when the fixture suite is empty", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    rmSync(join(repo, "fixtures", "runtime-evidence"), { recursive: true, force: true });
+    mkdirSync(join(repo, "fixtures", "runtime-evidence"), { recursive: true });
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence suite has no \*\.case\.json fixtures/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract fails closed when the fixture suite path is not a directory", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    rmSync(join(repo, "fixtures", "runtime-evidence"), { recursive: true, force: true });
+    writeFileSync(join(repo, "fixtures", "runtime-evidence"), "not a directory", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence fixture path is not a directory/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract fails closed when the fixture suite is unreadable", (t) => {
+  if (process.platform === "win32" || process.getuid?.() === 0 || process.geteuid?.() === 0) {
+    t.skip("permission-based unreadable suite check is not reliable on this platform/user");
+    return;
+  }
+  const repo = makeRepo();
+  const fixtureDir = join(repo, "fixtures", "runtime-evidence");
+  try {
+    runPassingSmoke(repo);
+    chmodSync(fixtureDir, 0o000);
+    try {
+      readdirSync(fixtureDir);
+      t.skip("chmod did not make runtime-evidence fixture suite unreadable");
+      return;
+    } catch {
+      // Continue only after the fixture suite is actually unreadable.
+    }
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence fixture suite is unreadable/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
+  } finally {
+    if (existsSync(fixtureDir)) chmodSync(fixtureDir, 0o700);
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract reports malformed fixture JSON", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "approval-disabled-readonly-fallback.case.json");
+    writeFileSync(fixturePath, "{", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: unreadable case/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence: unreadable case" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract accepts strict subagent and plugin evidence when present", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const subagentFixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const subagentFixture = JSON.parse(readFileSync(subagentFixturePath, "utf8"));
+    subagentFixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "artifacts/reviews/reviewer-1.md",
+      detail: "Subagent wrote the required review artifact."
+    });
+    subagentFixture.observed_events[3].event_id = "evt-004";
+    subagentFixture.observed_events[3].status = "passed";
+    subagentFixture.observed_events[3].detail = "Run finalized after matching ArtifactWritten evidence.";
+    subagentFixture.expected.verdict = "pass";
+    subagentFixture.expected.classification = "ok";
+    subagentFixture.expected.reason = "Strict subagent artifact evidence is present.";
+    writeFileSync(subagentFixturePath, JSON.stringify(subagentFixture, null, 2) + "\n", "utf8");
+
+    const pluginFixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const pluginFixture = JSON.parse(readFileSync(pluginFixturePath, "utf8"));
+    pluginFixture.case_id = "plugin-attribution-present";
+    pluginFixture.observed_events[0].plugin_id = "plugin-eval";
+    pluginFixture.observed_events[0].plugin_source = "openai-curated";
+    pluginFixture.observed_events[1].status = "passed";
+    pluginFixture.observed_events[1].detail = "Plugin attribution fields were present.";
+    pluginFixture.expected.verdict = "pass";
+    pluginFixture.expected.classification = "ok";
+    pluginFixture.expected.reason = "Plugin-originated runtime events include plugin id and source.";
+    writeFileSync(pluginFixturePath, JSON.stringify(pluginFixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const validation = parseJson(result.stdout);
+    const subagentCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-contract");
+    const pluginCheck = validation.checks.find((check) => check.label === "runtime evidence: plugin-attribution-present");
+    assert.equal(subagentCheck.status, "pass");
+    assert.equal(pluginCheck.status, "pass");
+    assert.deepEqual(subagentCheck.scorer_results.map((item) => item.status), ["pass"]);
+    assert.deepEqual(pluginCheck.scorer_results.map((item) => item.status), ["pass"]);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects plugin tool-call attribution without source", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "plugin-source-missing";
+    fixture.observed_events[0].plugin_id = "plugin-eval";
+    fixture.observed_events[0].plugin_source = "openai-curated";
+    delete fixture.observed_events[0].source;
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because source attribution is missing.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: plugin-source-missing expected verdict pass, got fail/);
+    assert.match(validation.errors.join("\n"), /expected classification ok, got plugin_attribution_missing/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: plugin-source-missing");
+    assert.equal(runtimeCheck.scorer_results[0].evidence, "tool-call event evt-001 missing source");
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract requires subagent closeout evidence per start", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-repeated-start-closeout";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "artifacts/reviews/reviewer-1.md",
+      detail: "One artifact was written for the first subagent start."
+    });
+    fixture.observed_events.splice(1, 0, {
+      event_id: "evt-004",
+      type: "SubagentStart",
+      actor: "parent-agent",
+      source: "agent",
+      status: "started",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      role: "reviewer",
+      reason: "Retry the same reviewer role.",
+      detail: "A second start should require its own closeout evidence."
+    });
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because only one closeout exists for two starts.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-repeated-start-closeout expected verdict pass, got fail/);
+    assert.match(validation.errors.join("\n"), /expected classification ok, got missing_subagent_artifact/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-repeated-start-closeout");
+    assert.match(runtimeCheck.scorer_results[0].evidence, /fewer ArtifactExpected events than starts/);
+    assert.match(runtimeCheck.scorer_results[0].evidence, /fewer ArtifactWritten events than starts/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract applies deterministic classification precedence across scorers", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-and-plugin-drift";
+    fixture.intent = "Prove that multi-scorer runtime evidence cases classify by deterministic scorer precedence.";
+    fixture.declared_contract.artifact_contract.subagent_artifacts_required = true;
+    fixture.observed_events.unshift({
+      event_id: "evt-000",
+      type: "SubagentStart",
+      actor: "parent-agent",
+      source: "agent",
+      status: "started",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      role: "reviewer",
+      reason: "Review runtime evidence contract changes.",
+      detail: "Subagent started without matching artifact events."
+    });
+    fixture.scorers = ["permission-drift", "subagent-artifact-contract", "plugin-attribution"];
+    fixture.expected.classification = "missing_subagent_artifact";
+    fixture.expected.reason = "Subagent artifact failures take deterministic precedence over later plugin attribution failures.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-and-plugin-drift");
+    assert.ok(runtimeCheck);
+    assert.equal(runtimeCheck.status, "pass");
+    assert.equal(runtimeCheck.scorer_results.length, 3);
+    assert.deepEqual(runtimeCheck.scorer_results.map((item) => item.scorer_id), ["permission-drift", "subagent-artifact-contract", "plugin-attribution"]);
+    assert.deepEqual(runtimeCheck.scorer_results.map((item) => item.status), ["pass", "fail", "fail"]);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract detects expected-verdict drift", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-contract expected verdict pass, got fail/);
+    assert.match(validation.errors.join("\n"), /expected classification ok, got missing_subagent_artifact/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence: subagent-artifact-contract" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects schema-invalid cases", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    delete fixture.declared_contract.plugin_policy;
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: plugin-attribution-missing .*plugin_policy.*missing required property/);
   } finally {
     cleanup(repo);
   }
