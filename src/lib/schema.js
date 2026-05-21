@@ -27,6 +27,10 @@ export const schemaTargets = {
   latest: {
     schema: join(schemaDir, "latest-run.schema.json"),
     label: "latest run"
+  },
+  state: {
+    schema: join(schemaDir, "runtime-state.schema.json"),
+    label: "runtime state"
   }
 };
 
