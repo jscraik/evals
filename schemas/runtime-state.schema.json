@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/runtime-state.schema.json",
+  "title": "Runtime State Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "status",
+    "latest_path",
+    "latest",
+    "artifacts",
+    "validation",
+    "recommended_commands"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "status": { "type": "string", "enum": ["ready", "stale", "missing", "invalid"] },
+    "latest_path": { "type": "string", "minLength": 1 },
+    "latest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "run_id", "case_id", "execution_mode"],
+      "properties": {
+        "status": { "type": "string", "enum": ["present", "missing", "invalid"] },
+        "run_id": { "type": ["string", "null"], "minLength": 1 },
+        "case_id": { "type": ["string", "null"], "minLength": 1 },
+        "execution_mode": { "type": ["string", "null"], "enum": ["synthetic", "real", null] }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "type", "path", "status", "reason"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "minLength": 1 },
+          "path": { "type": ["string", "null"], "minLength": 1 },
+          "status": { "type": "string", "enum": ["present", "missing", "invalid", "not_applicable"] },
+          "reason": { "type": ["string", "null"], "minLength": 1 }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "errors"],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "failed", "not_run"] },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "recommended_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
