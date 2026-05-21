@@ -118,7 +118,224 @@ Relevant invariants:
 | Trust Boundary Closeout | Remove false-ready and false-success paths from the phase-one executable spine. | GAP-001, GAP-002, GAP-003, GAP-005, selected GAP-013. | Now |
 | Mechanical Enforcement | Make contracts machine-checkable locally and in CI. | GAP-006, GAP-007, GAP-012, closure/latest consistency. | Next |
 | Runtime Memory Loop | Add current-state and replayable trace memory without external telemetry authority. | GAP-004, GAP-008, attempt/retry metadata. | Later |
+| Runtime Evidence Contract | Add portable offline cases for Codex runtime-governed agent operations without importing Codex, agent-skills, coding-harness, or .agents at runtime. | permission profile resolution, goal accounting, subagent stop, extension turn binding, plugin attribution, network policy, package provenance, websocket trace split. | Later / after trust boundary and enforcement |
 | Governance Expansion | Prepare promotion, scorer taxonomy, and human label gates without judge authority drift. | GAP-009, GAP-010, GAP-011. | Later |
+
+## 2026-05-21 Codex Runtime Evidence Addendum
+
+source_status: integrated_as_eval_specific_planning
+source_repo: /Users/jamiecraik/dev/codex
+source_range_checked: 59507b849..20fedafff
+codex_repo_mcp_status: unavailable_in_this_session
+
+Jamie supplied a new Codex upstream digest after origin/main moved to
+20fedafff. Live inspection of the local Codex checkout confirmed the relevant
+runtime direction through commits and changed surfaces around permission profile
+inheritance, runtime permission refresh, approval-disabled fallback rejection,
+goal accounting, SubagentStop hooks, extension turn metadata, MCP plugin
+attribution, MITM network enforcement, package/runtime provenance, thread
+settings updates, and websocket warmup tracing.
+
+This does not change the evals phase-one hard blocks. Evals must not import or
+depend on Codex, agent-skills, coding-harness, or .agents. The integration point
+is portable offline proof: representative fixtures, schemas, and deterministic
+scorers that prove missing runtime evidence is caught.
+
+### Codex Runtime Deltas That Matter To Evals
+
+| Runtime delta | Codex evidence examples | Evals implication |
+|---|---|---|
+| Permission profiles are runtime policy, not just declarations. | fe7c069fe, 40ad7be2b, 713a5b1b0, a27d3847b, 63a72e6b7. | Add offline cases that distinguish declared, inherited, managed, effective, refreshed, and fallback permission states. |
+| Approval-disabled read-only fallback is unsafe when writes are required. | a27d3847b. | Add a negative case that expects blocked: approvals_disabled_no_safe_fallback. |
+| Goals are default-on runtime state with accounting semantics. | d4f842f3b, d84b824d5, 0e9d22217. | Add cases for goal_accounting_flush_failed and preserve/report behavior. |
+| Subagent lifecycle has an explicit stop boundary. | eee3e60db. | Add a missing SubagentStop negative case before treating delegation artifacts as closed. |
+| Extension tool calls carry turn_id and truncation_policy. | c5bd13156. | Add cases that fail when extension evidence has no turn binding or cannot prove output completeness. |
+| MCP tool evidence carries plugin attribution. | 0a4179bb1 plus plugin discovery/listing commits. | Add cases for missing plugin_id, marketplace, or source when a plugin-backed tool call is part of evidence. |
+| Network policy has MITM hook configuration and enforcement. | 3d94e24a3, f6970214d, 3cae84009, ed6d73b3b. | Add cases that distinguish network disabled, websearch used, MITM configured, MITM enforced, and redaction evidence. |
+| Packaged runtimes have checksum, platform, DotSlash, and SDK launch provenance. | e9f59e30d, 110b30d54, e389e01f8, cb05de672, 0b4f86095. | Add package provenance cases for checksum and launch-source gaps. |
+| App-server thread settings and service tier defaults are mutable/resolved runtime state. | 771a4e74a, edc48e461, 370b13afc. | Add thread_settings_revision drift cases before harness enforcement relies on runtime settings. |
+| Websocket observability separates warmup from logical request tracing. | 20fedafff. | Add a case that prevents warmup traces from being counted as user-request proof. |
+
+### Runtime Evidence Contract v1 Candidate
+
+Do not create this as a Now issue. Treat it as the future parent that can follow
+the trust-boundary and mechanical-enforcement parents when the executable spine
+is ready to carry cross-repo runtime evidence examples.
+
+Objective:
+Define the portable payload shape that lets evals prove runtime evidence gaps
+without owning the runtime, harness, skill, plugin, or collector systems.
+
+Candidate minimal fields:
+
+~~~yaml
+runtime_evidence:
+  codex_origin_main: 20fedafff
+  thread_settings_revision: optional
+  effective_permission_profile: required
+  permission_profile_source: required
+  approvals_enabled: required
+  fallback_policy: required
+  goal_accounting_status: optional
+  extension_turn_id: optional
+  truncation_policy: optional
+  plugin_id: optional
+  plugin_marketplace: optional
+  subagent_start_seen: optional
+  subagent_stop_seen: optional
+  mitm_policy: optional
+  package_checksum_ref: optional
+  sdk_launch_source: optional
+  raw_output_refs: required
+~~~
+
+Generic fixture payload shape:
+
+~~~json
+{
+  "runtime_capabilities": {},
+  "declared_contract": {},
+  "resolved_runtime": {},
+  "observed_events": [],
+  "artifact_refs": [],
+  "permission_profile": {},
+  "goal_state": {},
+  "thread_settings": {},
+  "plugin_attribution": {},
+  "network_policy": {},
+  "package_provenance": {},
+  "expected": {}
+}
+~~~
+
+### Future Offline Fixture Backlog
+
+These cases should be planned under Runtime Evidence Contract v1 or Parent 3/4
+follow-up work, not under the active Now trust-boundary slice.
+
+~~~text
+permission-profile-inheritance.case.json
+managed-permission-profile-requirements.case.json
+runtime-permission-refresh.case.json
+approval-disabled-readonly-fallback.case.json
+goal-accounting-flush-failure.case.json
+subagent-stop-missing.case.json
+thread-settings-drift.case.json
+extension-tool-call-turn-id-missing.case.json
+extension-tool-call-truncation-policy-missing.case.json
+plugin-id-attribution-missing.case.json
+plugin-marketplace-source-missing.case.json
+mitm-network-policy-missing.case.json
+package-checksum-missing.case.json
+sdk-launch-provenance-missing.case.json
+logical-websocket-warmup-noise.case.json
+~~~
+
+### Example Future Cases
+
+~~~json
+{
+  "schema_version": 1,
+  "case_id": "approval-disabled-readonly-fallback",
+  "intent": "Reject silent read-only fallback when approvals are disabled and the requested task requires writes.",
+  "input": {
+    "declared_contract": {
+      "permission_profile": {
+        "declared": "repo-write",
+        "fallback_policy": "fail_closed"
+      }
+    },
+    "resolved_runtime": {
+      "effective_profile": "read-only",
+      "approvals_enabled": false
+    },
+    "observed_events": [
+      {
+        "type": "task_requirement",
+        "effect": "filesystem_write",
+        "path_scope": "repo"
+      }
+    ]
+  },
+  "expected": {
+    "verdict": "blocked",
+    "classification": "approvals_disabled_no_safe_fallback"
+  }
+}
+~~~
+
+~~~json
+{
+  "schema_version": 1,
+  "case_id": "subagent-stop-missing",
+  "intent": "Fail closeout when a subagent starts but no terminal stop event or equivalent completion evidence exists.",
+  "input": {
+    "observed_events": [
+      {
+        "type": "SubagentStart",
+        "agent_id": "reviewer-1",
+        "expected_artifact": "review_report"
+      },
+      {
+        "type": "ArtifactWritten",
+        "agent_id": "reviewer-1",
+        "artifact": "review_report"
+      }
+    ]
+  },
+  "expected": {
+    "verdict": "fail",
+    "classification": "missing_subagent_stop"
+  }
+}
+~~~
+
+~~~json
+{
+  "schema_version": 1,
+  "case_id": "plugin-id-attribution-missing",
+  "intent": "Detect MCP tool evidence that cannot be attributed to a plugin provider.",
+  "input": {
+    "observed_events": [
+      {
+        "type": "mcp_tool_call",
+        "tool_name": "web_search",
+        "plugin_id": null,
+        "marketplace": null
+      }
+    ]
+  },
+  "expected": {
+    "verdict": "fail",
+    "classification": "missing_plugin_attribution"
+  }
+}
+~~~
+
+### Integration Routing
+
+| Destination | Addendum action |
+|---|---|
+| Parent 1 / Now | No scope change. Keep the trust-boundary fixes first. |
+| Parent 2 / Mechanical Enforcement | Consider latest/schema and CI proof strong enough before adding runtime-evidence schemas. |
+| Parent 3 / Runtime Memory Loop | Add the Runtime Evidence Contract v1 parent here when current-state and trace-event ownership exists. |
+| Parent 4 / Governance Expansion | Use runtime-evidence cases to prevent plugin, network, package, and goal evidence from becoming hidden authority. |
+| .agents | Treat as observed-state prior art and future consumer evidence. Do not add runtime dependency from evals. |
+| agent-skills / coding-harness | Treat as declared-contract and enforcement consumers. Do not move their domain truth into evals. |
+
+### Updated Negative Risks
+
+| Risk | Evals mitigation |
+|---|---|
+| Permission inheritance drift | Keep declared, inherited, managed, effective, and refreshed profiles distinct in fixture payloads. |
+| Runtime refresh invalidates start assumptions | Add runtime-permission-refresh negative and positive cases before enforcement. |
+| Approval-disabled unsafe fallback | Require blocked: approvals_disabled_no_safe_fallback in the representative case. |
+| Goal accounting silent loss | Add goal_accounting_flush_failed classification. |
+| Subagent non-closure | Require SubagentStop or equivalent terminal evidence in lifecycle closeout cases. |
+| Plugin attribution gap | Require plugin_id and marketplace/source fields for plugin-backed MCP evidence cases. |
+| Network policy laundering | Distinguish MITM configured, MITM enforced, websearch used, and redaction evidence. |
+| Package provenance gap | Require checksum and SDK launch-source references for packaged-runtime evidence cases. |
+| Warmup trace confusion | Keep warmup traces separate from logical websocket request proof. |
 
 ## Proposed Parent Issues
 
