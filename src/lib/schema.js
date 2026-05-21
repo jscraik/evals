@@ -31,6 +31,10 @@ export const schemaTargets = {
   state: {
     schema: join(schemaDir, "runtime-state.schema.json"),
     label: "runtime state"
+  },
+  traceEvent: {
+    schema: join(schemaDir, "trace-event.schema.json"),
+    label: "trace events"
   }
 };
 

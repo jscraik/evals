@@ -967,7 +967,78 @@ close_agent final_git_project_triage</code></pre>
     <p><time datetime="2026-05-21T10:26:00+01:00">2026-05-21 10:26 BST</time> - Parent-loop reconciliation after stale heartbeat correction: live GitHub state showed PR #9 / <code>JSC-343</code> already merged, so the active child became PR #10 / <code>JSC-340</code>. PR #10 was rechecked before merge: <code>deterministic-gates</code>, <code>CodeRabbit</code>, <code>semgrep-cloud-platform/scan</code>, <code>Socket Security: Project Report</code>, <code>Socket Security: Pull Request Alerts</code>, <code>security/snyk (jscraik)</code>, and <code>license/snyk (jscraik)</code> were all passing; all review threads were resolved; the PR was non-draft and mergeable at head <code>8ba92ac52add7930b0866a79c25aaeb2f545f4de</code>.</p>
     <p>Merge evidence: PR #10 was merged at <code>2026-05-21T10:25:40Z</code> with merge commit <code>0a752077d8e00a120588f9c0c763c53422dc85ec</code>. Local <code>main</code> was then synced with <code>git pull --ff-only origin main</code>, which reported <code>Already up to date</code>. Linear <code>JSC-340</code> was already in <code>Done</code> state with the PR #10 attachment after merge, so the tracker closeout did not require a status mutation.</p>
     <p>Queue decision: parent <code>JSC-342</code> remains <code>In Progress</code>. The next phase-ordered child is <code>JSC-344</code>, which owns the replayable trace event timeline. The next implementation pass should start from current <code>main</code>, keep the owner module under <code>src/lib</code>, and preserve the phase-one hard blocks: no dashboards, external telemetry authority, plugin systems, or required LLM judge gates.</p>
-    <p>Files changed so far in this slice: <code>AGENTS.md</code>, <code>README.md</code>, <code>UBIQUITOUS_LANGUAGE.md</code>, <code>scripts/verify.js</code>, <code>src/cli.js</code>, <code>src/commands/state.js</code>, <code>src/lib/runtime-state.js</code>, <code>src/lib/schema.js</code>, <code>schemas/runtime-state.schema.json</code>, <code>test/cli.test.js</code>, <code>.harness/evals/runs/latest.json</code>, refreshed run artifacts under <code>.harness/evals/runs/20260520T221315Z-pr-closeout-4df36134/</code>, <code>.harness/evals/runs/20260520T221316Z-pr-closeout-4df36134/</code>, and <code>.harness/evals/runs/20260520T221852Z-pr-closeout-4df36134/</code>, plus this implementation notes file.</p>
+    <h3>JSC-344 Deep Module Fix Packet</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Deep Module Field</th>
+          <th>Decision</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Source gap</td>
+          <td><code>GAP-008</code>: no trace event schema or replayable runtime timeline.</td>
+          <td>JSC-344 requires local, artifact-bound trace evidence for eval run lifecycle events.</td>
+        </tr>
+        <tr>
+          <td>Owner module</td>
+          <td>Create <code>src/lib/trace-events.js</code> as the trace writer and validator owner.</td>
+          <td>The CLI and latest-run validator should call a small interface rather than choreograph event details.</td>
+        </tr>
+        <tr>
+          <td>Public interface</td>
+          <td>Each run artifact bundle includes <code>trace-events.jsonl</code>, surfaced as <code>trace_events_path</code> and validated by <code>pnpm evals check --json</code>.</td>
+          <td>This keeps the surface thin while making replay evidence durable and machine-checkable.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>Emit ordered JSONL events for run start, command result, scoring, baseline observation, manifest production, latest validation, and final status.</td>
+          <td>Callers should not infer lifecycle order from report prose or command logs.</td>
+        </tr>
+        <tr>
+          <td>Caller contract</td>
+          <td>Trace paths stay repository-relative and artifact-bound; each event is schema-backed, ordered, and tied to the run and case identifiers.</td>
+          <td>This preserves the executable-spine rule that local artifacts are authority and telemetry explains.</td>
+        </tr>
+        <tr>
+          <td>Seam test</td>
+          <td>Add tests proving a smoke run writes trace events, check validates them, and malformed or incomplete traces fail closed.</td>
+          <td>The previous command log alone was not a replayable lifecycle timeline.</td>
+        </tr>
+        <tr>
+          <td>Tracer proof</td>
+          <td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code>, <code>pnpm evals check --json</code>, and <code>pnpm verify</code>.</td>
+          <td>These commands exercise real CLI wiring and artifact validation.</td>
+        </tr>
+        <tr>
+          <td>Rollback path</td>
+          <td>Remove the trace schema, trace module, artifact contract field, run emission, latest validation wiring, and trace tests.</td>
+          <td>No external service or migration is introduced.</td>
+        </tr>
+        <tr>
+          <td>Phase-one check</td>
+          <td>No dashboard, external adapter, cloud runner, telemetry exporter as authority, plugin system, source-mining automation, required LLM judge gate, or sibling-repo runtime dependency.</td>
+          <td>The trace timeline remains local artifact evidence only.</td>
+        </tr>
+        <tr>
+          <td>Validation gate</td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, and <code>pnpm verify</code>.</td>
+          <td>Outcomes will be appended after implementation.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><time datetime="2026-05-21T10:45:00+01:00">2026-05-21 10:45 BST</time> - Implementation step: wired the trace owner module into the real artifact bundle path. <code>src/lib/artifact-bundle.js</code> now declares <code>trace_events_path</code> as a required bundle member, <code>src/commands/run.js</code> emits <code>trace-events.jsonl</code> and records it in latest, result refs, manifest artifacts, and CLI output, and <code>src/lib/latest-run.js</code> validates the trace file during <code>pnpm evals check --json</code>. The schema surface is local-only through <code>schemas/trace-event.schema.json</code>, <code>schemas/latest-run.schema.json</code>, and <code>schemas/eval-result.schema.json</code>.</p>
+    <p>Seam tests added before validation: the smoke artifact-bundle test now asserts trace path existence, event ordering, contiguous sequence numbers, result/latest wiring, and a passing trace validation check. Two negative seams corrupt <code>trace-events.jsonl</code>: one malformed JSON line and one incomplete timeline missing <code>run_finished</code>. Both must fail through the existing latest validation command, proving the trace timeline is enforced rather than merely written.</p>
+    <p>Files changed so far in this slice: <code>AGENTS.md</code>, <code>UBIQUITOUS_LANGUAGE.md</code>, <code>schemas/eval-result.schema.json</code>, <code>schemas/latest-run.schema.json</code>, <code>schemas/trace-event.schema.json</code>, <code>src/commands/run.js</code>, <code>src/lib/artifact-bundle.js</code>, <code>src/lib/latest-run.js</code>, <code>src/lib/schema.js</code>, <code>src/lib/trace-events.js</code>, <code>test/cli.test.js</code>, and this implementation notes file. The modified Linear plan remains outside the JSC-344 runtime patch unless explicitly reconciled later.</p>
+    <p><time datetime="2026-05-21T10:41:00+01:00">2026-05-21 10:41 BST</time> - Validation discovery: the first <code>pnpm test</code> run failed because several trace event definitions used <code>occurred_at</code> as a shorthand variable while the owner module variable was named <code>occurredAt</code>. The same test run also exposed stale latest-schema unit fixtures that did not include the newly required <code>trace_events_path</code>. This was a useful seam failure: the tests stopped the runtime before any PR work could claim success from written-only trace files.</p>
+    <p>Initial validation correction: <code>src/lib/trace-events.js</code> now maps <code>occurredAt</code> into each <code>occurred_at</code> field explicitly, and the latest-schema unit fixture includes <code>trace_events_path</code>. This moved the implementation from written-only trace output to schema-reachable trace output.</p>
+    <p><time datetime="2026-05-21T10:49:00+01:00">2026-05-21 10:49 BST</time> - Review discovery: the correctness review found that the first implementation could claim <code>validation_result.status: passed</code> before the final validation command had actually run, and that <code>run_finished</code> was emitted before the bundle was fully validated. The testing review found missing negative seams for validation-result drift, run/case identity drift, and unsafe trace artifact paths. The standards review found no blocking repository-standard issue; its only residual note was a Local Memory permission failure outside this patch.</p>
+    <p>Review correction: <code>src/commands/run.js</code> now finalizes trace evidence in two steps. It first writes a draft trace so the bundle can be hashed, validates the latest bundle with trace lifecycle validation disabled, rewrites the final trace with the actual pre-trace validation status, refreshes result and manifest hashes for the final trace, and then runs the normal <code>validateLatestRun</code> gate with trace validation enabled. This avoids a self-referential trace-hash loop while keeping the final <code>pnpm evals check --json</code> result authoritative.</p>
+    <p>Additional seam tests: <code>test/cli.test.js</code> now fails closed when <code>validation_result.status</code> is corrupted, when trace <code>run_id</code> or <code>case_id</code> no longer matches the latest packet, and when a trace event points outside the repository with an unsafe artifact path. These are deterministic anti-regression checks for the reviewer findings.</p>
+    <p>Final validation evidence: <code>pnpm test</code> passed with 74 tests. <code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code> passed and produced intermediate run <code>20260521T104519Z-pr-closeout-4df36134</code>; <code>pnpm evals check --json</code> passed for that run with <code>trace events: pass</code> and <code>closure latest consistency: pass</code>. <code>pnpm verify</code> passed and refreshed latest proof at <code>.harness/evals/runs/20260521T104524Z-pr-closeout-4df36134/</code>; it validated <code>trace-event.schema.json</code> in the schema inventory, reported <code>trace_events_path</code> as present in <code>pnpm evals state --json</code>, emitted <code>trace events: pass</code> in <code>pnpm evals check --json</code>, and found no credential-like patterns in <code>fixtures</code> or <code>.harness/evals</code>. The post-notes checks <code>git diff --check</code> and <code>pnpm evals check --json</code> also passed.</p>
+    <p>Runtime discovery: broad <code>rm -rf</code> cleanup was blocked by the sandbox, so superseded generated run artifacts were pruned with explicit file deletes instead. This left the final proof bundle as the only new tracked run artifact for JSC-344.</p>
   </section>
 
   <section id="follow-up-recommendations">

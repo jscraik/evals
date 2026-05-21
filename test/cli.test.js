@@ -8,6 +8,7 @@ import test from "node:test";
 
 import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
 import { verdictFor } from "../src/lib/scoring.js";
+import { requiredTraceEventTypes } from "../src/lib/trace-events.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -62,7 +63,7 @@ test("run writes a valid local artifact bundle", () => {
     assert.equal(output.status, "passed");
     assert.equal(output.verdict, "pass");
     assert.equal(output.execution_mode, "synthetic");
-    for (const key of ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path"]) {
+    for (const key of ["manifest_path", "result_path", "report_path", "command_log_path", "baseline_result_path", "scorer_results_path", "trace_events_path"]) {
       assertRepoRelativeArtifact(repo, output, key);
     }
 
@@ -73,20 +74,32 @@ test("run writes a valid local artifact bundle", () => {
 
     const result = JSON.parse(readFileSync(join(repo, output.result_path), "utf8"));
     assert.equal(result.execution_mode, "synthetic");
+    assert.equal(result.trace_events_path, output.trace_events_path);
+    assert.ok(result.artifact_refs.some((artifact) => artifact.type === "trace-events" && artifact.path === output.trace_events_path));
 
     const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
     assert.ok(scorerResults.results.some((item) => item.scorer_id === "baseline-presence" && item.status === "pass"));
+
+    const traceEvents = readFileSync(join(repo, output.trace_events_path), "utf8")
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => JSON.parse(line));
+    assert.deepEqual(traceEvents.map((event) => event.event_type), requiredTraceEventTypes);
+    assert.deepEqual(traceEvents.map((event) => event.sequence), [1, 2, 3, 4, 5, 6, 7]);
+    assert.ok(traceEvents.every((event) => event.run_id === output.run_id));
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
     assert.equal(latest.execution_mode, "synthetic");
     assert.ok(latest.baseline_result_path);
     assert.ok(latest.scorer_results_path);
+    assert.equal(latest.trace_events_path, output.trace_events_path);
 
     const checkResult = runCli(repo, ["check", "--json"]);
     assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
     const validation = parseJson(checkResult.stdout);
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
+    assert.ok(validation.checks.some((check) => check.label === "trace events" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
   } finally {
     cleanup(repo);
@@ -741,6 +754,103 @@ test("latest validation rejects result artifact ref hash drift", () => {
   }
 });
 
+test("latest validation rejects malformed trace event JSON", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    writeFileSync(join(repo, output.trace_events_path), "{\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /trace events line 1: JSON parse failed/);
+    assert.ok(validation.checks.some((check) => check.label === "trace events" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects incomplete trace event timelines", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const tracePath = join(repo, output.trace_events_path);
+    const lines = readFileSync(tracePath, "utf8").trim().split(/\r?\n/);
+    writeFileSync(tracePath, lines.slice(0, -1).join("\n") + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /trace event 7: expected run_finished, got missing/);
+    assert.match(validation.errors.join("\n"), /trace events: expected 7 events, got 6/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects trace validation-result drift", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const tracePath = join(repo, output.trace_events_path);
+    const events = readFileSync(tracePath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+    events.find((event) => event.event_type === "validation_result").status = "failed";
+    writeFileSync(tracePath, events.map((event) => JSON.stringify(event)).join("\n") + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /trace validation_result status: expected passed, got failed/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects trace identity drift", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const tracePath = join(repo, output.trace_events_path);
+    const events = readFileSync(tracePath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+    events[2].run_id = "different-run";
+    events[3].case_id = "different-case";
+    writeFileSync(tracePath, events.map((event) => JSON.stringify(event)).join("\n") + "\n", "utf8");
+
+    const result = runCli(repo, ["validate", ".harness/evals/runs/latest.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /trace event 3: expected run_id/);
+    assert.match(validation.errors.join("\n"), /trace event 4: expected case_id/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects unsafe trace artifact paths", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const tracePath = join(repo, output.trace_events_path);
+    const events = readFileSync(tracePath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+    events[1].artifact_path = "../outside-command-log.json";
+    writeFileSync(tracePath, events.map((event) => JSON.stringify(event)).join("\n") + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /trace event 2 artifact_path: path must not contain traversal segments/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("latest validation rejects baseline command-log linkage drift", () => {
   const repo = makeRepo();
   try {
@@ -849,7 +959,8 @@ const validLatestPointer = {
   report_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/report.md",
   command_log_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/command-log.json",
   baseline_result_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/baseline-result.json",
-  scorer_results_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/scorer-results.json"
+  scorer_results_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/scorer-results.json",
+  trace_events_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/trace-events.jsonl"
 };
 
 test("schemaCheck latest passes for a fully valid latest pointer", () => {
