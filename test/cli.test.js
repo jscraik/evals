@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -114,6 +114,11 @@ test("run writes a valid local artifact bundle", () => {
     assert.ok(baselineTraceEvent, "expected baseline_result trace event");
     assert.equal(baselineTraceEvent.status, baseline.comparison_status);
     assert.equal(baselineTraceEvent.detail, "Baseline comparison status: " + baseline.comparison_status + ".");
+    const validationTraceEvent = traceEvents.find((event) => event.event_type === "validation_result");
+    assert.ok(validationTraceEvent, "expected validation_result trace event");
+    assert.equal(validationTraceEvent.artifact_path, output.result_path);
+    assert.notEqual(validationTraceEvent.artifact_path, ".harness/evals/runs/latest.json");
+    assert.equal(validationTraceEvent.detail, "Run artifact validation passed.");
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
@@ -339,13 +344,23 @@ test("runtime evidence contract fails closed when the fixture suite path is not 
   }
 });
 
-test("runtime evidence contract fails closed when the fixture suite is unreadable", () => {
-  if (process.platform === "win32") return;
+test("runtime evidence contract fails closed when the fixture suite is unreadable", (t) => {
+  if (process.platform === "win32" || process.getuid?.() === 0 || process.geteuid?.() === 0) {
+    t.skip("permission-based unreadable suite check is not reliable on this platform/user");
+    return;
+  }
   const repo = makeRepo();
   const fixtureDir = join(repo, "fixtures", "runtime-evidence");
   try {
     runPassingSmoke(repo);
     chmodSync(fixtureDir, 0o000);
+    try {
+      readdirSync(fixtureDir);
+      t.skip("chmod did not make runtime-evidence fixture suite unreadable");
+      return;
+    } catch {
+      // Continue only after the fixture suite is actually unreadable.
+    }
 
     const result = runCli(repo, ["check", "--json"]);
     assert.equal(result.status, 1);

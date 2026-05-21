@@ -45,8 +45,8 @@ export function buildTraceEvents(input) {
   } = input;
   const occurredAt = new Date().toISOString();
   const validationDetail = validationErrors.length === 0
-    ? "Latest run artifact validation passed."
-    : "Latest run artifact validation failed: " + validationErrors.join("; ");
+    ? "Run artifact validation passed."
+    : "Run artifact validation failed: " + validationErrors.join("; ");
   const definitions = [
     {
       event_type: "run_started",
@@ -92,7 +92,7 @@ export function buildTraceEvents(input) {
       event_type: "validation_result",
       occurred_at: occurredAt,
       status: validationStatus,
-      artifact_path: paths.latestPath,
+      artifact_path: paths.resultPath,
       exit_code: null,
       detail: validationDetail
     },
