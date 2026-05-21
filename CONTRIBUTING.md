@@ -43,6 +43,12 @@ lifecycle authority or phase-one runtime dependencies.
 
 ## Commands
 
+Run all deterministic verification (the CI gate command):
+
+~~~bash
+pnpm verify
+~~~
+
 Run regression tests:
 
 ~~~bash

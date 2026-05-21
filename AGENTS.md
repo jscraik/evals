@@ -120,6 +120,18 @@ pnpm evals run fixtures/smoke/pr-closeout.case.json
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 pnpm evals state --json
 pnpm evals check --json
+pnpm verify
+~~~
+
+`pnpm verify` is the CI gate command (see `.harness/ci-required-checks.json`). It
+runs all deterministic checks including file-existence guards, the smoke run,
+latest-artifact validation, and credential scanning with a Node fallback when
+`rg` is unavailable. Run it locally before pushing to confirm the same gate CI
+enforces.
+
+For a lightweight direct credential scan when `rg` is available:
+
+~~~bash
 rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" fixtures .harness/evals
 ~~~
 
