@@ -52,7 +52,7 @@ pnpm verify
 Run regression tests:
 
 ~~~bash
-
+pnpm test
 ~~~
 
 Run the smoke eval:
