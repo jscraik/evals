@@ -37,6 +37,10 @@ const checks = [
     run: () => runCommand("pnpm", ["evals", "run", "fixtures/smoke/pr-closeout.case.json", "--json"])
   },
   {
+    command: "pnpm evals state --json",
+    run: () => runCommand("pnpm", ["evals", "state", "--json"])
+  },
+  {
     command: "pnpm evals check --json",
     run: () => runCommand("pnpm", ["evals", "check", "--json"])
   },

@@ -118,6 +118,7 @@ test -f fixtures/smoke/pr-closeout.case.json
 pnpm test
 pnpm evals run fixtures/smoke/pr-closeout.case.json
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
+pnpm evals state --json
 pnpm evals check --json
 rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" fixtures .harness/evals
 ~~~
