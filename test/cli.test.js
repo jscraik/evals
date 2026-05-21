@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
+import { sha256File } from "../src/lib/hash.js";
 import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
 import { verdictFor } from "../src/lib/scoring.js";
 import { requiredTraceEventTypes } from "../src/lib/trace-events.js";
@@ -54,6 +55,19 @@ function assertRepoRelativeArtifact(repo, output, key) {
   assert.equal(artifactPath.startsWith("/"), false, key + " should be repository-relative");
   assert.equal(artifactPath.split(/[\\/]+/).includes(".."), false, key + " should not contain traversal segments");
   assert.ok(existsSync(join(repo, artifactPath)), key + " should point to an existing artifact");
+}
+
+function refreshTraceArtifactHash(repo, output) {
+  const traceHash = sha256File(join(repo, output.trace_events_path));
+  const manifestPath = join(repo, output.manifest_path);
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  manifest.artifacts.find((artifact) => artifact.type === "trace-events").sha256 = traceHash;
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+
+  const resultPath = join(repo, output.result_path);
+  const result = JSON.parse(readFileSync(resultPath, "utf8"));
+  result.artifact_refs.find((artifact) => artifact.type === "trace-events").sha256 = traceHash;
+  writeFileSync(resultPath, JSON.stringify(result, null, 2) + "\n", "utf8");
 }
 
 test("run writes a valid local artifact bundle", () => {
@@ -846,6 +860,28 @@ test("latest validation rejects unsafe trace artifact paths", () => {
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.match(validation.errors.join("\n"), /trace event 2 artifact_path: path must not contain traversal segments/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects missing artifact paths for artifact-bearing trace events", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const tracePath = join(repo, output.trace_events_path);
+    const events = readFileSync(tracePath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+    events.find((event) => event.event_type === "command_result").artifact_path = null;
+    events.find((event) => event.event_type === "scorer_result").artifact_path = "";
+    writeFileSync(tracePath, events.map((event) => JSON.stringify(event)).join("\n") + "\n", "utf8");
+    refreshTraceArtifactHash(repo, output);
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /trace event 2 artifact_path: path must be a non-empty string/);
+    assert.match(validation.errors.join("\n"), /trace event 3 artifact_path: path must be a non-empty string/);
   } finally {
     cleanup(repo);
   }

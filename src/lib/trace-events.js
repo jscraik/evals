@@ -13,6 +13,8 @@ export const requiredTraceEventTypes = [
   "run_finished"
 ];
 
+const artifactBearingTraceEventTypes = new Set(requiredTraceEventTypes.filter((eventType) => eventType !== "run_started"));
+
 /**
  * Build the canonical local trace timeline for a completed eval run.
  * @param {object} input - Trace construction input.
@@ -176,7 +178,7 @@ function traceInvariantErrors(events, expected) {
     if (event.sequence !== expectedSequence) errors.push("trace event " + expectedSequence + ": expected sequence " + expectedSequence + ", got " + event.sequence);
     if (event.run_id !== expected.runId) errors.push("trace event " + expectedSequence + ": expected run_id " + expected.runId + ", got " + event.run_id);
     if (event.case_id !== expected.caseId) errors.push("trace event " + expectedSequence + ": expected case_id " + expected.caseId + ", got " + event.case_id);
-    if (event.artifact_path) {
+    if (artifactBearingTraceEventTypes.has(event.event_type) || event.artifact_path) {
       const pathErrors = [];
       repoRelativePath(event.artifact_path, "trace event " + expectedSequence + " artifact_path", pathErrors);
       errors.push(...pathErrors);
