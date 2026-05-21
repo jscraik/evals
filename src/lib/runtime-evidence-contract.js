@@ -20,12 +20,18 @@ export function validateRuntimeEvidenceSuite(fixturesDir = runtimeEvidenceFixtur
     const message = "runtime evidence fixture directory does not exist: " + rel(fixturesDir);
     return suiteFailure(fixturesDir, message);
   }
-  if (!statSync(fixturesDir).isDirectory()) {
-    const message = "runtime evidence fixture path is not a directory: " + rel(fixturesDir);
-    return suiteFailure(fixturesDir, message);
+  let entries;
+  try {
+    if (!statSync(fixturesDir).isDirectory()) {
+      const message = "runtime evidence fixture path is not a directory: " + rel(fixturesDir);
+      return suiteFailure(fixturesDir, message);
+    }
+    entries = readdirSync(fixturesDir);
+  } catch (error) {
+    return suiteFailure(fixturesDir, "runtime evidence fixture suite is unreadable: " + error.message);
   }
 
-  const caseFiles = readdirSync(fixturesDir)
+  const caseFiles = entries
     .filter((entry) => entry.endsWith(".case.json"))
     .sort()
     .map((entry) => join(fixturesDir, entry));

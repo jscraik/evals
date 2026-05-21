@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -335,6 +335,26 @@ test("runtime evidence contract fails closed when the fixture suite path is not 
     assert.match(validation.errors.join("\n"), /runtime evidence fixture path is not a directory/);
     assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
   } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract fails closed when the fixture suite is unreadable", () => {
+  if (process.platform === "win32") return;
+  const repo = makeRepo();
+  const fixtureDir = join(repo, "fixtures", "runtime-evidence");
+  try {
+    runPassingSmoke(repo);
+    chmodSync(fixtureDir, 0o000);
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence fixture suite is unreadable/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
+  } finally {
+    if (existsSync(fixtureDir)) chmodSync(fixtureDir, 0o700);
     cleanup(repo);
   }
 });
