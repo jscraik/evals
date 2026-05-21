@@ -111,6 +111,7 @@ test("run writes a valid local artifact bundle", () => {
     assert.deepEqual(traceEvents.map((event) => event.sequence), expectedTraceEventTypes.map((_, index) => index + 1));
     assert.ok(traceEvents.every((event) => event.run_id === output.run_id));
     const baselineTraceEvent = traceEvents.find((event) => event.event_type === "baseline_result");
+    assert.ok(baselineTraceEvent, "expected baseline_result trace event");
     assert.equal(baselineTraceEvent.status, baseline.comparison_status);
     assert.equal(baselineTraceEvent.detail, "Baseline comparison status: " + baseline.comparison_status + ".");
 
@@ -883,7 +884,9 @@ test("latest validation rejects invalid trace status vocabulary", () => {
     const output = runPassingSmoke(repo);
     const tracePath = join(repo, output.trace_events_path);
     const events = readFileSync(tracePath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
-    events.find((event) => event.event_type === "baseline_result").status = "missing";
+    const baselineTraceEvent = events.find((event) => event.event_type === "baseline_result");
+    assert.ok(baselineTraceEvent, "expected baseline_result trace event");
+    baselineTraceEvent.status = "missing";
     writeFileSync(tracePath, events.map((event) => JSON.stringify(event)).join("\n") + "\n", "utf8");
 
     const result = runCli(repo, ["check", "--json"]);
