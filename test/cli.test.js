@@ -438,6 +438,58 @@ test("runtime evidence contract rejects plugin tool-call attribution without sou
   }
 });
 
+test("runtime evidence contract requires subagent closeout evidence per start", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-repeated-start-closeout";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "artifacts/reviews/reviewer-1.md",
+      detail: "One artifact was written for the first subagent start."
+    });
+    fixture.observed_events.splice(1, 0, {
+      event_id: "evt-004",
+      type: "SubagentStart",
+      actor: "parent-agent",
+      source: "agent",
+      status: "started",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      role: "reviewer",
+      reason: "Retry the same reviewer role.",
+      detail: "A second start should require its own closeout evidence."
+    });
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because only one closeout exists for two starts.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-repeated-start-closeout expected verdict pass, got fail/);
+    assert.match(validation.errors.join("\n"), /expected classification ok, got missing_subagent_artifact/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-repeated-start-closeout");
+    assert.match(runtimeCheck.scorer_results[0].evidence, /fewer ArtifactExpected events than starts/);
+    assert.match(runtimeCheck.scorer_results[0].evidence, /fewer ArtifactWritten events than starts/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("runtime evidence contract applies deterministic classification precedence across scorers", () => {
   const repo = makeRepo();
   try {

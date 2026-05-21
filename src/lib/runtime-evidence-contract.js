@@ -196,22 +196,29 @@ function scoreSubagentArtifactContract(testCase) {
     };
   }
 
-  const expected = new Set();
-  const written = new Set();
+  const starts = new Map();
+  const expected = new Map();
+  const written = new Map();
   const errors = [];
+  const bump = (map, key) => map.set(key, (map.get(key) || 0) + 1);
   for (const event of testCase.observed_events) {
     if (event.type === "SubagentStart") {
       if (!event.subagent_id) errors.push("SubagentStart missing subagent_id");
       if (!event.role) errors.push("SubagentStart " + event.subagent_id + " missing role");
       if (!event.reason) errors.push("SubagentStart " + event.subagent_id + " missing reason");
+      if (event.subagent_id) bump(starts, event.subagent_id);
     }
-    if (event.type === "ArtifactExpected" && event.subagent_id) expected.add(event.subagent_id);
-    if (event.type === "ArtifactWritten" && event.subagent_id) written.add(event.subagent_id);
+    if (event.type === "ArtifactExpected" && event.subagent_id) bump(expected, event.subagent_id);
+    if (event.type === "ArtifactWritten" && event.subagent_id) bump(written, event.subagent_id);
   }
 
-  for (const event of testCase.observed_events.filter((item) => item.type === "SubagentStart")) {
-    if (!expected.has(event.subagent_id)) errors.push("SubagentStart " + event.subagent_id + " has no ArtifactExpected event");
-    if (!written.has(event.subagent_id)) errors.push("SubagentStart " + event.subagent_id + " has no ArtifactWritten event");
+  for (const [subagentId, startCount] of starts) {
+    if ((expected.get(subagentId) || 0) < startCount) {
+      errors.push("SubagentStart " + subagentId + " has fewer ArtifactExpected events than starts");
+    }
+    if ((written.get(subagentId) || 0) < startCount) {
+      errors.push("SubagentStart " + subagentId + " has fewer ArtifactWritten events than starts");
+    }
   }
 
   return {
