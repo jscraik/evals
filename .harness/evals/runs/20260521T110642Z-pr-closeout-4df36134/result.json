@@ -33,7 +33,7 @@
     {
       "type": "trace-events",
       "path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/trace-events.jsonl",
-      "sha256": "3afdba28e8c728fc1e5f16d626a300f42cab7cbffbbc4c68287f29009574b6dd"
+      "sha256": "6232000ee6a561eaec8a76008289e4ec3111cecda17338a67e85aa948afb1add"
     }
   ],
   "errors": []

@@ -17,7 +17,7 @@
     {
       "type": "result",
       "path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/result.json",
-      "sha256": "07eae2a055faff32c6d9dfc5bbe9be9e8ff69bc164f9fbb8c44909299f544fe2",
+      "sha256": "d1c256977dc1e06ece2d0f60b26b84ce125995c895ffb6eae32f44bfbf01619f",
       "required": true
     },
     {
@@ -47,7 +47,7 @@
     {
       "type": "trace-events",
       "path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/trace-events.jsonl",
-      "sha256": "3afdba28e8c728fc1e5f16d626a300f42cab7cbffbbc4c68287f29009574b6dd",
+      "sha256": "6232000ee6a561eaec8a76008289e4ec3111cecda17338a67e85aa948afb1add",
       "required": true
     }
   ]
