@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Run ID | 20260521T105812Z-pr-closeout-4df36134 |
+| Run ID | 20260521T110642Z-pr-closeout-4df36134 |
 | Case ID | pr-closeout |
 | Suite ID | smoke |
 | Status | passed |
@@ -21,13 +21,13 @@ baseline missing: presence_status=missing comparison_status=not_compared promoti
 
 ## Artifacts
 
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/result.json
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/report.md
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/command-log.json
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/manifest.json
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/scorer-results.json
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/baseline-result.json
-- .harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/trace-events.jsonl
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/result.json
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/report.md
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/command-log.json
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/manifest.json
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/scorer-results.json
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/baseline-result.json
+- .harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/trace-events.jsonl
 
 ## Judge Policy
 

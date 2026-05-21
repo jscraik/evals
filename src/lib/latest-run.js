@@ -94,8 +94,8 @@ export function validateLatestRun(latestPath, options = {}) {
       if (!existsSync(artifactPath)) {
         errors.push("manifest artifact missing: " + artifact.path);
       } else {
-        const actual = sha256File(artifactPath);
-        if (actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
+        const actual = safeSha256File(artifactPath, "manifest artifact", artifact.path, errors);
+        if (actual && actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
       }
     }
   }
@@ -192,8 +192,8 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
     const baselinePath = repoRelativePath(baselineRef.path, "baseline current_artifact_ref.path", baselinePathErrors);
     errors.push(...baselinePathErrors);
     if (baselinePath && existsSync(baselinePath)) {
-      const actual = sha256File(baselinePath);
-      if (baselineRef.sha256 !== actual) errors.push("baseline current_artifact_ref.sha256 does not match baseline artifact");
+      const actual = safeSha256File(baselinePath, "baseline current_artifact_ref.path", baselineRef.path, errors);
+      if (actual && baselineRef.sha256 !== actual) errors.push("baseline current_artifact_ref.sha256 does not match baseline artifact");
     } else if (baselinePath) {
       errors.push("baseline current_artifact_ref.path does not exist: " + baselineRef.path);
     }
@@ -202,6 +202,15 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
   }
 
   return errors;
+}
+
+function safeSha256File(path, label, displayPath, errors) {
+  try {
+    return sha256File(path);
+  } catch (error) {
+    errors.push(label + " read failed: " + displayPath + ": " + error.message);
+    return null;
+  }
 }
 
 function sameArtifactPath(left, right) {

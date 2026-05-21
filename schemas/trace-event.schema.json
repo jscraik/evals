@@ -20,7 +20,7 @@
     "schema_version": { "type": "integer", "const": 1 },
     "run_id": { "type": "string", "minLength": 1 },
     "case_id": { "type": "string", "minLength": 1 },
-    "sequence": { "type": "integer" },
+    "sequence": { "type": "integer", "minimum": 1 },
     "event_type": {
       "type": "string",
       "enum": [
@@ -35,8 +35,8 @@
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "status": { "type": "string", "minLength": 1 },
-    "artifact_path": { "type": ["string", "null"] },
-    "exit_code": { "type": ["integer", "null"] },
+    "artifact_path": { "type": ["string", "null"], "minLength": 1 },
+    "exit_code": { "type": ["integer", "null"], "minimum": 0 },
     "detail": { "type": "string", "minLength": 1 }
   }
 }

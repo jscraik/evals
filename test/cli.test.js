@@ -9,9 +9,17 @@ import test from "node:test";
 import { sha256File } from "../src/lib/hash.js";
 import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
 import { verdictFor } from "../src/lib/scoring.js";
-import { requiredTraceEventTypes } from "../src/lib/trace-events.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+const expectedTraceEventTypes = [
+  "run_started",
+  "command_result",
+  "scorer_result",
+  "baseline_result",
+  "artifact_manifest",
+  "validation_result",
+  "run_finished"
+];
 
 function makeRepo() {
   const repo = mkdtempSync(join(tmpdir(), "evals-cli-test-"));
@@ -98,8 +106,8 @@ test("run writes a valid local artifact bundle", () => {
       .trim()
       .split(/\r?\n/)
       .map((line) => JSON.parse(line));
-    assert.deepEqual(traceEvents.map((event) => event.event_type), requiredTraceEventTypes);
-    assert.deepEqual(traceEvents.map((event) => event.sequence), [1, 2, 3, 4, 5, 6, 7]);
+    assert.deepEqual(traceEvents.map((event) => event.event_type), expectedTraceEventTypes);
+    assert.deepEqual(traceEvents.map((event) => event.sequence), expectedTraceEventTypes.map((_, index) => index + 1));
     assert.ok(traceEvents.every((event) => event.run_id === output.run_id));
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
@@ -860,6 +868,23 @@ test("latest validation rejects unsafe trace artifact paths", () => {
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.match(validation.errors.join("\n"), /trace event 2 artifact_path: path must not contain traversal segments/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation reports unreadable trace files as structured failures", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    rmSync(join(repo, output.trace_events_path));
+    mkdirSync(join(repo, output.trace_events_path));
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /trace events file read failed/);
   } finally {
     cleanup(repo);
   }

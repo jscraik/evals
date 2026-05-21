@@ -7,7 +7,7 @@
   "comparison_evidence": "No baseline artifact_path provided; observed baseline presence is missing.",
   "current_artifact_ref": {
     "type": "command-log",
-    "path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/command-log.json",
-    "sha256": "cbfd34fb6c13b0ddcfce4ab571b3043f6ec32ce6bd5c5867b15bf942153d9e48"
+    "path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/command-log.json",
+    "sha256": "f92903985ceba10fcfbbfeafd108e0101c71dd9c1eba0295dcdc040e4fbe5afc"
   }
 }

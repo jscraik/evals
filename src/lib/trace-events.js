@@ -130,7 +130,12 @@ export function validateTraceEventsFile(tracePath, expected) {
   }
 
   const events = [];
-  const lines = readFileSync(tracePath, "utf8").split(/\r?\n/).filter((line) => line.length > 0);
+  let lines;
+  try {
+    lines = readFileSync(tracePath, "utf8").split(/\r?\n/).filter((line) => line.length > 0);
+  } catch (error) {
+    return traceCheck(dataPath, ["trace events file read failed: " + error.message]);
+  }
   if (lines.length === 0) errors.push("trace events file must contain at least one event");
 
   for (const [index, line] of lines.entries()) {

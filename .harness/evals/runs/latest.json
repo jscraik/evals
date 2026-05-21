@@ -1,12 +1,12 @@
 {
-  "run_id": "20260521T105812Z-pr-closeout-4df36134",
+  "run_id": "20260521T110642Z-pr-closeout-4df36134",
   "case_id": "pr-closeout",
   "execution_mode": "synthetic",
-  "manifest_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/manifest.json",
-  "result_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/result.json",
-  "report_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/report.md",
-  "command_log_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/command-log.json",
-  "baseline_result_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/baseline-result.json",
-  "scorer_results_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/scorer-results.json",
-  "trace_events_path": ".harness/evals/runs/20260521T105812Z-pr-closeout-4df36134/trace-events.jsonl"
+  "manifest_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/manifest.json",
+  "result_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/result.json",
+  "report_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/report.md",
+  "command_log_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/command-log.json",
+  "baseline_result_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/baseline-result.json",
+  "scorer_results_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/scorer-results.json",
+  "trace_events_path": ".harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/trace-events.jsonl"
 }

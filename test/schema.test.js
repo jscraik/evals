@@ -4,7 +4,7 @@ import test from "node:test";
 import { supportedSchemaKeywords, validateWithSchema } from "../src/lib/schema.js";
 
 test("schema validator exposes the supported local keyword contract", () => {
-  for (const keyword of ["$schema", "$id", "type", "properties", "required", "additionalProperties", "format"]) {
+  for (const keyword of ["$schema", "$id", "type", "properties", "required", "additionalProperties", "format", "minimum"]) {
     assert.equal(supportedSchemaKeywords.has(keyword), true, keyword + " should be declared as supported");
   }
 });
@@ -12,10 +12,10 @@ test("schema validator exposes the supported local keyword contract", () => {
 test("schema validator rejects unsupported keywords before validating data", () => {
   const errors = validateWithSchema(5, {
     type: "number",
-    minimum: 10
+    maximum: 10
   });
 
-  assert.match(errors.join("\n"), /\$schema\.minimum: unsupported JSON Schema keyword/);
+  assert.match(errors.join("\n"), /\$schema\.maximum: unsupported JSON Schema keyword/);
 });
 
 test("schema validator rejects unsupported nested keywords", () => {
@@ -26,13 +26,19 @@ test("schema validator rejects unsupported nested keywords", () => {
       properties: {
         count: {
           type: "integer",
-          minimum: 5
+          maximum: 5
         }
       }
     }
   );
 
-  assert.match(errors.join("\n"), /\$schema\.properties\.count\.minimum: unsupported JSON Schema keyword/);
+  assert.match(errors.join("\n"), /\$schema\.properties\.count\.maximum: unsupported JSON Schema keyword/);
+});
+
+test("schema validator enforces numeric minimum bounds", () => {
+  assert.match(validateWithSchema(-1, { type: "integer", minimum: 0 }).join("\n"), /must be >= 0/);
+  assert.deepEqual(validateWithSchema(0, { type: "integer", minimum: 0 }), []);
+  assert.deepEqual(validateWithSchema(null, { type: ["integer", "null"], minimum: 0 }), []);
 });
 
 test("schema validator rejects unsupported formats", () => {
