@@ -321,6 +321,24 @@ test("runtime evidence contract fails closed when the fixture suite is empty", (
   }
 });
 
+test("runtime evidence contract fails closed when the fixture suite path is not a directory", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    rmSync(join(repo, "fixtures", "runtime-evidence"), { recursive: true, force: true });
+    writeFileSync(join(repo, "fixtures", "runtime-evidence"), "not a directory", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence fixture path is not a directory/);
+    assert.ok(validation.checks.some((check) => check.label === "runtime evidence suite" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("runtime evidence contract reports malformed fixture JSON", () => {
   const repo = makeRepo();
   try {
@@ -387,6 +405,34 @@ test("runtime evidence contract accepts strict subagent and plugin evidence when
     assert.equal(pluginCheck.status, "pass");
     assert.deepEqual(subagentCheck.scorer_results.map((item) => item.status), ["pass"]);
     assert.deepEqual(pluginCheck.scorer_results.map((item) => item.status), ["pass"]);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects plugin tool-call attribution without source", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "plugin-source-missing";
+    fixture.observed_events[0].plugin_id = "plugin-eval";
+    fixture.observed_events[0].plugin_source = "openai-curated";
+    delete fixture.observed_events[0].source;
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because source attribution is missing.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: plugin-source-missing expected verdict pass, got fail/);
+    assert.match(validation.errors.join("\n"), /expected classification ok, got plugin_attribution_missing/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: plugin-source-missing");
+    assert.equal(runtimeCheck.scorer_results[0].evidence, "tool-call event evt-001 missing source");
   } finally {
     cleanup(repo);
   }

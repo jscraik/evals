@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { rel, repoRoot } from "./paths.js";
@@ -18,6 +18,10 @@ export function validateRuntimeEvidenceSuite(fixturesDir = runtimeEvidenceFixtur
   const errors = [];
   if (!existsSync(fixturesDir)) {
     const message = "runtime evidence fixture directory does not exist: " + rel(fixturesDir);
+    return suiteFailure(fixturesDir, message);
+  }
+  if (!statSync(fixturesDir).isDirectory()) {
+    const message = "runtime evidence fixture path is not a directory: " + rel(fixturesDir);
     return suiteFailure(fixturesDir, message);
   }
 
@@ -225,7 +229,12 @@ function scorePluginAttribution(testCase) {
   const policy = testCase.declared_contract.plugin_policy;
   const errors = [];
   for (const event of testCase.observed_events) {
-    if (event.type !== "ToolCallObserved" || event.source !== "plugin") continue;
+    if (event.type !== "ToolCallObserved") continue;
+    if (!event.source) {
+      errors.push("tool-call event " + event.event_id + " missing source");
+      continue;
+    }
+    if (event.source !== "plugin") continue;
     if (policy.plugin_id_required && !event.plugin_id) errors.push("plugin event " + event.event_id + " missing plugin_id");
     if (policy.plugin_source_required && !event.plugin_source) errors.push("plugin event " + event.event_id + " missing plugin_source");
   }
