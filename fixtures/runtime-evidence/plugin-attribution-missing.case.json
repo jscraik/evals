@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "case_id": "plugin-attribution-missing",
+  "suite_id": "runtime-evidence",
+  "intent": "Prove that plugin-originated tool calls require plugin id and source attribution before they can become trusted runtime evidence.",
+  "fixture_source": {
+    "type": "synthetic",
+    "provenance": "Synthetic Codex-aligned runtime evidence case authored for JSC-345; it contains no private session, PR, Linear, or transcript content.",
+    "redaction_status": "synthetic_no_redaction_needed"
+  },
+  "declared_contract": {
+    "permission_profile": {
+      "name": "repo-read",
+      "filesystem": {
+        "read": ["repo"],
+        "write": [],
+        "deny": ["home", "credential-store"]
+      },
+      "network": false,
+      "approval_fallback": "not_applicable"
+    },
+    "artifact_contract": {
+      "subagent_artifacts_required": false
+    },
+    "plugin_policy": {
+      "plugin_id_required": true,
+      "plugin_source_required": true
+    }
+  },
+  "resolved_runtime": {
+    "approval_state": "not_required",
+    "environment_profile": "local-offline",
+    "runtime_capabilities": ["plugin-tool-events"]
+  },
+  "observed_events": [
+    {
+      "event_id": "evt-001",
+      "type": "ToolCallObserved",
+      "actor": "agent",
+      "source": "plugin",
+      "status": "observed",
+      "effect": "tool_call",
+      "path_scope": "none",
+      "detail": "A plugin-originated tool call was observed without plugin id/source attribution."
+    },
+    {
+      "event_id": "evt-002",
+      "type": "ValidationRun",
+      "actor": "runtime",
+      "source": "runtime",
+      "status": "failed",
+      "effect": "none",
+      "path_scope": "none",
+      "detail": "Plugin attribution fields were missing."
+    }
+  ],
+  "artifact_refs": [
+    {
+      "type": "runtime-evidence-case",
+      "path": "fixtures/runtime-evidence/plugin-attribution-missing.case.json"
+    }
+  ],
+  "scorers": ["plugin-attribution"],
+  "expected": {
+    "verdict": "fail",
+    "classification": "plugin_attribution_missing",
+    "reason": "Plugin-originated runtime events must include plugin_id and plugin_source before they can be trusted."
+  }
+}

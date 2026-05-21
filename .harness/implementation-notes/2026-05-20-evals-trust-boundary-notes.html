@@ -1048,6 +1048,82 @@ close_agent final_git_project_triage</code></pre>
     <p>Review-thread cleanup discovery: CodeRabbit's unresolved inline threads were anchored to the earlier committed proof bundle <code>.harness/evals/runs/20260521T110642Z-pr-closeout-4df36134/trace-events.jsonl</code>. Because that artifact remains part of the PR diff, fixing only the producer and latest proof was insufficient. The older proof bundle was repaired in place by changing its <code>baseline_result.status</code> to <code>not_compared</code> and refreshing the trace, result, and manifest hashes. Validation for the repaired historical proof: <code>node --input-type=module -e 'import assert from "node:assert/strict"; import { readFileSync } from "node:fs"; import { validateTraceEventsFile } from "./src/lib/trace-events.js"; import { sha256File } from "./src/lib/hash.js"; const run = "20260521T110642Z-pr-closeout-4df36134"; const dir = ".harness/evals/runs/" + run; const check = validateTraceEventsFile(dir + "/trace-events.jsonl", { runId: run, caseId: "pr-closeout" }); assert.equal(check.status, "pass", check.errors.join("\\n")); const manifest = JSON.parse(readFileSync(dir + "/manifest.json", "utf8")); const result = JSON.parse(readFileSync(dir + "/result.json", "utf8")); const manifestArtifacts = new Map(manifest.artifacts.map((artifact) =&gt; [artifact.type, artifact])); const resultArtifacts = new Map(result.artifact_refs.map((artifact) =&gt; [artifact.type, artifact])); assert.equal(manifestArtifacts.get("trace-events").sha256, sha256File(dir + "/trace-events.jsonl")); assert.equal(resultArtifacts.get("trace-events").sha256, manifestArtifacts.get("trace-events").sha256); assert.equal(manifestArtifacts.get("result").sha256, sha256File(dir + "/result.json")); console.log("old proof trace contract ok");'</code> passed with output <code>old proof trace contract ok</code>. <code>pnpm evals check --json</code> passed for latest proof <code>20260521T112143Z-pr-closeout-4df36134</code>. <code>git diff --check</code> passed.</p>
   </section>
 
+  <section id="jsc-345-runtime-evidence-contract">
+    <h2>JSC-345 Runtime Evidence Contract v1</h2>
+    <p><time datetime="2026-05-21T11:46:00+01:00">2026-05-21 11:46 BST</time> - Parent-loop reconciliation: PR #11 / <code>JSC-344</code> is merged into <code>main</code> at <code>555b3a45fa9ccc83cef71f55a539d36638695b1e</code>. Local sync with <code>git pull --ff-only origin main</code> reported <code>Already up to date</code>. Linear already showed <code>JSC-344</code> as <code>Done</code> with PR #11 attached. Parent <code>JSC-342</code> remains active because <code>JSC-345</code> is queued under the same runtime-memory parent.</p>
+    <p>Queue decision: start <code>JSC-345</code> now that the trace event timeline exists. The scope is intentionally offline and local: model Codex-shaped runtime behavior as fixtures, schemas, and deterministic scorer checks without importing Codex, agent-skills, coding-harness, plugins, telemetry exporters, cloud runners, or LLM judges.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Deep Module Field</th>
+          <th>Decision</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Source gap</td>
+          <td><code>JSC-345</code>: Runtime Evidence Contract v1 for portable offline runtime proof cases.</td>
+          <td>The Codex runtime alignment addendum recommends permission drift, missing subagent artifact, and plugin attribution cases after trace ownership lands.</td>
+        </tr>
+        <tr>
+          <td>Owner module</td>
+          <td>Create <code>src/lib/runtime-evidence-contract.js</code> as the sole scorer/validator owner.</td>
+          <td>This keeps runtime-evidence logic out of CLI callers and preserves the deep-module format.</td>
+        </tr>
+        <tr>
+          <td>Public interface</td>
+          <td><code>pnpm evals check --json</code> includes runtime-evidence contract checks.</td>
+          <td>Thin surface: no new command is needed for the first offline contract slice.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>Load <code>fixtures/runtime-evidence/*.case.json</code>, validate each file against <code>schemas/runtime-evidence-case.schema.json</code>, score observed events, and pass only when observed verdict/classification matches the fixture expectation.</td>
+          <td>Negative fixtures should be successful tests of guardrails, not failed CI runs.</td>
+        </tr>
+        <tr>
+          <td>Caller contract</td>
+          <td>Cases are portable offline evidence contracts with declared contract, resolved runtime, observed events, artifact refs, scorer list, and expected verdict/classification.</td>
+          <td>Evals remains a proof spine, not a runtime authority for sibling repos.</td>
+        </tr>
+        <tr>
+          <td>Seam test</td>
+          <td>Add tests proving runtime-evidence checks are enforced by <code>pnpm evals check --json</code> and fail when fixture expectations drift from deterministic scorer output.</td>
+          <td>This prevents manifest theatre where fixtures exist but the check lane ignores them.</td>
+        </tr>
+        <tr>
+          <td>Tracer proof</td>
+          <td>The check output records runtime-evidence case labels and pass/fail status.</td>
+          <td>Trace timeline artifacts remain separate; JSC-345 models portable runtime contracts.</td>
+        </tr>
+        <tr>
+          <td>Rollback path</td>
+          <td>Remove the runtime-evidence schema, fixtures, owner module, check wiring, vocabulary entries, and tests.</td>
+          <td>No persisted run-artifact migration should be required.</td>
+        </tr>
+        <tr>
+          <td>Phase-one check</td>
+          <td>No dashboard, external adapter, cloud runner, telemetry exporter as authority, plugin system, source-mining automation, required LLM judge gate, or sibling-repo runtime dependency.</td>
+          <td>All new cases stay synthetic, local, dependency-free, and deterministic.</td>
+        </tr>
+        <tr>
+          <td>Validation gate</td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, <code>pnpm verify</code>, and <code>git diff --check</code>.</td>
+          <td>Outcomes will be appended after implementation.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><time datetime="2026-05-21T12:05:00+01:00">2026-05-21 12:05 BST</time> - Implementation step: created the first Runtime Evidence Contract v1 slice. The deep owner is <code>src/lib/runtime-evidence-contract.js</code>; it loads <code>fixtures/runtime-evidence/*.case.json</code>, validates each fixture with <code>schemas/runtime-evidence-case.schema.json</code>, scores declared contract versus observed events, and only passes when deterministic scorer output matches the fixture expectation. <code>pnpm evals check --json</code> is the public surface, preserving the thin-surface rule.</p>
+    <p>The scorer set covers the three highest-leverage runtime evidence risks from the Codex alignment plan: permission drift, subagent artifact closeout, and plugin attribution. The schema also supports the broader v1 envelope named in <code>JSC-345</code>: permissions, goal state, thread settings, plugin attribution, network policy, package provenance, expected verdict, and expected classification. The extra envelope fields are accepted through the real check path but are not yet treated as runtime authority or external integrations.</p>
+    <p>Representative fixtures added: <code>approval-disabled-readonly-fallback.case.json</code> proves read-only fallback stays within declared permissions; <code>subagent-artifact-contract.case.json</code> is an expected negative case for missing subagent artifact evidence; <code>plugin-attribution-missing.case.json</code> is an expected negative case for plugin-originated runtime events without plugin id/source attribution. The negative fixtures pass only because their expected verdicts match the deterministic failure classification.</p>
+    <p>Seam tests: <code>test/cli.test.js</code> proves runtime-evidence checks are reachable from <code>pnpm evals check --json</code>, rejects expected-verdict drift, rejects schema-invalid cases, fails closed when the fixture suite is missing or empty, reports malformed runtime-evidence JSON, accepts strict valid subagent/plugin evidence, and locks deterministic classification precedence for mixed-scorer cases. Runtime impact remains local/offline and dependency-free.</p>
+    <p><time datetime="2026-05-21T12:16:00+01:00">2026-05-21 12:16 BST</time> - Review pass: architecture and correctness reviews reported no blocking findings. Simplicity review correctly flagged duplicate suite-failure construction and brittle fixture-field assertions. Correctness review noted two residual testing gaps: missing-suite behavior and multi-scorer classification precedence.</p>
+    <p>Review correction: <code>src/lib/runtime-evidence-contract.js</code> now uses a single <code>suiteFailure</code> helper for missing and empty fixture-suite failures. The runtime-evidence behavior test no longer asserts fixture internals directly. New seams prove <code>pnpm evals check --json</code> fails closed when <code>fixtures/runtime-evidence</code> is missing and that a multi-scorer case reports deterministic scorer order and classification precedence while still passing when the fixture expectation matches that negative classification.</p>
+    <p><time datetime="2026-05-21T12:24:00+01:00">2026-05-21 12:24 BST</time> - Testing review follow-up: the testing reviewer flagged empty-suite, malformed-fixture, strict-positive, and mixed-scorer coverage as unproven. Additional tests now cover an empty runtime-evidence fixture directory, malformed runtime-evidence JSON, positive strict subagent artifact evidence, positive strict plugin attribution evidence, and a mixed-scorer case with one passing scorer followed by two failing scorers. This keeps the contract honest in both directions: it catches bad evidence and accepts valid evidence.</p>
+    <p><time datetime="2026-05-21T12:30:00+01:00">2026-05-21 12:30 BST</time> - Cleanup review: <code>$unslopify</code> routing gates passed with <code>./bin/ask skills resolve unslopify --json</code> and <code>./bin/ask skills handles --check --json</code> in <code>/Users/jamiecraik/dev/agent-skills</code>. Scoped reference evidence with <code>rg</code> found the runtime-evidence owner module reachable from <code>src/commands/validation.js</code>, schema target registration reachable from <code>src/lib/schema.js</code>, and tests covering every exported runtime-evidence function. No dead owner module, stale import, orphaned fixture, or duplicate generated run bundle remained after cleanup.</p>
+    <p>Validation evidence after review corrections: <code>pnpm test</code> passed with 86 tests. <code>pnpm evals check --json</code> passed and emitted runtime-evidence checks for <code>approval-disabled-readonly-fallback</code>, <code>plugin-attribution-missing</code>, and <code>subagent-artifact-contract</code>. <code>git diff --check</code> passed. Final <code>pnpm verify</code> passed and refreshed latest proof at <code>.harness/evals/runs/20260521T120709Z-pr-closeout-4df36134/</code>, with runtime-evidence checks included in the enforced check lane and no credential-like patterns found.</p>
+  </section>
+
   <section id="follow-up-recommendations">
     <h2>Follow-up Recommendations</h2>
     <p>After Phase 1 lands, move to the trace/runtime artifact phase: explicit trace-event schemas, latest-run schema hardening, replayable failure classification, and a real-execution contract only when the safe command boundary is defined.</p>

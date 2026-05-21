@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { emitFailure } from "../lib/failures.js";
 import { validateCaseFile, validateLatestRun } from "../lib/latest-run.js";
 import { insideRepo, rel, repoRoot } from "../lib/paths.js";
+import { validateRuntimeEvidenceSuite } from "../lib/runtime-evidence-contract.js";
 
 /**
  * Print a validation result as either pretty JSON or a human-readable summary.
@@ -80,8 +81,9 @@ export function checkCommand(jsonMode) {
   const latestPath = join(repoRoot, ".harness", "evals", "runs", "latest.json");
   const caseCheck = validateCaseFile("fixtures/smoke/pr-closeout.case.json");
   const latestValidation = validateLatestRun(latestPath);
-  const checks = [caseCheck].concat(latestValidation.checks);
-  const errors = caseCheck.errors.concat(latestValidation.errors);
+  const runtimeEvidenceValidation = validateRuntimeEvidenceSuite();
+  const checks = [caseCheck].concat(latestValidation.checks, runtimeEvidenceValidation.checks);
+  const errors = caseCheck.errors.concat(latestValidation.errors, runtimeEvidenceValidation.errors);
   const validation = {
     status: errors.length === 0 ? "passed" : "failed",
     latest_path: rel(latestPath),

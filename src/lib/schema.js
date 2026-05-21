@@ -35,6 +35,10 @@ export const schemaTargets = {
   traceEvent: {
     schema: join(schemaDir, "trace-event.schema.json"),
     label: "trace events"
+  },
+  runtimeEvidenceCase: {
+    schema: join(schemaDir, "runtime-evidence-case.schema.json"),
+    label: "runtime evidence case"
   }
 };
 

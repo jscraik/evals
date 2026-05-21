@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "case_id": "subagent-artifact-contract",
+  "suite_id": "runtime-evidence",
+  "intent": "Prove that a SubagentStart without a matching ArtifactWritten event is classified as missing subagent artifact evidence.",
+  "fixture_source": {
+    "type": "synthetic",
+    "provenance": "Synthetic Codex-aligned runtime evidence case authored for JSC-345; it contains no private session, PR, Linear, or transcript content.",
+    "redaction_status": "synthetic_no_redaction_needed"
+  },
+  "declared_contract": {
+    "permission_profile": {
+      "name": "repo-read",
+      "filesystem": {
+        "read": ["repo"],
+        "write": [],
+        "deny": ["home", "credential-store"]
+      },
+      "network": false,
+      "approval_fallback": "not_applicable"
+    },
+    "artifact_contract": {
+      "subagent_artifacts_required": true
+    },
+    "plugin_policy": {
+      "plugin_id_required": false,
+      "plugin_source_required": false
+    }
+  },
+  "resolved_runtime": {
+    "approval_state": "not_required",
+    "environment_profile": "local-offline",
+    "runtime_capabilities": ["subagent-events"]
+  },
+  "observed_events": [
+    {
+      "event_id": "evt-001",
+      "type": "SubagentStart",
+      "actor": "parent-agent",
+      "source": "agent",
+      "status": "started",
+      "effect": "none",
+      "path_scope": "none",
+      "subagent_id": "reviewer-1",
+      "role": "reviewer",
+      "reason": "Review runtime evidence contract changes.",
+      "detail": "Subagent started with a declared role and reason."
+    },
+    {
+      "event_id": "evt-002",
+      "type": "ArtifactExpected",
+      "actor": "parent-agent",
+      "source": "agent",
+      "status": "expected",
+      "effect": "none",
+      "path_scope": "none",
+      "subagent_id": "reviewer-1",
+      "artifact_type": "review_report",
+      "artifact_path": "artifacts/reviews/reviewer-1.md",
+      "detail": "Parent expected a review artifact from the subagent."
+    },
+    {
+      "event_id": "evt-003",
+      "type": "RunFinalized",
+      "actor": "runtime",
+      "source": "runtime",
+      "status": "failed",
+      "effect": "none",
+      "path_scope": "none",
+      "detail": "Run finalized without a matching ArtifactWritten event."
+    }
+  ],
+  "artifact_refs": [
+    {
+      "type": "runtime-evidence-case",
+      "path": "fixtures/runtime-evidence/subagent-artifact-contract.case.json"
+    }
+  ],
+  "scorers": ["subagent-artifact-contract"],
+  "expected": {
+    "verdict": "fail",
+    "classification": "missing_subagent_artifact",
+    "reason": "Every SubagentStart must close with matching ArtifactExpected and ArtifactWritten evidence."
+  }
+}
