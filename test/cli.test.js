@@ -101,6 +101,7 @@ test("run writes a valid local artifact bundle", () => {
 
     const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
     assert.ok(scorerResults.results.some((item) => item.scorer_id === "baseline-presence" && item.status === "pass"));
+    const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
 
     const traceEvents = readFileSync(join(repo, output.trace_events_path), "utf8")
       .trim()
@@ -109,6 +110,9 @@ test("run writes a valid local artifact bundle", () => {
     assert.deepEqual(traceEvents.map((event) => event.event_type), expectedTraceEventTypes);
     assert.deepEqual(traceEvents.map((event) => event.sequence), expectedTraceEventTypes.map((_, index) => index + 1));
     assert.ok(traceEvents.every((event) => event.run_id === output.run_id));
+    const baselineTraceEvent = traceEvents.find((event) => event.event_type === "baseline_result");
+    assert.equal(baselineTraceEvent.status, baseline.comparison_status);
+    assert.equal(baselineTraceEvent.detail, "Baseline comparison status: " + baseline.comparison_status + ".");
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
@@ -868,6 +872,25 @@ test("latest validation rejects unsafe trace artifact paths", () => {
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.match(validation.errors.join("\n"), /trace event 2 artifact_path: path must not contain traversal segments/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects invalid trace status vocabulary", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const tracePath = join(repo, output.trace_events_path);
+    const events = readFileSync(tracePath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+    events.find((event) => event.event_type === "baseline_result").status = "missing";
+    writeFileSync(tracePath, events.map((event) => JSON.stringify(event)).join("\n") + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /trace event 4 status: expected one of not_compared, matched, changed, error, got missing/);
   } finally {
     cleanup(repo);
   }

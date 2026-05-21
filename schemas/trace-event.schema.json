@@ -34,7 +34,11 @@
       ]
     },
     "occurred_at": { "type": "string", "format": "date-time" },
-    "status": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Trace status is validated by event_type in src/lib/trace-events.js: run_started=started, command_result=passed|failed, scorer_result=pass|fail|blocked, baseline_result=not_compared|matched|changed|error, artifact_manifest=written, validation_result=passed|failed, run_finished=passed|failed|blocked."
+    },
     "artifact_path": { "type": ["string", "null"], "minLength": 1 },
     "exit_code": { "type": ["integer", "null"], "minimum": 0 },
     "detail": { "type": "string", "minLength": 1 }

@@ -14,6 +14,15 @@ export const requiredTraceEventTypes = [
 ];
 
 const artifactBearingTraceEventTypes = new Set(requiredTraceEventTypes.filter((eventType) => eventType !== "run_started"));
+const traceStatusValuesByType = {
+  run_started: ["started"],
+  command_result: ["passed", "failed"],
+  scorer_result: ["pass", "fail", "blocked"],
+  baseline_result: ["not_compared", "matched", "changed", "error"],
+  artifact_manifest: ["written"],
+  validation_result: ["passed", "failed"],
+  run_finished: ["passed", "failed", "blocked"]
+};
 
 /**
  * Build the canonical local trace timeline for a completed eval run.
@@ -66,7 +75,7 @@ export function buildTraceEvents(input) {
     {
       event_type: "baseline_result",
       occurred_at: occurredAt,
-      status: baseline.presence_status,
+      status: baseline.comparison_status,
       artifact_path: paths.baselineResultPath,
       exit_code: null,
       detail: "Baseline comparison status: " + baseline.comparison_status + "."
@@ -183,6 +192,10 @@ function traceInvariantErrors(events, expected) {
     if (event.sequence !== expectedSequence) errors.push("trace event " + expectedSequence + ": expected sequence " + expectedSequence + ", got " + event.sequence);
     if (event.run_id !== expected.runId) errors.push("trace event " + expectedSequence + ": expected run_id " + expected.runId + ", got " + event.run_id);
     if (event.case_id !== expected.caseId) errors.push("trace event " + expectedSequence + ": expected case_id " + expected.caseId + ", got " + event.case_id);
+    const allowedStatuses = traceStatusValuesByType[event.event_type];
+    if (allowedStatuses && !allowedStatuses.includes(event.status)) {
+      errors.push("trace event " + expectedSequence + " status: expected one of " + allowedStatuses.join(", ") + ", got " + event.status);
+    }
     if (artifactBearingTraceEventTypes.has(event.event_type) || event.artifact_path) {
       const pathErrors = [];
       repoRelativePath(event.artifact_path, "trace event " + expectedSequence + " artifact_path", pathErrors);
