@@ -31,6 +31,10 @@ export const schemaTargets = {
   state: {
     schema: join(schemaDir, "runtime-state.schema.json"),
     label: "runtime state"
+  },
+  traceEvent: {
+    schema: join(schemaDir, "trace-event.schema.json"),
+    label: "trace events"
   }
 };
 
@@ -43,6 +47,7 @@ export const supportedSchemaKeywords = new Set([
   "enum",
   "format",
   "items",
+  "minimum",
   "minItems",
   "minLength",
   "pattern",
@@ -162,6 +167,9 @@ function validateValueWithSchema(value, schema, path) {
   if (schema.enum && !schema.enum.includes(value)) addError(errors, path, "expected one of " + schema.enum.join(", "));
   if (schema.minLength !== undefined && typeof value === "string" && value.length < schema.minLength) {
     addError(errors, path, "must have length >= " + schema.minLength);
+  }
+  if (schema.minimum !== undefined && typeof value === "number" && value < schema.minimum) {
+    addError(errors, path, "must be >= " + schema.minimum);
   }
   if (schema.pattern && typeof value === "string" && !new RegExp(schema.pattern).test(value)) {
     addError(errors, path, "must match pattern " + schema.pattern);

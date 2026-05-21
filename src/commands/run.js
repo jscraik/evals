@@ -10,6 +10,7 @@ import { validateLatestRun } from "../lib/latest-run.js";
 import { rel, repoRelativePath, repoRoot, utcBasic } from "../lib/paths.js";
 import { buildReport } from "../lib/report.js";
 import { scoreArtifactCompleteness, scoreBaselinePresence, scoreRuntime, simulatedRunOutput, verdictFor } from "../lib/scoring.js";
+import { buildTraceEvents, writeTraceEvents } from "../lib/trace-events.js";
 
 /**
  * Constructs a synthetic execution record for a test case.
@@ -140,8 +141,9 @@ export function runCase(casePath, jsonMode) {
   const manifestPath = join(repoRoot, expectedLatestPath(runId, "manifest_path"));
   const scorerResultsPath = join(repoRoot, expectedLatestPath(runId, "scorer_results_path"));
   const baselineResultPath = join(repoRoot, expectedLatestPath(runId, "baseline_result_path"));
+  const traceEventsPath = join(repoRoot, expectedLatestPath(runId, "trace_events_path"));
   const failurePath = join(runDir, "failure.json");
-  const artifactPaths = [resultPath, reportPath, commandLogPath, manifestPath, scorerResultsPath, baselineResultPath];
+  const artifactPaths = [resultPath, reportPath, commandLogPath, manifestPath, scorerResultsPath, baselineResultPath, traceEventsPath];
   const artifactRelPaths = artifactPaths.map(rel);
   const artifactNames = artifactPaths.map((path) => path.split(sep).at(-1));
   setActiveRunContext({
@@ -174,12 +176,35 @@ export function runCase(casePath, jsonMode) {
   writeJson(baselineResultPath, baseline);
   writeJson(scorerResultsPath, scorerEnvelope);
   writeFileSync(reportPath, report, "utf8");
+  const latestPath = join(repoRoot, ".harness", "evals", "runs", "latest.json");
+  const draftTraceEvents = buildTraceEvents({
+    runId,
+    caseId: testCase.case_id,
+    startedAt,
+    finishedAt: new Date(),
+    execution,
+    deterministicVerdict,
+    status,
+    baseline,
+    paths: {
+      resultPath: rel(resultPath),
+      commandLogPath: rel(commandLogPath),
+      manifestPath: rel(manifestPath),
+      scorerResultsPath: rel(scorerResultsPath),
+      baselineResultPath: rel(baselineResultPath),
+      latestPath: rel(latestPath)
+    },
+    validationStatus: "pending",
+    validationErrors: []
+  });
+  writeTraceEvents(traceEventsPath, draftTraceEvents);
 
   const artifactRefs = [
     { type: "report", path: rel(reportPath), sha256: sha256File(reportPath) },
     { type: "command-log", path: rel(commandLogPath), sha256: sha256File(commandLogPath) },
     { type: "scorer-results", path: rel(scorerResultsPath), sha256: sha256File(scorerResultsPath) },
-    { type: "baseline-result", path: rel(baselineResultPath), sha256: sha256File(baselineResultPath) }
+    { type: "baseline-result", path: rel(baselineResultPath), sha256: sha256File(baselineResultPath) },
+    { type: "trace-events", path: rel(traceEventsPath), sha256: sha256File(traceEventsPath) }
   ];
   const result = {
     schema_version: 1,
@@ -191,6 +216,7 @@ export function runCase(casePath, jsonMode) {
     deterministic_verdict: deterministicVerdict,
     scorer_results_path: rel(scorerResultsPath),
     baseline_result_path: rel(baselineResultPath),
+    trace_events_path: rel(traceEventsPath),
     artifact_refs: artifactRefs,
     errors: []
   };
@@ -201,7 +227,8 @@ export function runCase(casePath, jsonMode) {
     { type: "report", path: rel(reportPath), sha256: sha256File(reportPath), required: true },
     { type: "command-log", path: rel(commandLogPath), sha256: sha256File(commandLogPath), required: true },
     { type: "scorer-results", path: rel(scorerResultsPath), sha256: sha256File(scorerResultsPath), required: true },
-    { type: "baseline-result", path: rel(baselineResultPath), sha256: sha256File(baselineResultPath), required: true }
+    { type: "baseline-result", path: rel(baselineResultPath), sha256: sha256File(baselineResultPath), required: true },
+    { type: "trace-events", path: rel(traceEventsPath), sha256: sha256File(traceEventsPath), required: true }
   ];
   const manifest = {
     schema_version: 1,
@@ -222,7 +249,6 @@ export function runCase(casePath, jsonMode) {
   };
   writeJson(manifestPath, manifest);
 
-  const latestPath = join(repoRoot, ".harness", "evals", "runs", "latest.json");
   const latest = {
     run_id: runId,
     case_id: testCase.case_id,
@@ -232,9 +258,47 @@ export function runCase(casePath, jsonMode) {
     report_path: rel(reportPath),
     command_log_path: rel(commandLogPath),
     baseline_result_path: rel(baselineResultPath),
-    scorer_results_path: rel(scorerResultsPath)
+    scorer_results_path: rel(scorerResultsPath),
+    trace_events_path: rel(traceEventsPath)
   };
   writeJson(latestPath, latest);
+
+  const preTraceValidation = validateLatestRun(latestPath, { validateTraceEvents: false });
+  if (preTraceValidation.errors.length > 0) {
+    emitFailure(jsonMode, {
+      status: "failed",
+      requirement: "artifact schema validation",
+      errors: preTraceValidation.errors,
+      recovery: "Fix generated artifact shape before trusting this run."
+    });
+  }
+
+  const traceEvents = buildTraceEvents({
+    runId,
+    caseId: testCase.case_id,
+    startedAt,
+    finishedAt: new Date(),
+    execution,
+    deterministicVerdict,
+    status,
+    baseline,
+    paths: {
+      resultPath: rel(resultPath),
+      commandLogPath: rel(commandLogPath),
+      manifestPath: rel(manifestPath),
+      scorerResultsPath: rel(scorerResultsPath),
+      baselineResultPath: rel(baselineResultPath),
+      latestPath: rel(latestPath)
+    },
+    validationStatus: preTraceValidation.status,
+    validationErrors: preTraceValidation.errors
+  });
+  writeTraceEvents(traceEventsPath, traceEvents);
+  artifactRefs.find((artifact) => artifact.type === "trace-events").sha256 = sha256File(traceEventsPath);
+  writeJson(resultPath, result);
+  manifestArtifacts.find((artifact) => artifact.type === "trace-events").sha256 = sha256File(traceEventsPath);
+  manifestArtifacts.find((artifact) => artifact.type === "result").sha256 = sha256File(resultPath);
+  writeJson(manifestPath, manifest);
 
   const validation = validateLatestRun(latestPath);
   if (validation.errors.length > 0) {
@@ -258,7 +322,8 @@ export function runCase(casePath, jsonMode) {
     command_log_path: rel(commandLogPath),
     baseline_path: rel(baselineResultPath),
     baseline_result_path: rel(baselineResultPath),
-    scorer_results_path: rel(scorerResultsPath)
+    scorer_results_path: rel(scorerResultsPath),
+    trace_events_path: rel(traceEventsPath)
   };
 
   if (jsonMode) {
@@ -271,6 +336,7 @@ export function runCase(casePath, jsonMode) {
     console.log("result: " + output.result_path);
     console.log("report: " + output.report_path);
     console.log("command_log: " + output.command_log_path);
+    console.log("trace_events: " + output.trace_events_path);
   }
   clearActiveRunContext();
   process.exit(deterministicVerdict === "pass" ? 0 : 1);

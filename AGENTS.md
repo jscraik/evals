@@ -137,8 +137,8 @@ rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" fi
 
 The check command validates the smoke fixture against
 'schemas/eval-case.schema.json' and validates the latest result, manifest,
-scorer results, baseline result, and manifest artifact hashes from
-'.harness/evals/runs/latest.json'.
+scorer results, baseline result, trace event timeline, and manifest artifact
+hashes from '.harness/evals/runs/latest.json'.
 
 The regex check is a lightweight phase-one privacy aid, not full secret-scan
 coverage.

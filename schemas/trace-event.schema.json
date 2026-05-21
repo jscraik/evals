@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/trace-event.schema.json",
+  "title": "Trace Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "case_id",
+    "sequence",
+    "event_type",
+    "occurred_at",
+    "status",
+    "artifact_path",
+    "exit_code",
+    "detail"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "case_id": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "run_started",
+        "command_result",
+        "scorer_result",
+        "baseline_result",
+        "artifact_manifest",
+        "validation_result",
+        "run_finished"
+      ]
+    },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Trace status is validated by event_type in src/lib/trace-events.js: run_started=started, command_result=passed|failed, scorer_result=pass|fail|blocked, baseline_result=not_compared|matched|changed|error, artifact_manifest=written, validation_result=passed|failed, run_finished=passed|failed|blocked."
+    },
+    "artifact_path": { "type": ["string", "null"], "minLength": 1 },
+    "exit_code": { "type": ["integer", "null"], "minimum": 0 },
+    "detail": { "type": "string", "minLength": 1 }
+  }
+}

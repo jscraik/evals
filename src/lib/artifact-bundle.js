@@ -4,7 +4,8 @@ export const latestArtifactContracts = [
   { key: "report_path", type: "report", filename: "report.md", inManifest: true, inResultRefs: true },
   { key: "command_log_path", type: "command-log", filename: "command-log.json", inManifest: true, inResultRefs: true },
   { key: "baseline_result_path", type: "baseline-result", filename: "baseline-result.json", inManifest: true, inResultRefs: true },
-  { key: "scorer_results_path", type: "scorer-results", filename: "scorer-results.json", inManifest: true, inResultRefs: true }
+  { key: "scorer_results_path", type: "scorer-results", filename: "scorer-results.json", inManifest: true, inResultRefs: true },
+  { key: "trace_events_path", type: "trace-events", filename: "trace-events.jsonl", inManifest: true, inResultRefs: true }
 ];
 
 export const requiredLatestKeys = latestArtifactContracts.map((contract) => contract.key);

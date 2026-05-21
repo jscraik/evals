@@ -13,7 +13,8 @@
     "report_path",
     "command_log_path",
     "baseline_result_path",
-    "scorer_results_path"
+    "scorer_results_path",
+    "trace_events_path"
   ],
   "properties": {
     "run_id": { "type": "string", "minLength": 1 },
@@ -24,6 +25,7 @@
     "report_path": { "type": "string", "minLength": 1 },
     "command_log_path": { "type": "string", "minLength": 1 },
     "baseline_result_path": { "type": "string", "minLength": 1 },
-    "scorer_results_path": { "type": "string", "minLength": 1 }
+    "scorer_results_path": { "type": "string", "minLength": 1 },
+    "trace_events_path": { "type": "string", "minLength": 1 }
   }
 }

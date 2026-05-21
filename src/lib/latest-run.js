@@ -6,6 +6,7 @@ import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
 import { insideRepo, rel, repoRelativePath } from "./paths.js";
 import { schemaCheck, schemaCheckFromObject } from "./schema.js";
+import { validateTraceEventsFile } from "./trace-events.js";
 
 /**
  * Validates a case JSON file against the "case" schema.
@@ -27,7 +28,7 @@ export function validateCaseFile(casePath) {
  *   - `checks`: array of schema check results produced for any referenced files (e.g. result, manifest, scorers, baseline).
  *   - `errors`: list of human-readable validation error messages collected during processing.
  */
-export function validateLatestRun(latestPath) {
+export function validateLatestRun(latestPath, options = {}) {
   const absoluteLatestPath = insideRepo(latestPath);
   const errors = [];
   let latest;
@@ -63,6 +64,9 @@ export function validateLatestRun(latestPath) {
   if (latestPaths.manifest_path) checks.push(schemaCheck("manifest", latestPaths.manifest_path));
   if (latestPaths.scorer_results_path) checks.push(schemaCheck("scorers", latestPaths.scorer_results_path));
   if (latestPaths.baseline_result_path) checks.push(schemaCheck("baseline", latestPaths.baseline_result_path));
+  if (latestPaths.trace_events_path && options.validateTraceEvents !== false) {
+    checks.push(validateTraceEventsFile(latestPaths.trace_events_path, { runId: latest.run_id, caseId: latest.case_id }));
+  }
 
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
 
@@ -90,8 +94,8 @@ export function validateLatestRun(latestPath) {
       if (!existsSync(artifactPath)) {
         errors.push("manifest artifact missing: " + artifact.path);
       } else {
-        const actual = sha256File(artifactPath);
-        if (actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
+        const actual = safeSha256File(artifactPath, "manifest artifact", artifact.path, errors);
+        if (actual && actual !== artifact.sha256) errors.push("manifest hash mismatch: " + artifact.path);
       }
     }
   }
@@ -137,6 +141,9 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
     }
     if (result.baseline_result_path !== latest.baseline_result_path) {
       errors.push("result.baseline_result_path: expected " + latest.baseline_result_path + ", got " + result.baseline_result_path);
+    }
+    if (result.trace_events_path !== latest.trace_events_path) {
+      errors.push("result.trace_events_path: expected " + latest.trace_events_path + ", got " + result.trace_events_path);
     }
   }
 
@@ -185,8 +192,8 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
     const baselinePath = repoRelativePath(baselineRef.path, "baseline current_artifact_ref.path", baselinePathErrors);
     errors.push(...baselinePathErrors);
     if (baselinePath && existsSync(baselinePath)) {
-      const actual = sha256File(baselinePath);
-      if (baselineRef.sha256 !== actual) errors.push("baseline current_artifact_ref.sha256 does not match baseline artifact");
+      const actual = safeSha256File(baselinePath, "baseline current_artifact_ref.path", baselineRef.path, errors);
+      if (actual && baselineRef.sha256 !== actual) errors.push("baseline current_artifact_ref.sha256 does not match baseline artifact");
     } else if (baselinePath) {
       errors.push("baseline current_artifact_ref.path does not exist: " + baselineRef.path);
     }
@@ -195,6 +202,15 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
   }
 
   return errors;
+}
+
+function safeSha256File(path, label, displayPath, errors) {
+  try {
+    return sha256File(path);
+  } catch (error) {
+    errors.push(label + " read failed: " + displayPath + ": " + error.message);
+    return null;
+  }
 }
 
 function sameArtifactPath(left, right) {

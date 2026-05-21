@@ -4,7 +4,7 @@
   "title": "Eval Result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "run_id", "case_id", "suite_id", "execution_mode", "status", "deterministic_verdict", "scorer_results_path", "baseline_result_path", "artifact_refs", "errors"],
+  "required": ["schema_version", "run_id", "case_id", "suite_id", "execution_mode", "status", "deterministic_verdict", "scorer_results_path", "baseline_result_path", "trace_events_path", "artifact_refs", "errors"],
   "properties": {
     "schema_version": { "type": "integer", "const": 1 },
     "run_id": { "type": "string", "minLength": 1 },
@@ -15,6 +15,7 @@
     "deterministic_verdict": { "type": "string", "enum": ["pass", "fail", "blocked"] },
     "scorer_results_path": { "type": "string", "minLength": 1 },
     "baseline_result_path": { "type": "string", "minLength": 1 },
+    "trace_events_path": { "type": "string", "minLength": 1 },
     "artifact_refs": {
       "type": "array",
       "items": {
