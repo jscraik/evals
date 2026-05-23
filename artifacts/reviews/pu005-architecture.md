@@ -13,8 +13,8 @@ or a new architecture boundary.
 | Severity | Finding | Evidence | Disposition |
 | --- | --- | --- | --- |
 | medium | Goal-board human table drifted from machine state. | `.harness/goals/2026-05-23-jsc-346-runtime-evidence-trust-boundary/state.yaml` marked PU-001 through PU-004 complete while `goal.md` still said pending. | Fixed in PU-005 by aligning `goal.md` with `state.yaml`. |
-| medium | Tracker truth drifted from local runtime truth. | Live Linear recheck showed JSC-346 through JSC-350 in `Todo` after local implementation and validation had passed. | Fixed by moving all five issues to `In Review` and posting parent evidence; not marked `Done` because PR/CI/mergeability are unproven. |
-| informational | Remote delivery state remains a separate authority. | `gh pr list --repo jscraik/evals --state open --json number,title,headRefName,baseRefName,url` returned `[]`. | Held open as delivery risk; no architecture change required. |
+| medium | Tracker truth drifted from local runtime truth. | Live Linear recheck showed JSC-346 through JSC-350 in `Todo` after local implementation and validation had passed. | Fixed by moving all five issues through `In Review`, then `Done` after PR #13 merged and final evidence was reconciled. |
+| informational | Remote delivery state remains a separate authority. | PR #13 merged after review remediation and remote check rechecks. | Closed as delivery evidence, not scorer authority. |
 
 ## Architecture Decision
 

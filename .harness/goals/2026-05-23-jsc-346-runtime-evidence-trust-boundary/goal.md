@@ -2,7 +2,7 @@
 schema_version: 1
 goal_id: 2026-05-23-jsc-346-runtime-evidence-trust-boundary
 title: JSC-346 Runtime Evidence Trust Boundary Governed Execution
-status: active
+status: complete
 created_at: 2026-05-23T14:27:45Z
 plan: ../../plan/2026-05-22-jsc-346-runtime-evidence-trust-boundary-plan.md
 spec: ../../specs/2026-05-22-jsc-346-runtime-evidence-trust-boundary-spec.md
@@ -81,7 +81,7 @@ Every slice must pass the following lifecycle before progression:
 | PU-002 | JSC-349 | Enforce runtime-evidence policy coverage. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
 | PU-003 | JSC-347 | Align pnpm evals state --json readiness with runtime-evidence health. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
 | PU-004 | JSC-350 | Harden credential scan proof-surface coverage. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
-| PU-005 | JSC-346 | Reconcile parent governance, docs, review stack, and delivery readiness. | in_progress | GIT TRIAGE HANDOFF |
+| PU-005 | JSC-346 | Reconcile parent governance, docs, review stack, and delivery readiness. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
 
 ## Stop Conditions
 

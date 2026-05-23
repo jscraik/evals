@@ -52,23 +52,23 @@ rechecked against the current branch head.
 | PU-004 / JSC-350 | complete locally | credential scan proof roots now include fixtures, schemas, src, scripts, test, tests, .harness/evals, .harness/research, .harness/specs, .harness/plan, .harness/plans, and .harness/linear with redacted rg and Node fallback behavior. |
 | Review artifacts | pass locally | artifacts/reviews/pu001-* through artifacts/reviews/pu004-* record architecture, simplification, testing, docs/language, and coordination outcomes. |
 | Local validation | pass | pnpm test; pnpm evals state --json; pnpm evals check --json; pnpm verify; EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js. |
-| Linear parent and children | in review | JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 were rechecked live and moved from Todo to In Review on 2026-05-23 with a parent comment containing validation evidence. |
-| Remote delivery lane | active / not merge-ready | PR #13 exists for `jscraik/jsc-346-runtime-evidence-trust-boundary` against `main`. Remote CI, review-thread, and mergeability proof must be rechecked after each push. Do not mark Linear issues Done until those surfaces are verified for the current head. |
+| Linear parent and children | Done | JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 were rechecked live as Done on 2026-05-23 after PR #13 merged. |
+| Remote delivery lane | merged / closed | PR #13 merged to `main` at head `e0160cdcfd66a7c38132be1590fd828e50c4afcb`. Deterministic gates, Semgrep, Socket, and Snyk passed; all review threads were resolved. CodeRabbit remained blocked by insufficient review credits, but no emitted actionable finding remained unresolved before merge. |
 
 ### JSC-346 Parent Reconciliation
 
-Parent-loop reconciliation decision: keep JSC-346 and children in Linear
-`In Review` until branch, PR, remote check, review-thread, and mergeability
-evidence exist. Local runtime implementation is complete enough for review, but
-not complete enough for a remote delivery closeout claim.
+Parent-loop reconciliation decision: close JSC-346 and children because runtime
+implementation, validation, review-thread triage, PR merge, and live Linear
+state are reconciled. CodeRabbit's final check remained an external review-credit
+capacity failure, not an unresolved emitted code finding.
 
 | Issue | Live Linear State | Local Runtime State | Decision |
 | --- | --- | --- | --- |
-| JSC-346 | In Review | parent evidence reconciled | hold open for PR, CI, review, and mergeability proof |
-| JSC-347 | In Review | runtime-state readiness enforcement implemented and tested | hold open for PR review |
-| JSC-348 | In Review | subagent artifact identity enforcement implemented and tested | hold open for PR review |
-| JSC-349 | In Review | policy coverage enforcement implemented and tested | hold open for PR review |
-| JSC-350 | In Review | credential scan proof roots and fallback parity implemented and tested | hold open for PR review |
+| JSC-346 | Done | parent evidence reconciled | closed after PR #13 merged and final live tracker recheck passed |
+| JSC-347 | Done | runtime-state readiness enforcement implemented and tested | closed after parent reconciliation |
+| JSC-348 | Done | subagent artifact identity enforcement implemented and tested | closed after parent reconciliation |
+| JSC-349 | Done | policy coverage enforcement implemented and tested | closed after parent reconciliation |
+| JSC-350 | Done | credential scan proof roots and fallback parity implemented and tested | closed after parent reconciliation |
 
 ## Command Output
 
@@ -197,7 +197,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | git remote -v | pass | origin is 'https://github.com/jscraik/evals.git' for fetch and push |
 | git log --oneline --decorate --max-count=3 | pass | History includes initial implementation commit 8029517, delivery-state evidence refreshes, and schema-validation hardening commit 8e9f6fb |
 | gh repo view jscraik/evals | pass | defaultBranchRef.name is main; repo URL is https://github.com/jscraik/evals |
-| gh pr status / gh pr view | active | PR #13 exists for `jscraik/jsc-346-runtime-evidence-trust-boundary`; remote checks and review state remain live delivery surfaces that must be refreshed after each push |
+| gh pr status / gh pr view | merged | PR #13 merged to `main` at head `e0160cdcfd66a7c38132be1590fd828e50c4afcb`; final heartbeat recheck found zero unresolved review threads and all non-CodeRabbit checks passing |
 
 ## Requirement Classifications
 
