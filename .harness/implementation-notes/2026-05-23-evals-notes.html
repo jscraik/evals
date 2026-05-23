@@ -364,6 +364,7 @@
     </table>
     <p><strong>Blocked audit:</strong> On the third consecutive goal turn with the same remote-delivery blocker, the repo goal board was marked blocked. The blocker was not local runtime validation; it was missing owner approval for pushing the large local code and artifact set to origin so PR, CI, review, and mergeability evidence can exist.</p>
     <p><strong>Resume decision:</strong> The owner later clarified, "i asked you to commit and triage it". The board was resumed for the intended origin delivery path so branch push, PR creation, and remote triage could continue.</p>
+    <p><strong>Heartbeat triage:</strong> At 2026-05-23T16:34:58Z, PR #13 was rechecked. GitHub reported the PR as mergeable, deterministic gates and security checks passed, and CodeRabbit failed with insufficient review credits rather than an actionable code finding. Local follow-up remediation tightened report execution-mode provenance, manifest retention wording, goal-board stage/status separation, stop-condition validation mapping, PU-005 testing evidence, and media artifact portability.</p>
   </section>
 
   <section id="risks">
@@ -390,7 +391,7 @@
         <tr>
           <td>Review or delivery state may drift while local implementation continues.</td>
           <td>medium</td>
-          <td>Pending final remote review convergence. Receipts now include owner-approved push resume and PR #13 remote triage state; local tests are not treated as mergeability proof.</td>
+          <td>Pending CodeRabbit capacity recovery or owner acceptance of that external blocker. Receipts now include owner-approved push resume, PR #13 remote triage state, and heartbeat triage state; local tests are not treated as mergeability proof.</td>
         </tr>
       </tbody>
     </table>

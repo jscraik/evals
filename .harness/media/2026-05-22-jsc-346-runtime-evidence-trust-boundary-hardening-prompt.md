@@ -32,7 +32,7 @@ After state:
 * Public runtime-state and check output names are governed by the data/domain contract.
 * Policy coverage failure requires machine-readable evidence at runtime_evidence.policy_coverage or reviewed equivalent.
 * Live Linear reconciliation is explicit as a closeout-time verification dependency.
-* Confidence is capped at 88% because runtime implementation remains untested.
+* Confidence is capped at 88% even with deterministic tests and PR gates passing because broader runtime and integration validation remains unproven.
 
 Evidence shown:
 
@@ -63,5 +63,5 @@ Deterministic overlay text to add separately:
 * JSC-346 Runtime Evidence Trust Boundary Spec
 * From Ambiguous Runtime Proof Contract → Enforced Runtime Evidence Boundary
 * Main improvement: public proof contracts now fail closed instead of relying on prose
-* Evidence status: spec-shape checks pass; runtime implementation still untested
+* Evidence status: spec-shape checks, deterministic tests, and PR gates pass; broader runtime and integration validation remains unproven
 * Loop outcome: optimal within available evidence

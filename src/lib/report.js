@@ -17,6 +17,7 @@
  * @param {string} params.baseline.comparison_status - Baseline comparison status.
  * @param {string} params.baseline.promotion_status - Baseline promotion status.
  * @param {Object} params.execution - Execution output data.
+ * @param {string} params.execution.execution_mode - Execution mode recorded for provenance.
  * @param {string} params.execution.stdout - Execution standard output to include in the report.
  * @param {string[]} params.paths - Array of artifact file paths to list under "Artifacts".
  * @returns {string} A Markdown-formatted report string containing the run table, output block, artifacts list and judge policy.
@@ -25,6 +26,7 @@ export function buildReport({ runId, testCase, status, deterministicVerdict, bas
   return "# Evals Smoke Run\n\n" +
     "| Field | Value |\n| --- | --- |\n" +
     "| Run ID | " + runId + " |\n" +
+    "| Execution mode | " + execution.execution_mode + " |\n" +
     "| Case ID | " + testCase.case_id + " |\n" +
     "| Suite ID | " + testCase.suite_id + " |\n" +
     "| Status | " + status + " |\n" +

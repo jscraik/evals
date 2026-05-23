@@ -237,7 +237,7 @@ export function runCase(casePath, jsonMode) {
     created_at: startedAt.toISOString(),
     retention: {
       status: "retained_local",
-      policy: "Phase-one run artifacts are retained locally; automatic retention duration is not defined yet."
+      policy: "Retain committed phase-one run artifacts indefinitely in repository history until an explicit retention ADR supersedes this policy."
     },
     privacy: {
       class: testCase.privacy.class,

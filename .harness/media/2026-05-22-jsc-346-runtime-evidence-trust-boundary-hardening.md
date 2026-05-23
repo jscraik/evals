@@ -10,8 +10,8 @@ This review artifact records the media outcome for the 2026-05-22 JSC-346 runtim
 * $imagegen invoked: blocked
 * generated-image cache source path: blocked because no image generation tool was callable in the active tool surface
 * repository .harness/media/ PNG path: blocked because no generated bitmap existed to persist
-* prompt metadata path: /Users/jamiecraik/dev/evals/.harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening-prompt.md
-* sidecar path: /Users/jamiecraik/dev/evals/.harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening.md
+* prompt metadata path: .harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening-prompt.md
+* sidecar path: .harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening.md
 * repository PNG existence verification: blocked
 * persistence method: blocked
 * final user-facing text after imagegen permitted: yes
@@ -32,11 +32,11 @@ This review artifact records the media outcome for the 2026-05-22 JSC-346 runtim
 
 ## Prompt Summary
 
-See /Users/jamiecraik/dev/evals/.harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening-prompt.md for the fallback $imagegen prompt.
+See .harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening-prompt.md for the fallback $imagegen prompt.
 
 ## Linked Context
 
-* Spec: /Users/jamiecraik/dev/evals/.harness/specs/2026-05-22-jsc-346-runtime-evidence-trust-boundary-spec.md
-* Linear plan: /Users/jamiecraik/dev/evals/.harness/linear/2026-05-22-evals-runtime-evidence-enforcement-linear-plan.md
-* Audit: /Users/jamiecraik/dev/evals/.harness/research/audits/2026-05-22-evidence-led-codebase-gap-audit.md
-* Fallback SVG: /Users/jamiecraik/dev/evals/.harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening.svg
+* Spec: .harness/specs/2026-05-22-jsc-346-runtime-evidence-trust-boundary-spec.md
+* Linear plan: .harness/linear/2026-05-22-evals-runtime-evidence-enforcement-linear-plan.md
+* Audit: .harness/research/audits/2026-05-22-evidence-led-codebase-gap-audit.md
+* Fallback SVG: .harness/media/2026-05-22-jsc-346-runtime-evidence-trust-boundary-hardening.svg

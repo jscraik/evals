@@ -75,20 +75,20 @@ Every slice must pass the following lifecycle before progression:
 
 ## Slices
 
-| Slice | Issue | Objective | Status |
-|---|---|---|---|
-| PU-001 | JSC-348 | Enforce subagent artifact identity proof. | complete |
-| PU-002 | JSC-349 | Enforce runtime-evidence policy coverage. | complete |
-| PU-003 | JSC-347 | Align pnpm evals state --json readiness with runtime-evidence health. | complete |
-| PU-004 | JSC-350 | Harden credential scan proof-surface coverage. | complete |
-| PU-005 | JSC-346 | Reconcile parent governance, docs, review stack, and delivery readiness. | remote delivery resumed |
+| Slice | Issue | Objective | Status | Stage |
+|---|---|---|---|---|
+| PU-001 | JSC-348 | Enforce subagent artifact identity proof. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
+| PU-002 | JSC-349 | Enforce runtime-evidence policy coverage. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
+| PU-003 | JSC-347 | Align pnpm evals state --json readiness with runtime-evidence health. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
+| PU-004 | JSC-350 | Harden credential scan proof-surface coverage. | complete | CONTINUE ONLY AFTER SAFE STATE CONFIRMED |
+| PU-005 | JSC-346 | Reconcile parent governance, docs, review stack, and delivery readiness. | in_progress | GIT TRIAGE HANDOFF |
 
 ## Stop Conditions
 
-- Runtime-evidence validation can fail while state still reads as ready.
-- A subagent artifact scorer can pass without matching subagent ID, artifact type, and artifact path.
-- A declared policy family can pass without an enforcing scorer or explicit scaffold reason.
-- Credential scan expansion creates unclassified false positives.
-- Public JSON shape changes without schema/version tests.
-- Review stack reports an unresolved blocker.
-- Live delivery state contradicts local closeout claims.
+- Runtime-evidence validation can fail while state still reads as ready. Detect with `pnpm evals check --json` and `pnpm evals state --json`.
+- A subagent artifact scorer can pass without matching subagent ID, artifact type, and artifact path. Detect with `pnpm test` negative fixture coverage and `pnpm evals check --json`.
+- A declared policy family can pass without an enforcing scorer or explicit scaffold reason. Detect with `pnpm evals check --json`.
+- Credential scan expansion creates unclassified false positives. Detect with `pnpm verify` and, when scanner fallback behavior changes, `EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js`.
+- Public JSON shape changes without schema/version tests. Detect with `pnpm test`, `pnpm evals check --json`, and schema-specific fixture tests.
+- Review stack reports an unresolved blocker. Detect by reviewing `artifacts/reviews/*.md` and live PR review threads before progression.
+- Live delivery state contradicts local closeout claims. Detect with live GitHub PR checks, mergeability, review-thread recheck, and live Linear recheck.
