@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "presence_status": "missing",
+  "comparison_status": "not_compared",
+  "promotion_status": "not_requested",
+  "baseline_owner": null,
+  "comparison_evidence": "No baseline artifact_path provided; observed baseline presence is missing.",
+  "current_artifact_ref": {
+    "type": "command-log",
+    "path": ".harness/evals/runs/20260523T162326Z-pr-closeout-4df36134/command-log.json",
+    "sha256": "493d0dc0383406ef15e2b33da97881db50130b21c41e409f015145094ad64551"
+  }
+}

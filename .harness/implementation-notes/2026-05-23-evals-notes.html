@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSC-346 Evals Runtime Evidence Trust Boundary Notes</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --fg: #172033;
+      --muted: #526071;
+      --panel: #ffffff;
+      --border: #d9e1ec;
+      --accent: #0f766e;
+      --risk: #b45309;
+      --fail: #b91c1c;
+      --pass: #15803d;
+      --block: #6d28d9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --fg: #e5e7eb;
+        --muted: #aeb8c7;
+        --panel: #162033;
+        --border: #334155;
+        --accent: #2dd4bf;
+      }
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+    h1 { font-size: 2rem; }
+    h2 {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      overflow: auto;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--panel) 82%, var(--bg));
+    }
+    details {
+      margin: 12px 0;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+    }
+    .pass { color: var(--pass); }
+    .fail { color: var(--fail); }
+    .blocked { color: var(--block); }
+    .risk { color: var(--risk); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>JSC-346 Evals Runtime Evidence Trust Boundary Notes</h1>
+    <p><strong>Started:</strong> 2026-05-23 Europe/London</p>
+    <p><strong>Branch:</strong> <code>main</code> at governance start; worktree already had uncommitted plan/spec and generated evidence files.</p>
+    <p><strong>Goal board:</strong> <code>.harness/goals/2026-05-23-jsc-346-runtime-evidence-trust-boundary/</code></p>
+    <p><strong>North star:</strong> Runtime truth first. Artifacts decide; telemetry explains.</p>
+    <p><strong>Scope:</strong> Implement JSC-346 through bounded slices for artifact identity proof, policy coverage enforcement, state/check alignment, credential scan proof-surface coverage, and parent-loop reconciliation.</p>
+  </header>
+
+  <section id="current-state">
+    <h2>Current State</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Surface</th>
+          <th>Status</th>
+          <th>Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Governance board</td>
+          <td><span class="badge pass">active</span></td>
+          <td>Created <code>goal.md</code>, <code>state.yaml</code>, and <code>receipts.jsonl</code>.</td>
+        </tr>
+        <tr>
+          <td>Implementation lane</td>
+          <td><span class="badge pass">PU-001-PU-004 complete</span></td>
+          <td>Subagent artifact identity, policy coverage, state/check alignment, and credential scan proof-surface coverage are implemented. CodeRabbit follow-up tightened the internal artifact identity key to include subagent ID.</td>
+        </tr>
+        <tr>
+          <td>Validation lane</td>
+          <td><span class="badge pass">local gates passing</span></td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, and <code>pnpm verify</code> pass through PU-004 and artifact triage.</td>
+        </tr>
+        <tr>
+          <td>Delivery lane</td>
+          <td><span class="badge risk">PR triage active</span></td>
+          <td>PR #13 exists and is ready for review. Receipt <code>pu005_pr_created_remote_triage</code> records push, PR, check, and CodeRabbit remediation state.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="decisions">
+    <h2>Decisions</h2>
+    <details open>
+      <summary>2026-05-23 - Use a local Goal Governor board as the execution contract</summary>
+      <p><strong>Decision:</strong> Create a repository-local board under <code>.harness/goals/2026-05-23-jsc-346-runtime-evidence-trust-boundary/</code> with <code>goal.md</code>, <code>state.yaml</code>, and <code>receipts.jsonl</code>.</p>
+      <p><strong>Why:</strong> The user requested a governed workflow, not a one-pass implementation. The board gives each slice an explicit receipt trail and stop condition.</p>
+      <p><strong>Rejected:</strong> Treating the prompt alone as the execution state. That would increase stale-state risk during a multi-slice implementation.</p>
+    </details>
+    <details open>
+      <summary>2026-05-23 - Execute scorer trust boundaries before runtime-state aggregation</summary>
+      <p><strong>Decision:</strong> Start with subagent artifact identity and policy coverage before wiring runtime-evidence health into <code>pnpm evals state --json</code>.</p>
+      <p><strong>Why:</strong> State readiness can only consume trustworthy runtime-evidence health after scorer failures are precise and deterministic.</p>
+      <p><strong>Rejected:</strong> Adding state-level prose warnings first. That would leave the false-success path inside the scorer boundary.</p>
+    </details>
+    <details open>
+      <summary>2026-05-23 - PU-001 requires artifact identity, not event counts</summary>
+      <p><strong>Decision:</strong> Change <code>scoreSubagentArtifactContract</code> from subagent-level event counting to artifact identity matching across <code>subagent_id</code>, <code>artifact_type</code>, and normalized <code>artifact_path</code>.</p>
+      <p><strong>Why:</strong> Count-based evidence can pass when a subagent writes the wrong artifact. The trust boundary needs to prove the exact expected artifact identity.</p>
+      <p><strong>Contract note:</strong> The scorer revision is <code>subagent-artifact-contract</code> version <code>1.1.0</code>. Covered drift scenarios now include wrong path, wrong type, wrong subagent, missing identity, traversal path, and ambiguous duplicate writes.</p>
+      <p><strong>Rejected:</strong> Reading artifact files from disk inside the scorer. PU-001 verifies event identity only; artifact existence belongs to artifact bundle validation.</p>
+    </details>
+    <details open>
+      <summary>2026-05-23 - PU-001 review findings resolved before progression</summary>
+      <p><strong>Decision:</strong> Fix the architecture high finding, the cross-subagent keying issue, the derived-count simplification, the missing type/subagent tests, and the docs addendum before marking PU-001 complete.</p>
+      <p><strong>Why:</strong> The mandatory review stack found concrete validation and governance gaps. Progressing with unresolved findings would violate the slice lifecycle.</p>
+      <p><strong>Deferred:</strong> Low-value test helper extraction and generic push-helper simplification. These are local readability suggestions with no current runtime safety effect.</p>
+    </details>
+    <details open>
+      <summary>2026-05-23 - PU-002 makes policy coverage fail closed</summary>
+      <p><strong>Decision:</strong> Add runtime-evidence policy coverage under <code>runtime_evidence.policy_coverage</code> in <code>pnpm evals check --json</code>. Declared enforced families must have their scorer present; scaffolded families must declare <code>scaffolded_not_enforced</code> with a reason.</p>
+      <p><strong>Why:</strong> Without machine-readable coverage, the suite can appear green while declared runtime policy families have no enforcing scorer.</p>
+      <p><strong>Contract note:</strong> Permission, subagent artifact, and plugin attribution policies are enforced by scorers. Goal, thread, network, and package provenance remain explicit scaffolds in phase one and are not runtime authority.</p>
+      <p><strong>Rejected:</strong> Treating unscored declared policy as informational. The revised contract fails closed with <code>RTE_POLICY_*_UNSCORED</code> errors.</p>
+    </details>
+    <details open>
+      <summary>2026-05-23 - PU-003 makes runtime state consume runtime-evidence health</summary>
+      <p><strong>Decision:</strong> Bump the runtime-state packet to <code>schema_version: 2</code> and add <code>contract_health.runtime_evidence</code> plus <code>non_ready_reason_code</code>.</p>
+      <p><strong>Why:</strong> <code>pnpm evals state --json</code> previously only reflected latest-run health. It could report <code>ready</code> while <code>pnpm evals check --json</code> would fail runtime-evidence contracts.</p>
+      <p><strong>Contract note:</strong> Runtime-evidence failure now makes top-level state <code>invalid</code>, sets <code>non_ready_reason_code</code> to <code>runtime_evidence_failed</code>, and recommends <code>pnpm evals check --json</code>.</p>
+      <p><strong>Rejected:</strong> Adding an advisory warning without changing readiness. That would preserve the false-ready path.</p>
+    </details>
+  </section>
+
+  <section id="runtime-discoveries">
+    <h2>Runtime Discoveries</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Discovery</th>
+          <th>Classification</th>
+          <th>Consequence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The worktree was already dirty with untracked plan/spec/media/research artifacts and a modified latest-run pointer.</td>
+          <td>delivery-state risk</td>
+          <td>Do not revert unrelated files. Report changed files precisely at closeout.</td>
+        </tr>
+        <tr>
+          <td>The JSC-346 plan/spec require live Linear recheck before parent closeout.</td>
+          <td>external-state risk</td>
+          <td>Do not claim parent completion from local validation alone.</td>
+        </tr>
+        <tr>
+          <td>The runtime-evidence schema already permits artifact identity fields on observed events.</td>
+          <td>implementation simplification</td>
+          <td>PU-001 can harden scorer behavior without a fixture schema change.</td>
+        </tr>
+        <tr>
+          <td>Policy-family declarations were not previously visible in check output as coverage status.</td>
+          <td>false-success risk</td>
+          <td>PU-002 adds explicit implemented, scaffolded, and missing-enforcement states to the runtime-evidence validation output.</td>
+        </tr>
+        <tr>
+          <td>Every fixture has a required <code>permission_profile</code>, so permission coverage is always declared.</td>
+          <td>contract tightening</td>
+          <td>Plugin and subagent fixtures now include <code>permission-drift</code> alongside their specialized scorers.</td>
+        </tr>
+        <tr>
+          <td>The runtime-state schema is closed with <code>additionalProperties: false</code>.</td>
+          <td>schema contract</td>
+          <td>PU-003 bumped runtime state to schema version 2 instead of silently adding output fields.</td>
+        </tr>
+        <tr>
+          <td>The old credential scan keyword pattern cannot be safely expanded across proof-bearing docs and source surfaces.</td>
+          <td>false-positive risk</td>
+          <td>PU-004 replaced standalone keyword matching with credential-shaped patterns, shared root constants, redacted reporting, and tests for both <code>rg</code> and Node fallback behavior.</td>
+        </tr>
+        <tr>
+          <td>The forced Node fallback previously printed an <code>rg</code>-shaped command label even when the fallback path was active.</td>
+          <td>evidence clarity</td>
+          <td>PU-004 now reports the fallback command surface separately so verifier logs do not overstate which scanner path ran.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="validation-evidence">
+    <h2>Validation Evidence</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Command</th>
+          <th>Result</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>pwd &amp;&amp; git status --short --branch</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Confirmed repo root and pre-existing dirty state before implementation edits.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm test</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>96 tests passed at the PU-001 checkpoint, including path mismatch, type mismatch, wrong subagent, missing identity, traversal, and duplicate-write negative cases. Later artifact-key remediation raised the suite to 107 tests.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm evals check --json</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Runtime-evidence suite remains valid; the existing subagent negative fixture now reports missing matching ArtifactWritten identity.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm test</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>98 tests passed after PU-002, including policy coverage fail-closed tests for missing scaffold coverage and missing plugin scorer coverage.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm evals check --json</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td><code>runtime_evidence.policy_coverage.status</code> returned <code>pass</code> with implemented enforcement for permissions, plugin attribution, and subagent artifacts, and scaffolded status for goal, thread, network, and package provenance.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm test</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>100 tests passed after PU-003, including state downgrade tests for failing and missing runtime-evidence fixtures.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm evals state --json</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Returned <code>schema_version: 2</code>, <code>status: ready</code>, <code>contract_health.runtime_evidence.status: ready</code>, and <code>non_ready_reason_code: null</code>.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm test</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>106 tests passed after PU-004, including proof-root coverage, prose false-positive handling, redacted credential-shaped assignment reporting, same-line multiple-match fallback handling, and <code>rg</code>/Node fallback parity including simulated <code>rg</code> unavailability.</td>
+        </tr>
+        <tr>
+          <td><code>pnpm verify</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>The aggregate gate passed with credential scanning across <code>fixtures</code>, <code>schemas</code>, <code>src</code>, <code>scripts</code>, <code>test</code>, <code>tests</code>, <code>.harness/evals</code>, <code>.harness/research</code>, <code>.harness/specs</code>, <code>.harness/plan</code>, <code>.harness/plans</code>, and <code>.harness/linear</code>.</td>
+        </tr>
+        <tr>
+          <td><code>EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>The forced fallback path passed with the same roots and credential-shaped pattern contract.</td>
+        </tr>
+        <tr>
+          <td><code>Linear live recheck</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>JSC-346 through JSC-350 existed and were still <code>Todo</code>; this contradicted local implementation state, so they were moved to <code>In Review</code> and the parent issue received a validation-evidence comment.</td>
+        </tr>
+        <tr>
+          <td><code>GitHub open PR recheck</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>PR #13 exists for <code>jscraik/jsc-346-runtime-evidence-trust-boundary</code> against <code>main</code>. Remote review-thread, CI, CodeRabbit, CircleCI, and mergeability evidence must be refreshed after every push.</td>
+        </tr>
+        <tr>
+          <td><code>Delivery branch packaging</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>Created branch <code>jscraik/jsc-346-runtime-evidence-trust-boundary</code> after requesting narrow write access for <code>.git</code>.</td>
+        </tr>
+        <tr>
+          <td><code>git push -u origin jscraik/jsc-346-runtime-evidence-trust-boundary</code></td>
+          <td><span class="badge pass">pass</span></td>
+          <td>The branch was pushed and PR #13 was opened. Earlier push-blocker evidence remains historical only; current delivery risk is remote check and review convergence after each new head.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="pu005-reconciliation">
+    <h2>PU-005 Parent Reconciliation</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Decision</th>
+          <th>Evidence</th>
+          <th>Disposition</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Keep Linear issues open in review state.</td>
+          <td>Local implementation and validation are complete, but no PR or remote merge-safety proof exists.</td>
+          <td>JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 are <code>In Review</code>, not <code>Done</code>.</td>
+        </tr>
+        <tr>
+          <td>Do not treat local validation as delivery closeout.</td>
+          <td><code>pnpm test</code>, <code>pnpm evals state --json</code>, <code>pnpm evals check --json</code>, <code>pnpm verify</code>, and forced Node credential scan passed locally.</td>
+          <td>Runtime truth is green locally; delivery truth remains pending remote evidence.</td>
+        </tr>
+        <tr>
+          <td>Preserve phase-one boundaries.</td>
+          <td>No dashboards, external adapters, cloud runners, plugin systems, source mining, sibling runtime dependencies, or required LLM judge gates were added.</td>
+          <td>Runtime-evidence enforcement remains local, deterministic, schema-backed, and scorer-backed.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Blocked audit:</strong> On the third consecutive goal turn with the same remote-delivery blocker, the repo goal board was marked blocked. The blocker was not local runtime validation; it was missing owner approval for pushing the large local code and artifact set to origin so PR, CI, review, and mergeability evidence can exist.</p>
+    <p><strong>Resume decision:</strong> The owner later clarified, "i asked you to commit and triage it". The board was resumed for the intended origin delivery path so branch push, PR creation, and remote triage could continue.</p>
+    <p><strong>Heartbeat triage:</strong> At 2026-05-23T16:34:58Z, PR #13 was rechecked. GitHub reported the PR as mergeable, deterministic gates and security checks passed, and CodeRabbit failed with insufficient review credits rather than an actionable code finding. Local follow-up remediation tightened report execution-mode provenance, manifest retention wording, goal-board stage/status separation, stop-condition validation mapping, PU-005 testing evidence, and media artifact portability.</p>
+  </section>
+
+  <section id="risks">
+    <h2>Risks</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Risk</th>
+          <th>Severity</th>
+          <th>Mitigation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Public JSON shape drift in check or state output.</td>
+          <td>high</td>
+          <td>Implemented in PU-003 with runtime-state schema version 2 and tests covering readiness, runtime-evidence failure, malformed latest JSON, and reason codes.</td>
+        </tr>
+        <tr>
+          <td>Credential scan expansion may report documentation prose as credential-like text.</td>
+          <td>high</td>
+          <td>Implemented in PU-004 with credential-shaped pattern tests, redacted output assertions, and rg/Node fallback parity tests.</td>
+        </tr>
+        <tr>
+          <td>Review or delivery state may drift while local implementation continues.</td>
+          <td>medium</td>
+          <td>Pending CodeRabbit capacity recovery or owner acceptance of that external blocker. Receipts now include owner-approved push resume, PR #13 remote triage state, and heartbeat triage state; local tests are not treated as mergeability proof.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -41,6 +41,24 @@
       "package_source_required": false,
       "checksum_required": false,
       "build_artifact_required": false
+    },
+    "policy_scaffolds": {
+      "goal": {
+        "status": "scaffolded_not_enforced",
+        "reason": "Goal-state fields are accepted as runtime-evidence shape only; this slice does not make goal state runtime authority."
+      },
+      "thread": {
+        "status": "scaffolded_not_enforced",
+        "reason": "Thread metadata fields are accepted as runtime-evidence shape only; no scorer enforces thread readiness in this slice."
+      },
+      "network": {
+        "status": "scaffolded_not_enforced",
+        "reason": "Network policy shape is recorded for future runtime evidence but is not enforced beyond permission drift in this slice."
+      },
+      "package_provenance": {
+        "status": "scaffolded_not_enforced",
+        "reason": "Package provenance shape is recorded for future runtime evidence and remains non-authoritative in phase one."
+      }
     }
   },
   "resolved_runtime": {

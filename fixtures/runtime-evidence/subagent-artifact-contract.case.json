@@ -76,7 +76,7 @@
       "path": "fixtures/runtime-evidence/subagent-artifact-contract.case.json"
     }
   ],
-  "scorers": ["subagent-artifact-contract"],
+  "scorers": ["permission-drift", "subagent-artifact-contract"],
   "expected": {
     "verdict": "fail",
     "classification": "missing_subagent_artifact",

@@ -32,7 +32,43 @@ override:
   delivered as the initial commit on the repository default branch.
 
 This artifact is closure evidence for the local executable spine, git push, and
-approved tracker override. It is not a claim that a live Linear issue exists.
+approved tracker override. It is not a claim that a live phase-one Linear issue
+exists. The later JSC-346 runtime-evidence trust-boundary tracker state is
+recorded separately below.
+
+## JSC-346 Runtime-Evidence Trust-Boundary Addendum
+
+This section records governed JSC-346 trust-boundary hardening evidence. It is a
+local runtime-truth and tracker-reconciliation artifact. It does not claim
+merge readiness until PR, CI, review-thread, and mergeability surfaces are
+rechecked against the current branch head.
+
+| Slice | Status | Evidence |
+| --- | --- | --- |
+| PU-001 / JSC-348 | complete locally | subagent-artifact-contract scorer version 1.1.0 now matches ArtifactExpected and ArtifactWritten by artifact type, artifact path, and subagent ownership. |
+| PU-001 drift scenarios | covered by local tests | wrong artifact path, wrong artifact type, wrong subagent, missing artifact identity, traversal artifact path, and ambiguous duplicate writes. |
+| PU-002 / JSC-349 | complete locally | runtime-evidence policy coverage fails closed for declared unscored policy families unless an explicit scaffold reason is present. |
+| PU-003 / JSC-347 | complete locally | runtime state schema version 2 includes runtime-evidence contract health and downgrades readiness when the runtime-evidence suite fails. |
+| PU-004 / JSC-350 | complete locally | credential scan proof roots now include fixtures, schemas, src, scripts, test, tests, .harness/evals, .harness/research, .harness/specs, .harness/plan, .harness/plans, and .harness/linear with redacted rg and Node fallback behavior. |
+| Review artifacts | pass locally | artifacts/reviews/pu001-* through artifacts/reviews/pu004-* record architecture, simplification, testing, docs/language, and coordination outcomes. |
+| Local validation | pass | pnpm test; pnpm evals state --json; pnpm evals check --json; pnpm verify; EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js. |
+| Linear parent and children | in review | JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 were rechecked live and moved from Todo to In Review on 2026-05-23 with a parent comment containing validation evidence. |
+| Remote delivery lane | active / not merge-ready | PR #13 exists for `jscraik/jsc-346-runtime-evidence-trust-boundary` against `main`. Remote CI, review-thread, and mergeability proof must be rechecked after each push. Do not mark Linear issues Done until those surfaces are verified for the current head. |
+
+### JSC-346 Parent Reconciliation
+
+Parent-loop reconciliation decision: keep JSC-346 and children in Linear
+`In Review` until branch, PR, remote check, review-thread, and mergeability
+evidence exist. Local runtime implementation is complete enough for review, but
+not complete enough for a remote delivery closeout claim.
+
+| Issue | Live Linear State | Local Runtime State | Decision |
+| --- | --- | --- | --- |
+| JSC-346 | In Review | parent evidence reconciled | hold open for PR, CI, review, and mergeability proof |
+| JSC-347 | In Review | runtime-state readiness enforcement implemented and tested | hold open for PR review |
+| JSC-348 | In Review | subagent artifact identity enforcement implemented and tested | hold open for PR review |
+| JSC-349 | In Review | policy coverage enforcement implemented and tested | hold open for PR review |
+| JSC-350 | In Review | credential scan proof roots and fallback parity implemented and tested | hold open for PR review |
 
 ## Command Output
 
@@ -161,7 +197,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | git remote -v | pass | origin is 'https://github.com/jscraik/evals.git' for fetch and push |
 | git log --oneline --decorate --max-count=3 | pass | History includes initial implementation commit 8029517, delivery-state evidence refreshes, and schema-validation hardening commit 8e9f6fb |
 | gh repo view jscraik/evals | pass | defaultBranchRef.name is main; repo URL is https://github.com/jscraik/evals |
-| gh pr status / gh pr list | not applicable | no PR is associated with main and no open PRs exist after initial default-branch push |
+| gh pr status / gh pr view | active | PR #13 exists for `jscraik/jsc-346-runtime-evidence-trust-boundary`; remote checks and review state remain live delivery surfaces that must be refreshed after each push |
 
 ## Requirement Classifications
 

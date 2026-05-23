@@ -174,9 +174,16 @@ test("CI required check contract matches the workflow gate", () => {
 });
 
 test("privacy check regex is documented consistently", () => {
-  const requiredFragments = ["rg -n", "sk-", "api[_-]?key", "BEGIN (RSA|OPENSSH|PRIVATE) KEY"];
+  const requiredFragments = [
+    "rg -n -o --replace",
+    "credential-like pattern redacted",
+    "sk-[A-Za-z0-9_-]{20,}",
+    "(api[_-]?key|token|secret|password)\\s*[:=]\\s*",
+    "fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/plans .harness/linear"
+  ];
   for (const path of ["AGENTS.md", "CONTRIBUTING.md", "SECURITY.md"]) {
     const content = read(path);
+    assert.equal(content.includes("\\\\s"), false, path + " must use executable single-backslash regex escapes");
     for (const fragment of requiredFragments) {
       assert.ok(content.includes(fragment), path + " should include " + fragment);
     }

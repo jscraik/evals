@@ -132,7 +132,8 @@ enforces.
 For a lightweight direct credential scan when `rg` is available:
 
 ~~~bash
-rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" fixtures .harness/evals
+credential_pattern='sk-[A-Za-z0-9_-]{20,}|(api[_-]?key|token|secret|password)\s*[:=]\s*["'"'"']?[A-Za-z0-9_./+=-]{16,}|-{5}BEGIN (RSA|OPENSSH|PRIVATE) KEY-{5}'
+rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/plans .harness/linear
 ~~~
 
 The check command validates the smoke fixture against
@@ -141,7 +142,9 @@ scorer results, baseline result, trace event timeline, and manifest artifact
 hashes from '.harness/evals/runs/latest.json'.
 
 The regex check is a lightweight phase-one privacy aid, not full secret-scan
-coverage.
+coverage. It uses credential-shaped patterns so documentation prose can discuss
+secrets, tokens, or passwords without becoming a false positive, and failures
+must redact the matched value.
 
 ## Closure Evidence
 

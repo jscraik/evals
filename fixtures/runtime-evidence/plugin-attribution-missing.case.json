@@ -60,7 +60,7 @@
       "path": "fixtures/runtime-evidence/plugin-attribution-missing.case.json"
     }
   ],
-  "scorers": ["plugin-attribution"],
+  "scorers": ["permission-drift", "plugin-attribution"],
   "expected": {
     "verdict": "fail",
     "classification": "plugin_attribution_missing",

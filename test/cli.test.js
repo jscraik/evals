@@ -149,6 +149,10 @@ test("state reports ready runtime packet for the latest proof bundle", () => {
     assert.equal(state.latest.status, "present");
     assert.equal(state.latest.run_id, output.run_id);
     assert.equal(state.validation.status, "passed");
+    assert.equal(state.schema_version, 2);
+    assert.equal(state.contract_health.runtime_evidence.status, "ready");
+    assert.equal(state.contract_health.runtime_evidence.policy_coverage_status, "pass");
+    assert.equal(state.non_ready_reason_code, null);
     assert.ok(state.recommended_commands.includes("pnpm evals check --json"));
     assert.ok(state.artifacts.every((artifact) => artifact.status === "present"));
 
@@ -168,6 +172,8 @@ test("state reports missing runtime packet without failing the command", () => {
     assert.equal(state.status, "missing");
     assert.equal(state.latest.status, "missing");
     assert.equal(state.validation.status, "not_run");
+    assert.equal(state.contract_health.runtime_evidence.status, "ready");
+    assert.equal(state.non_ready_reason_code, "latest_missing");
     assert.ok(state.recommended_commands.includes("pnpm evals run fixtures/smoke/pr-closeout.case.json --json"));
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
@@ -189,6 +195,8 @@ test("state reports stale runtime packet when latest artifacts are missing", () 
     assert.equal(state.status, "stale");
     assert.equal(state.latest.run_id, output.run_id);
     assert.equal(state.validation.status, "failed");
+    assert.equal(state.contract_health.runtime_evidence.status, "ready");
+    assert.equal(state.non_ready_reason_code, "artifact_missing");
     const resultArtifact = state.artifacts.find((artifact) => artifact.key === "result_path");
     assert.ok(resultArtifact);
     assert.equal(resultArtifact.status, "missing");
@@ -215,6 +223,8 @@ test("state reports invalid runtime packet for unsafe latest artifact paths", ()
     const state = parseJson(result.stdout);
     assert.equal(state.status, "invalid");
     assert.equal(state.validation.status, "failed");
+    assert.equal(state.contract_health.runtime_evidence.status, "ready");
+    assert.equal(state.non_ready_reason_code, "artifact_invalid");
     const resultArtifact = state.artifacts.find((artifact) => artifact.key === "result_path");
     assert.ok(resultArtifact);
     assert.equal(resultArtifact.status, "invalid");
@@ -240,6 +250,8 @@ test("state reports invalid runtime packet for malformed latest JSON", () => {
     assert.equal(state.status, "invalid");
     assert.equal(state.latest.status, "invalid");
     assert.equal(state.validation.status, "failed");
+    assert.equal(state.contract_health.runtime_evidence.status, "ready");
+    assert.equal(state.non_ready_reason_code, "latest_invalid");
     assert.match(state.validation.errors.join("\n"), /JSON parse failed/);
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
@@ -265,7 +277,62 @@ test("state reports invalid runtime packet for schema-invalid latest pointers", 
     assert.equal(state.latest.status, "invalid");
     assert.equal(state.latest.run_id, null);
     assert.equal(state.validation.status, "failed");
+    assert.equal(state.contract_health.runtime_evidence.status, "ready");
+    assert.equal(state.non_ready_reason_code, "latest_invalid");
     assert.match(state.validation.errors.join("\n"), /run_id/);
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports invalid runtime packet when runtime evidence fixture suite fails", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.scorers = ["permission-drift"];
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "invalid");
+    assert.equal(state.latest.status, "present");
+    assert.equal(state.latest.run_id, output.run_id);
+    assert.equal(state.validation.status, "failed");
+    assert.equal(state.contract_health.runtime_evidence.status, "failing");
+    assert.equal(state.contract_health.runtime_evidence.policy_coverage_status, "fail");
+    assert.equal(state.non_ready_reason_code, "runtime_evidence_failed");
+    assert.ok(state.recommended_commands.includes("pnpm evals check --json"));
+    assert.match(state.validation.errors.join("\n"), /RTE_POLICY_PLUGIN_UNSCORED/);
+
+    const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
+    assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports invalid runtime packet when runtime evidence suite is missing", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    rmSync(join(repo, "fixtures", "runtime-evidence"), { recursive: true, force: true });
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "invalid");
+    assert.equal(state.validation.status, "failed");
+    assert.equal(state.contract_health.runtime_evidence.status, "failing");
+    assert.equal(state.non_ready_reason_code, "runtime_evidence_failed");
+    assert.match(state.validation.errors.join("\n"), /runtime evidence fixture directory does not exist/);
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
     assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
@@ -286,6 +353,15 @@ test("check validates runtime evidence contract cases", () => {
     assert.ok(runtimeChecks.some((check) => check.label === "runtime evidence: approval-disabled-readonly-fallback" && check.status === "pass"));
     assert.ok(runtimeChecks.some((check) => check.label === "runtime evidence: subagent-artifact-contract" && check.status === "pass"));
     assert.ok(runtimeChecks.some((check) => check.label === "runtime evidence: plugin-attribution-missing" && check.status === "pass"));
+    assert.equal(validation.runtime_evidence.policy_coverage.status, "pass");
+    const coverageFamilies = validation.runtime_evidence.policy_coverage.families;
+    assert.ok(coverageFamilies.some((entry) => entry.family === "permissions" && entry.enforcement_status === "implemented_enforced" && entry.scorer_id === "permission-drift"));
+    assert.ok(coverageFamilies.some((entry) => entry.family === "subagent_artifacts" && entry.enforcement_status === "implemented_enforced" && entry.scorer_id === "subagent-artifact-contract"));
+    assert.ok(coverageFamilies.some((entry) => entry.family === "plugin_attribution" && entry.enforcement_status === "implemented_enforced" && entry.scorer_id === "plugin-attribution"));
+    assert.ok(coverageFamilies.some((entry) => entry.family === "goal" && entry.enforcement_status === "scaffolded_not_enforced"));
+    assert.ok(coverageFamilies.some((entry) => entry.family === "thread" && entry.enforcement_status === "scaffolded_not_enforced"));
+    assert.ok(coverageFamilies.some((entry) => entry.family === "network" && entry.enforcement_status === "scaffolded_not_enforced"));
+    assert.ok(coverageFamilies.some((entry) => entry.family === "package_provenance" && entry.enforcement_status === "scaffolded_not_enforced"));
   } finally {
     cleanup(repo);
   }
@@ -438,8 +514,10 @@ test("runtime evidence contract accepts strict subagent and plugin evidence when
     const pluginCheck = validation.checks.find((check) => check.label === "runtime evidence: plugin-attribution-present");
     assert.equal(subagentCheck.status, "pass");
     assert.equal(pluginCheck.status, "pass");
-    assert.deepEqual(subagentCheck.scorer_results.map((item) => item.status), ["pass"]);
-    assert.deepEqual(pluginCheck.scorer_results.map((item) => item.status), ["pass"]);
+    assert.deepEqual(subagentCheck.scorer_results.map((item) => item.scorer_id), ["permission-drift", "subagent-artifact-contract"]);
+    assert.deepEqual(subagentCheck.scorer_results.map((item) => item.status), ["pass", "pass"]);
+    assert.deepEqual(pluginCheck.scorer_results.map((item) => item.scorer_id), ["permission-drift", "plugin-attribution"]);
+    assert.deepEqual(pluginCheck.scorer_results.map((item) => item.status), ["pass", "pass"]);
   } finally {
     cleanup(repo);
   }
@@ -467,7 +545,8 @@ test("runtime evidence contract rejects plugin tool-call attribution without sou
     assert.match(validation.errors.join("\n"), /runtime evidence: plugin-source-missing expected verdict pass, got fail/);
     assert.match(validation.errors.join("\n"), /expected classification ok, got plugin_attribution_missing/);
     const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: plugin-source-missing");
-    assert.equal(runtimeCheck.scorer_results[0].evidence, "tool-call event evt-001 missing source");
+    const pluginResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "plugin-attribution");
+    assert.equal(pluginResult.evidence, "tool-call event evt-001 missing source");
   } finally {
     cleanup(repo);
   }
@@ -518,8 +597,417 @@ test("runtime evidence contract requires subagent closeout evidence per start", 
     assert.match(validation.errors.join("\n"), /runtime evidence: subagent-repeated-start-closeout expected verdict pass, got fail/);
     assert.match(validation.errors.join("\n"), /expected classification ok, got missing_subagent_artifact/);
     const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-repeated-start-closeout");
-    assert.match(runtimeCheck.scorer_results[0].evidence, /fewer ArtifactExpected events than starts/);
-    assert.match(runtimeCheck.scorer_results[0].evidence, /fewer ArtifactWritten events than starts/);
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /fewer ArtifactExpected events than starts/);
+    assert.match(subagentResult.evidence, /fewer ArtifactWritten events than starts/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects subagent artifact path mismatch", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-path-mismatch";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "artifacts/reviews/other-reviewer.md",
+      detail: "Subagent wrote a different review artifact path."
+    });
+    fixture.observed_events[3].event_id = "evt-004";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because the artifact path does not match.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-path-mismatch expected verdict pass, got fail/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-path-mismatch");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity reviewer-1:review_report:artifacts\/reviews\/reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects subagent artifact type mismatch", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-type-mismatch";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "other_report",
+      artifact_path: "artifacts/reviews/reviewer-1.md",
+      detail: "Subagent wrote the right path with the wrong artifact type."
+    });
+    fixture.observed_events[3].event_id = "evt-004";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because the artifact type does not match.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-type-mismatch expected verdict pass, got fail/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-type-mismatch");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity reviewer-1:review_report:artifacts\/reviews\/reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects artifact identity written by a different subagent", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-wrong-subagent";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-2",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-2",
+      artifact_type: "review_report",
+      artifact_path: "artifacts/reviews/reviewer-1.md",
+      detail: "A different subagent wrote the expected artifact identity."
+    });
+    fixture.observed_events[3].event_id = "evt-004";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because the written artifact belongs to another subagent.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-wrong-subagent expected verdict pass, got fail/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-wrong-subagent");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity reviewer-1:review_report:artifacts\/reviews\/reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract permits distinct subagents to write the same artifact type and path", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-shared-path-distinct-subagents";
+    fixture.observed_events = [
+      {
+        event_id: "evt-001",
+        type: "SubagentStart",
+        actor: "parent-agent",
+        source: "agent",
+        status: "started",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-1",
+        role: "reviewer",
+        reason: "Review runtime evidence contract changes."
+      },
+      {
+        event_id: "evt-002",
+        type: "SubagentStart",
+        actor: "parent-agent",
+        source: "agent",
+        status: "started",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-2",
+        role: "reviewer",
+        reason: "Review runtime evidence contract changes."
+      },
+      {
+        event_id: "evt-003",
+        type: "ArtifactExpected",
+        actor: "parent-agent",
+        source: "agent",
+        status: "expected",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-1",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      },
+      {
+        event_id: "evt-004",
+        type: "ArtifactExpected",
+        actor: "parent-agent",
+        source: "agent",
+        status: "expected",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-2",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      },
+      {
+        event_id: "evt-005",
+        type: "ArtifactWritten",
+        actor: "reviewer-1",
+        source: "subagent",
+        status: "written",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-1",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      },
+      {
+        event_id: "evt-006",
+        type: "ArtifactWritten",
+        actor: "reviewer-2",
+        source: "subagent",
+        status: "written",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-2",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      }
+    ];
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "Distinct subagents are independent artifact identities even when type and path match.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-shared-path-distinct-subagents");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.equal(subagentResult.status, "pass");
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects missing subagent artifact identity", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-missing-identity";
+    delete fixture.observed_events[1].artifact_path;
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because the expected artifact identity is incomplete.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-missing-identity expected verdict pass, got fail/);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-missing-identity");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /ArtifactExpected evt-002 missing artifact_path/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects traversal in subagent artifact identity", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-traversal";
+    fixture.observed_events[1].artifact_path = "../artifacts/reviews/reviewer-1.md";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "../artifacts/reviews/reviewer-1.md",
+      detail: "Subagent wrote an unsafe traversal artifact path."
+    });
+    fixture.observed_events[3].event_id = "evt-004";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because traversal paths are unsafe.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-traversal");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /unsafe artifact_path \.\.\/artifacts\/reviews\/reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects Windows absolute artifact identity paths", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-windows-absolute-path";
+    fixture.observed_events[1].artifact_path = "C:\\Users\\agent\\artifacts\\reviews\\reviewer-1.md";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "C:\\Users\\agent\\artifacts\\reviews\\reviewer-1.md",
+      detail: "Subagent wrote an unsafe Windows absolute artifact path."
+    });
+    fixture.observed_events[3].event_id = "evt-004";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because Windows absolute paths are unsafe.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-windows-absolute-path");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /unsafe artifact_path C:\\Users\\agent\\artifacts\\reviews\\reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract rejects ambiguous duplicate artifact writes", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-duplicate-write";
+    const written = {
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "artifacts/reviews/reviewer-1.md",
+      detail: "Subagent wrote the required review artifact."
+    };
+    fixture.observed_events.splice(2, 0, { ...written }, { ...written });
+    fixture.observed_events[4].event_id = "evt-003";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because duplicate artifact writes are ambiguous.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-duplicate-write");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /ambiguous duplicate write events: unknown-event, unknown-event/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence policy coverage fails closed when declared scaffold coverage is missing", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "approval-disabled-readonly-fallback.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    delete fixture.declared_contract.policy_scaffolds.thread;
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.runtime_evidence.policy_coverage.status, "fail");
+    assert.match(validation.errors.join("\n"), /RTE_POLICY_THREAD_UNSCORED/);
+    assert.ok(validation.runtime_evidence.policy_coverage.families.some((entry) => (
+      entry.family === "thread" &&
+      entry.enforcement_status === "missing_enforcement" &&
+      entry.error_code === "RTE_POLICY_THREAD_UNSCORED"
+    )));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence policy coverage fails closed when declared plugin policy is unscored", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "plugin-attribution-missing.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.scorers = ["permission-drift"];
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because plugin policy is declared without the enforcing scorer.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.runtime_evidence.policy_coverage.status, "fail");
+    assert.match(validation.errors.join("\n"), /RTE_POLICY_PLUGIN_UNSCORED/);
+    const pluginCoverage = validation.runtime_evidence.policy_coverage.families.find((entry) => entry.family === "plugin_attribution");
+    assert.equal(pluginCoverage.enforcement_status, "missing_enforcement");
+    assert.equal(pluginCoverage.error_code, "RTE_POLICY_PLUGIN_UNSCORED");
   } finally {
     cleanup(repo);
   }

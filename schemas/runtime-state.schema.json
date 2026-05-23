@@ -12,10 +12,12 @@
     "latest",
     "artifacts",
     "validation",
+    "contract_health",
+    "non_ready_reason_code",
     "recommended_commands"
   ],
   "properties": {
-    "schema_version": { "type": "integer", "const": 1 },
+    "schema_version": { "type": "integer", "const": 2 },
     "generated_at": { "type": "string", "format": "date-time" },
     "status": { "type": "string", "enum": ["ready", "stale", "missing", "invalid"] },
     "latest_path": { "type": "string", "minLength": 1 },
@@ -53,6 +55,36 @@
         "status": { "type": "string", "enum": ["passed", "failed", "not_run"] },
         "errors": { "type": "array", "items": { "type": "string" } }
       }
+    },
+    "contract_health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_evidence"],
+      "properties": {
+        "runtime_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "policy_coverage_status", "check_count", "errors"],
+          "properties": {
+            "status": { "type": "string", "enum": ["ready", "failing", "unavailable", "not_configured"] },
+            "policy_coverage_status": { "type": "string", "enum": ["pass", "fail", "unavailable", "not_configured"] },
+            "check_count": { "type": "integer", "minimum": 0 },
+            "errors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "non_ready_reason_code": {
+      "type": ["string", "null"],
+      "enum": [
+        "runtime_evidence_failed",
+        "latest_missing",
+        "latest_invalid",
+        "artifact_invalid",
+        "artifact_missing",
+        "latest_validation_failed",
+        null
+      ]
     },
     "recommended_commands": {
       "type": "array",
