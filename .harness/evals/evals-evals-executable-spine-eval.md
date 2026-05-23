@@ -40,8 +40,8 @@ recorded separately below.
 
 This section records governed JSC-346 trust-boundary hardening evidence. It is a
 local runtime-truth and tracker-reconciliation artifact. It does not claim
-remote PR, CI, CodeRabbit, CircleCI, or merge readiness until those surfaces are
-created and rechecked.
+merge readiness until PR, CI, review-thread, and mergeability surfaces are
+rechecked against the current branch head.
 
 | Slice | Status | Evidence |
 | --- | --- | --- |
@@ -49,11 +49,11 @@ created and rechecked.
 | PU-001 drift scenarios | covered by local tests | wrong artifact path, wrong artifact type, wrong subagent, missing artifact identity, traversal artifact path, and ambiguous duplicate writes. |
 | PU-002 / JSC-349 | complete locally | runtime-evidence policy coverage fails closed for declared unscored policy families unless an explicit scaffold reason is present. |
 | PU-003 / JSC-347 | complete locally | runtime state schema version 2 includes runtime-evidence contract health and downgrades readiness when the runtime-evidence suite fails. |
-| PU-004 / JSC-350 | complete locally | credential scan proof roots now include fixtures, schemas, src, scripts, test, tests, .harness/evals, .harness/research, .harness/specs, .harness/plan, and .harness/linear with redacted rg and Node fallback behavior. |
+| PU-004 / JSC-350 | complete locally | credential scan proof roots now include fixtures, schemas, src, scripts, test, tests, .harness/evals, .harness/research, .harness/specs, .harness/plan, .harness/plans, and .harness/linear with redacted rg and Node fallback behavior. |
 | Review artifacts | pass locally | artifacts/reviews/pu001-* through artifacts/reviews/pu004-* record architecture, simplification, testing, docs/language, and coordination outcomes. |
 | Local validation | pass | pnpm test; pnpm evals state --json; pnpm evals check --json; pnpm verify; EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js. |
 | Linear parent and children | in review | JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 were rechecked live and moved from Todo to In Review on 2026-05-23 with a parent comment containing validation evidence. |
-| Remote delivery lane | not yet proven | `gh pr list --repo jscraik/evals --state open --json number,title,headRefName,baseRefName,url` returned no open PRs. Remote CI, CodeRabbit review, CircleCI status, and mergeability proof have not been established for the current local change set. Do not mark Linear issues Done until those surfaces are verified. |
+| Remote delivery lane | active / not merge-ready | PR #13 exists for `jscraik/jsc-346-runtime-evidence-trust-boundary` against `main`. Remote CI, review-thread, and mergeability proof must be rechecked after each push. Do not mark Linear issues Done until those surfaces are verified for the current head. |
 
 ### JSC-346 Parent Reconciliation
 
@@ -197,7 +197,7 @@ The missing baseline is explicit and is not treated as a fake match.
 | git remote -v | pass | origin is 'https://github.com/jscraik/evals.git' for fetch and push |
 | git log --oneline --decorate --max-count=3 | pass | History includes initial implementation commit 8029517, delivery-state evidence refreshes, and schema-validation hardening commit 8e9f6fb |
 | gh repo view jscraik/evals | pass | defaultBranchRef.name is main; repo URL is https://github.com/jscraik/evals |
-| gh pr status / gh pr list | not applicable | no PR is associated with main and no open PRs exist after initial default-branch push |
+| gh pr status / gh pr view | active | PR #13 exists for `jscraik/jsc-346-runtime-evidence-trust-boundary`; remote checks and review state remain live delivery surfaces that must be refreshed after each push |
 
 ## Requirement Classifications
 

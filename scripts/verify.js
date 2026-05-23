@@ -23,6 +23,7 @@ export const credentialScanRootCandidates = [
   ".harness/research",
   ".harness/specs",
   ".harness/plan",
+  ".harness/plans",
   ".harness/linear"
 ];
 

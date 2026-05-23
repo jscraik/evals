@@ -63,7 +63,7 @@ const policyFamilies = [
 /**
  * Validate and score all local runtime-evidence contract fixtures.
  * @param {string} fixturesDir Directory containing runtime-evidence *.case.json files.
- * @returns {{checks: Array, errors: string[]}} Suite validation result.
+ * @returns {{checks: Array, errors: string[], policy_coverage: object}} Suite validation result.
  */
 export function validateRuntimeEvidenceSuite(fixturesDir = runtimeEvidenceFixtureDir) {
   const checks = [];
@@ -126,7 +126,7 @@ function suiteFailure(fixturesDir, message) {
 /**
  * Validate and score one runtime-evidence contract fixture.
  * @param {string} casePath Runtime-evidence case file.
- * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[], scorer_results?: Array}}
+ * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[], scorer_results?: Array, policy_coverage?: object}}
  */
 export function validateRuntimeEvidenceCase(casePath) {
   const schemaResult = schemaCheck("runtimeEvidenceCase", casePath);
@@ -446,7 +446,7 @@ function artifactIdentity(event, eventType, errors) {
     subagent_id: event.subagent_id,
     artifact_type: artifactType,
     artifact_path: artifactPath,
-    key: artifactType + ":" + artifactPath
+    key: event.subagent_id + ":" + artifactType + ":" + artifactPath
   };
 }
 

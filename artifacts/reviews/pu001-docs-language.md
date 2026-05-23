@@ -15,6 +15,6 @@
 
 ## Alignment Notes
 - No vocabulary conflict found with core doctrine: current code language remains aligned with "artifacts decide; telemetry explains" and uses the repo’s canonical "runtime evidence contract" and "artifact identity" terms.
+- Resolution evidence: the implementation notes now include a PU-001 artifact-identity decision entry with scorer version 1.1.0 and the expanded drift scenarios; the executable-spine closure artifact includes the JSC-346 addendum for the runtime-evidence trust-boundary lane.
 
 WROTE: artifacts/reviews/pu001-docs-language.md
-

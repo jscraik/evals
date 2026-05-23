@@ -42,9 +42,9 @@ Primary code surfaces inspected:
 
 Reviewer coverage:
 
-- agent-native reviewer completed and wrote /private/tmp/evals-agent-native-audit.md. It also reported pnpm evals check --json passed.
-- api-contract reviewer returned structured findings in the agent completion payload, but did not write the requested /private/tmp report. Its substantive findings were incorporated.
-- adversarial reviewer returned structured findings in the agent completion payload, but did not write the requested /private/tmp report. Its substantive findings were incorporated.
+- agent-native reviewer completed and wrote /private/tmp/evals-agent-native-audit.md. It also reported pnpm evals check --json passed. Its artifact-first finding maps most directly to GAP-003, where subagent artifact closure needed artifact identity proof instead of event counts.
+- api-contract reviewer returned structured findings in the agent completion payload, but did not write the requested /private/tmp report. Its substantive findings were incorporated into GAP-001, GAP-002, and the public JSON/schema compatibility risks.
+- adversarial reviewer returned structured findings in the agent completion payload, but did not write the requested /private/tmp report. Its substantive findings were incorporated into GAP-004, GAP-005, and the false-readiness, fixture-tampering, and stale-tracker risks.
 
 Skill lens selection:
 

@@ -134,18 +134,18 @@
         </tr>
         <tr>
           <td>Implementation lane</td>
-          <td><span class="badge pass">PU-001 implemented</span></td>
-          <td>Subagent artifact scoring now matches subagent ID, artifact type, and normalized artifact path. Review stack is pending before progression.</td>
+          <td><span class="badge pass">PU-001-PU-004 complete</span></td>
+          <td>Subagent artifact identity, policy coverage, state/check alignment, and credential scan proof-surface coverage are implemented. CodeRabbit follow-up tightened the internal artifact identity key to include subagent ID.</td>
         </tr>
         <tr>
           <td>Validation lane</td>
-          <td><span class="badge pass">PU-001 local gates passing</span></td>
-          <td><code>pnpm test</code> and <code>pnpm evals check --json</code> pass after review fixes.</td>
+          <td><span class="badge pass">local gates passing</span></td>
+          <td><code>pnpm test</code>, <code>pnpm evals check --json</code>, and <code>pnpm verify</code> pass through PU-004 and artifact triage.</td>
         </tr>
         <tr>
           <td>Delivery lane</td>
-          <td><span class="badge risk">no PR yet</span></td>
-          <td>Git triage handoff is blocked until a branch/PR exists. Local safe-state is recorded in receipts.</td>
+          <td><span class="badge risk">PR triage active</span></td>
+          <td>PR #13 exists and is ready for review. Receipt <code>pu005_pr_created_remote_triage</code> records push, PR, check, and CodeRabbit remediation state.</td>
         </tr>
       </tbody>
     </table>
@@ -268,7 +268,7 @@
         <tr>
           <td><code>pnpm test</code></td>
           <td><span class="badge pass">pass</span></td>
-          <td>96 tests passed, including PU-001 path mismatch, type mismatch, wrong subagent, missing identity, traversal, and duplicate-write negative cases.</td>
+          <td>96 tests passed at the PU-001 checkpoint, including path mismatch, type mismatch, wrong subagent, missing identity, traversal, and duplicate-write negative cases. Later artifact-key remediation raised the suite to 107 tests.</td>
         </tr>
         <tr>
           <td><code>pnpm evals check --json</code></td>
@@ -303,7 +303,7 @@
         <tr>
           <td><code>pnpm verify</code></td>
           <td><span class="badge pass">pass</span></td>
-          <td>The aggregate gate passed with credential scanning across <code>fixtures</code>, <code>schemas</code>, <code>src</code>, <code>scripts</code>, <code>test</code>, <code>tests</code>, <code>.harness/evals</code>, <code>.harness/research</code>, <code>.harness/specs</code>, <code>.harness/plan</code>, and <code>.harness/linear</code>.</td>
+          <td>The aggregate gate passed with credential scanning across <code>fixtures</code>, <code>schemas</code>, <code>src</code>, <code>scripts</code>, <code>test</code>, <code>tests</code>, <code>.harness/evals</code>, <code>.harness/research</code>, <code>.harness/specs</code>, <code>.harness/plan</code>, <code>.harness/plans</code>, and <code>.harness/linear</code>.</td>
         </tr>
         <tr>
           <td><code>EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js</code></td>
@@ -318,7 +318,7 @@
         <tr>
           <td><code>GitHub open PR recheck</code></td>
           <td><span class="badge pass">pass</span></td>
-          <td><code>gh pr list --repo jscraik/evals --state open --json number,title,headRefName,baseRefName,url</code> returned no open PRs. Remote review-thread, CI, CodeRabbit, CircleCI, and mergeability evidence remain unproven for the local change set.</td>
+          <td>PR #13 exists for <code>jscraik/jsc-346-runtime-evidence-trust-boundary</code> against <code>main</code>. Remote review-thread, CI, CodeRabbit, CircleCI, and mergeability evidence must be refreshed after every push.</td>
         </tr>
         <tr>
           <td><code>Delivery branch packaging</code></td>
@@ -327,8 +327,8 @@
         </tr>
         <tr>
           <td><code>git push -u origin jscraik/jsc-346-runtime-evidence-trust-boundary</code></td>
-          <td><span class="badge blocked">blocked</span></td>
-          <td>Policy rejected the external transfer because destination trust or explicit approval was not established for a large code and artifact push. No workaround was attempted.</td>
+          <td><span class="badge pass">pass</span></td>
+          <td>The branch was pushed and PR #13 was opened. Earlier push-blocker evidence remains historical only; current delivery risk is remote check and review convergence after each new head.</td>
         </tr>
       </tbody>
     </table>
@@ -380,17 +380,17 @@
         <tr>
           <td>Public JSON shape drift in check or state output.</td>
           <td>high</td>
-          <td>Schema or golden-output tests are required before accepting a JSON contract change.</td>
+          <td>Implemented in PU-003 with runtime-state schema version 2 and tests covering readiness, runtime-evidence failure, malformed latest JSON, and reason codes.</td>
         </tr>
         <tr>
           <td>Credential scan expansion may report documentation prose as credential-like text.</td>
           <td>high</td>
-          <td>Use tested credential-shaped pattern classes and explicit exclusions rather than broad keyword matching.</td>
+          <td>Implemented in PU-004 with credential-shaped pattern tests, redacted output assertions, and rg/Node fallback parity tests.</td>
         </tr>
         <tr>
           <td>Review or delivery state may drift while local implementation continues.</td>
           <td>medium</td>
-          <td>Use receipts and delivery rechecks before closeout; do not treat local tests as PR mergeability proof.</td>
+          <td>Pending final remote review convergence. Receipts now include owner-approved push resume and PR #13 remote triage state; local tests are not treated as mergeability proof.</td>
         </tr>
       </tbody>
     </table>

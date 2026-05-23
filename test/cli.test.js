@@ -638,7 +638,7 @@ test("runtime evidence contract rejects subagent artifact path mismatch", () => 
     assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-path-mismatch expected verdict pass, got fail/);
     const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-path-mismatch");
     const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
-    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity review_report:artifacts\/reviews\/reviewer-1\.md/);
+    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity reviewer-1:review_report:artifacts\/reviews\/reviewer-1\.md/);
   } finally {
     cleanup(repo);
   }
@@ -677,7 +677,7 @@ test("runtime evidence contract rejects subagent artifact type mismatch", () => 
     assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-type-mismatch expected verdict pass, got fail/);
     const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-type-mismatch");
     const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
-    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity review_report:artifacts\/reviews\/reviewer-1\.md/);
+    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity reviewer-1:review_report:artifacts\/reviews\/reviewer-1\.md/);
   } finally {
     cleanup(repo);
   }
@@ -716,7 +716,105 @@ test("runtime evidence contract rejects artifact identity written by a different
     assert.match(validation.errors.join("\n"), /runtime evidence: subagent-artifact-wrong-subagent expected verdict pass, got fail/);
     const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-wrong-subagent");
     const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
-    assert.match(subagentResult.evidence, /only has ArtifactWritten events from a different subagent for identity review_report:artifacts\/reviews\/reviewer-1\.md/);
+    assert.match(subagentResult.evidence, /missing matching ArtifactWritten identity reviewer-1:review_report:artifacts\/reviews\/reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("runtime evidence contract permits distinct subagents to write the same artifact type and path", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-shared-path-distinct-subagents";
+    fixture.observed_events = [
+      {
+        event_id: "evt-001",
+        type: "SubagentStart",
+        actor: "parent-agent",
+        source: "agent",
+        status: "started",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-1",
+        role: "reviewer",
+        reason: "Review runtime evidence contract changes."
+      },
+      {
+        event_id: "evt-002",
+        type: "SubagentStart",
+        actor: "parent-agent",
+        source: "agent",
+        status: "started",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-2",
+        role: "reviewer",
+        reason: "Review runtime evidence contract changes."
+      },
+      {
+        event_id: "evt-003",
+        type: "ArtifactExpected",
+        actor: "parent-agent",
+        source: "agent",
+        status: "expected",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-1",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      },
+      {
+        event_id: "evt-004",
+        type: "ArtifactExpected",
+        actor: "parent-agent",
+        source: "agent",
+        status: "expected",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-2",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      },
+      {
+        event_id: "evt-005",
+        type: "ArtifactWritten",
+        actor: "reviewer-1",
+        source: "subagent",
+        status: "written",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-1",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      },
+      {
+        event_id: "evt-006",
+        type: "ArtifactWritten",
+        actor: "reviewer-2",
+        source: "subagent",
+        status: "written",
+        effect: "none",
+        path_scope: "none",
+        subagent_id: "reviewer-2",
+        artifact_type: "review_report",
+        artifact_path: "artifacts/reviews/shared.md"
+      }
+    ];
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "Distinct subagents are independent artifact identities even when type and path match.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-shared-path-distinct-subagents");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.equal(subagentResult.status, "pass");
   } finally {
     cleanup(repo);
   }

@@ -179,7 +179,7 @@ test("privacy check regex is documented consistently", () => {
     "credential-like pattern redacted",
     "sk-[A-Za-z0-9_-]{20,}",
     "(api[_-]?key|token|secret|password)\\s*[:=]\\s*",
-    "fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/linear"
+    "fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/plans .harness/linear"
   ];
   for (const path of ["AGENTS.md", "CONTRIBUTING.md", "SECURITY.md"]) {
     const content = read(path);

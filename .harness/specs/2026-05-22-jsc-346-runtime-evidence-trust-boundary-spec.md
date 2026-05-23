@@ -20,7 +20,7 @@ scope: "Runtime evidence trust-boundary behavior for the approved JSC-346 execut
 safe_to_continue: true
 blocked_reason: none
 linear_mutation_status: live_verified_2026-05-22
-tracker_reconciliation: "2026-05-22 live Linear lookup confirmed JSC-346 through JSC-350 exist and are unstarted/Todo; closeout must re-verify live Linear state because AGENTS.md still contains an older tracker override for the previous 2026-05-18 parent."
+tracker_reconciliation: "2026-05-22 live Linear lookup confirmed JSC-346 through JSC-350 exist; closeout must re-verify live Linear state and reconcile the AGENTS.md tracker override without representing that historical override as a live Linear issue."
 linear_action_required: recheck_before_closeout
 linear_parent_issue: JSC-346
 linear_child_issues:
@@ -49,7 +49,7 @@ confidence: 88_percent_strong_candidate_with_validation_gaps
 
 BLUF: This spec defines the behavior contract for the approved JSC-346 evals trust-boundary slice so each operator, developer, and future agent can trust the repo's local proof signals. It closes the most urgent runtime-evidence gaps found in the 2026-05-22 codebase audit because readiness can be overstated when runtime-evidence fixtures are broken, subagent artifact events can pass without proving artifact identity, and schema-shaped policy fields can look authoritative without scorer enforcement. The decision is to fix only the deterministic proof boundary now: state/check agreement, artifact identity matching, runtime-evidence policy coverage, and credential scan scope. The main risks are phase drift and contract drift, so this spec must not open dashboards, source mining, external adapters, packaged runtime launchers, plugin systems, LLM judge authority, or silent JSON shape changes. The next step is for he-plan to turn these acceptance IDs into bounded implementation units, starting with the smallest artifact-identity or policy-coverage patch and re-verifying live Linear state before any parent closeout.
 
-Decision Needed: None for specification. The 2026-05-22 Linear plan records JSC-346 through JSC-350 as created; implementation closeout must re-check live Linear state because AGENTS.md still contains an older tracker override for the prior evals parent.
+Decision Needed: None for specification. The 2026-05-22 Linear plan records JSC-346 through JSC-350 as created; implementation closeout must re-check live Linear state and reconcile the AGENTS.md tracker override as historical unless or until the parent issue recovery condition creates or links a live issue.
 
 Top Risks:
 

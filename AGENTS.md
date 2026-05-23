@@ -133,7 +133,7 @@ For a lightweight direct credential scan when `rg` is available:
 
 ~~~bash
 credential_pattern='sk-[A-Za-z0-9_-]{20,}|(api[_-]?key|token|secret|password)\s*[:=]\s*["'"'"']?[A-Za-z0-9_./+=-]{16,}|-{5}BEGIN (RSA|OPENSSH|PRIVATE) KEY-{5}'
-rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/linear
+rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/plans .harness/linear
 ~~~
 
 The check command validates the smoke fixture against

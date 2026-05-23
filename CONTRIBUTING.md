@@ -84,7 +84,7 @@ safe to share:
 
 ~~~bash
 credential_pattern='sk-[A-Za-z0-9_-]{20,}|(api[_-]?key|token|secret|password)\s*[:=]\s*["'"'"']?[A-Za-z0-9_./+=-]{16,}|-{5}BEGIN (RSA|OPENSSH|PRIVATE) KEY-{5}'
-rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/linear
+rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/plans .harness/linear
 ~~~
 
 This regex is a phase-one aid, not a complete secret scanner. It intentionally

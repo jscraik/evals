@@ -2,7 +2,7 @@ schema_version: 1
 goal_id: 2026-05-23-jsc-346-runtime-evidence-trust-boundary
 status: active
 created_at: 2026-05-23T14:27:45Z
-updated_at: 2026-05-23T15:46:30Z
+updated_at: 2026-05-23T16:23:30Z
 current_slice: PU-005
 board_health: clear
 safe_to_continue: true
@@ -29,6 +29,10 @@ slices:
   PU-005:
     issue: JSC-346
     objective: Reconcile parent governance, docs, review stack, and delivery readiness.
-    status: remote_delivery_resumed
-last_receipt: pu005_owner_approved_push_resume
+    status: remote_triage_active
+pending_evidence:
+  - coderabbit_review_convergence_after_remediation_push
+  - refreshed_remote_checks_after_review_remediation_push
+  - final_mergeability_recheck
+last_receipt: pu005_coderabbit_local_remediation_ready
 blocked_reason: none

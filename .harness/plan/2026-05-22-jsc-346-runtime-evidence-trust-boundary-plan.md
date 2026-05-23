@@ -125,7 +125,7 @@ Implementation-time unknowns:
 | Verify scanner | scripts/verify.js scans currently discovered credential roots and has an EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 fallback path. | Scan target contract needs proof roots and parity tests for fallback behavior. |
 | CI gate | .github/workflows/ci.yml and .harness/ci-required-checks.json route to pnpm verify. | JSC-350 must preserve deterministic CI behavior. |
 | Candidate expanded credential scan | Dry-run search across proof-bearing roots currently reports prose/source matches for words like secret and token. | PU-004 must add tested pattern classes, false-positive handling, or explicit exclusions before expanded roots can be treated as passing proof. |
-| Linear tracker state | Live Linear lookup on 2026-05-22 confirmed JSC-346 through JSC-350 exist and remain unstarted/Todo. | Parent closeout still needs a fresh live recheck because tracker state can drift. |
+| Linear tracker state | Initial live Linear lookup on 2026-05-22 confirmed JSC-346 through JSC-350 exist. Closeout requires a fresh recheck per linear_action_required. | Parent closeout still needs current live tracker evidence because tracker state can drift. |
 
 Current validation snapshot from the planning/spec review lane:
 

@@ -65,6 +65,11 @@ export function buildRuntimeState(now = new Date()) {
   try {
     latest = readJson(latestPath);
   } catch (error) {
+    const latestValidation = {
+      status: "failed",
+      errors: [rel(latestPath) + ": JSON parse failed: " + error.message]
+    };
+    const validation = runtimeEvidenceValidationState(latestValidation, runtimeEvidenceHealth);
     return withSchemaGuard({
       ...base,
       status: "invalid",
@@ -81,11 +86,14 @@ export function buildRuntimeState(now = new Date()) {
         status: "not_applicable",
         reason: "latest pointer is not parseable JSON"
       })),
-      validation: {
-        status: "failed",
-        errors: [rel(latestPath) + ": JSON parse failed: " + error.message]
-      },
-      non_ready_reason_code: "latest_invalid"
+      validation,
+      non_ready_reason_code: nonReadyReason("invalid", {
+        latestStatus: "invalid",
+        hasInvalidArtifact: false,
+        hasMissingArtifact: false,
+        latestValidationStatus: latestValidation.status,
+        runtimeEvidenceHealth
+      })
     });
   }
 
