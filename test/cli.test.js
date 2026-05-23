@@ -885,6 +885,45 @@ test("runtime evidence contract rejects traversal in subagent artifact identity"
   }
 });
 
+test("runtime evidence contract rejects Windows absolute artifact identity paths", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const fixturePath = join(repo, "fixtures", "runtime-evidence", "subagent-artifact-contract.case.json");
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    fixture.case_id = "subagent-artifact-windows-absolute-path";
+    fixture.observed_events[1].artifact_path = "C:\\Users\\agent\\artifacts\\reviews\\reviewer-1.md";
+    fixture.observed_events.splice(2, 0, {
+      event_id: "evt-003",
+      type: "ArtifactWritten",
+      actor: "reviewer-1",
+      source: "subagent",
+      status: "written",
+      effect: "none",
+      path_scope: "none",
+      subagent_id: "reviewer-1",
+      artifact_type: "review_report",
+      artifact_path: "C:\\Users\\agent\\artifacts\\reviews\\reviewer-1.md",
+      detail: "Subagent wrote an unsafe Windows absolute artifact path."
+    });
+    fixture.observed_events[3].event_id = "evt-004";
+    fixture.expected.verdict = "pass";
+    fixture.expected.classification = "ok";
+    fixture.expected.reason = "This expectation should drift because Windows absolute paths are unsafe.";
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    const runtimeCheck = validation.checks.find((check) => check.label === "runtime evidence: subagent-artifact-windows-absolute-path");
+    const subagentResult = runtimeCheck.scorer_results.find((result) => result.scorer_id === "subagent-artifact-contract");
+    assert.match(subagentResult.evidence, /unsafe artifact_path C:\\Users\\agent\\artifacts\\reviews\\reviewer-1\.md/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("runtime evidence contract rejects ambiguous duplicate artifact writes", () => {
   const repo = makeRepo();
   try {

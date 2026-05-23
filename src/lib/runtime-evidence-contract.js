@@ -454,6 +454,7 @@ function normalizeArtifactPath(artifactPath) {
   if (typeof artifactPath !== "string") return null;
   const normalizedSeparators = artifactPath.trim().replace(/\\/g, "/");
   if (normalizedSeparators.length === 0 || normalizedSeparators.startsWith("/")) return null;
+  if (/^[A-Za-z]:\//.test(normalizedSeparators)) return null;
   const segments = [];
   for (const segment of normalizedSeparators.split("/")) {
     if (segment === "" || segment === ".") continue;
