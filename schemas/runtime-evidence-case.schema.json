@@ -113,6 +113,48 @@
             "checksum_required": { "type": "boolean" },
             "build_artifact_required": { "type": "boolean" }
           }
+        },
+        "policy_scaffolds": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "reason"],
+              "properties": {
+                "status": { "type": "string", "const": "scaffolded_not_enforced" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            },
+            "thread": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "reason"],
+              "properties": {
+                "status": { "type": "string", "const": "scaffolded_not_enforced" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            },
+            "network": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "reason"],
+              "properties": {
+                "status": { "type": "string", "const": "scaffolded_not_enforced" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            },
+            "package_provenance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "reason"],
+              "properties": {
+                "status": { "type": "string", "const": "scaffolded_not_enforced" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
         }
       }
     },

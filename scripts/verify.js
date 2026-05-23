@@ -2,6 +2,39 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const credentialPatternSource = [
+  "sk-[A-Za-z0-9_-]{20,}",
+  "(api[_-]?key|token|secret|password)\\s*[:=]\\s*[\\\"']?[A-Za-z0-9_./+=-]{16,}",
+  "-{5}BEGIN (RSA|OPENSSH|PRIVATE) KEY-{5}"
+].join("|");
+
+const credentialGlobalPattern = new RegExp(credentialPatternSource, "g");
+
+export const credentialScanRootCandidates = [
+  "fixtures",
+  "schemas",
+  "src",
+  "scripts",
+  "test",
+  "tests",
+  ".harness/evals",
+  ".harness/research",
+  ".harness/specs",
+  ".harness/plan",
+  ".harness/linear"
+];
+
+const excludedCredentialScanDirectories = new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  "coverage",
+  ".pnpm-store",
+  ".turbo"
+]);
 
 const checks = [
   {
@@ -50,14 +83,19 @@ const checks = [
   }
 ];
 
-function credentialScanPaths() {
-  return ["fixtures", ".harness/evals"].filter((path) => existsSync(path));
+export function credentialScanPaths(cwd = ".") {
+  return credentialScanRootCandidates
+    .map((path) => join(cwd, path))
+    .filter((path) => existsSync(path));
 }
 
 function credentialScanCommand() {
   const searchPaths = credentialScanPaths();
   const suffix = searchPaths.length > 0 ? searchPaths.join(" ") : "<no existing scan paths>";
-  return 'rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" ' + suffix;
+  if (process.env.EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN === "1") {
+    return "node credential scan fallback using " + JSON.stringify(credentialPatternSource) + " " + suffix;
+  }
+  return 'rg -n -o --replace "credential-like pattern redacted" ' + JSON.stringify(credentialPatternSource) + " " + suffix;
 }
 
 function credentialScan() {
@@ -67,9 +105,16 @@ function credentialScan() {
     const matches = scanCredentialPatterns(searchPaths);
     return matches.length === 0 ? pass("no credential-like patterns found") : fail(matches.join("\n"));
   }
-  const result = spawnSync("rg", [
+  return credentialScanWithRg(searchPaths);
+}
+
+export function credentialScanWithRg(searchPaths, spawn = spawnSync) {
+  const result = spawn("rg", [
     "-n",
-    "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY",
+    "-o",
+    "--replace",
+    "credential-like pattern redacted",
+    credentialPatternSource,
     ...searchPaths
   ], {
     encoding: "utf8",
@@ -89,15 +134,19 @@ function credentialScan() {
   return matches.length === 0 ? pass("no credential-like patterns found") : fail(matches.join("\n"));
 }
 
-function scanCredentialPatterns(searchPaths) {
-  const pattern = /sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY/;
+export function scanCredentialPatterns(searchPaths) {
   const matches = [];
   for (const searchPath of searchPaths) {
     for (const filePath of listFiles(searchPath)) {
-      const lines = readFileSync(filePath, "utf8").split(/\r?\n/);
+      let lines;
+      try {
+        lines = readFileSync(filePath, "utf8").split(/\r?\n/);
+      } catch (error) {
+        matches.push(filePath + ": credential scan unreadable: " + error.message);
+        continue;
+      }
       for (const [index, line] of lines.entries()) {
-        const match = line.match(pattern);
-        if (match) {
+        for (const match of line.matchAll(credentialGlobalPattern)) {
           matches.push(filePath + ":" + (index + 1) + ": credential-like pattern redacted; match length " + match[0].length);
         }
       }
@@ -113,7 +162,7 @@ function listFiles(path) {
   const files = [];
   for (const entry of readdirSync(path, { withFileTypes: true })) {
     const child = join(path, entry.name);
-    if (entry.isDirectory()) files.push(...listFiles(child));
+    if (entry.isDirectory() && !excludedCredentialScanDirectories.has(entry.name)) files.push(...listFiles(child));
     if (entry.isFile()) files.push(child);
   }
   return files;
@@ -160,17 +209,23 @@ function runCommand(command, args, options = {}) {
   return passStatuses.includes(result.status) ? pass(message) : fail(message || "exit status " + result.status);
 }
 
-const results = [];
-for (const check of checks) {
-  const command = typeof check.command === "function" ? check.command() : check.command;
-  const result = check.run();
-  results.push({ command, ...result });
-  const marker = result.status === "pass" ? "PASS" : "FAIL";
-  console.log(marker + ": " + command);
-  if (result.output) console.log(result.output);
-  if (result.status !== "pass") break;
+export function main() {
+  const results = [];
+  for (const check of checks) {
+    const command = typeof check.command === "function" ? check.command() : check.command;
+    const result = check.run();
+    results.push({ command, ...result });
+    const marker = result.status === "pass" ? "PASS" : "FAIL";
+    console.log(marker + ": " + command);
+    if (result.output) console.log(result.output);
+    if (result.status !== "pass") break;
+  }
+
+  if (results.some((result) => result.status !== "pass")) {
+    process.exit(1);
+  }
 }
 
-if (results.some((result) => result.status !== "pass")) {
-  process.exit(1);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
 }

@@ -88,6 +88,9 @@ export function checkCommand(jsonMode) {
     status: errors.length === 0 ? "passed" : "failed",
     latest_path: rel(latestPath),
     run_id: latestValidation.run_id,
+    runtime_evidence: {
+      policy_coverage: runtimeEvidenceValidation.policy_coverage
+    },
     checks,
     errors
   };

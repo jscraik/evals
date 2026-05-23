@@ -32,7 +32,43 @@ override:
   delivered as the initial commit on the repository default branch.
 
 This artifact is closure evidence for the local executable spine, git push, and
-approved tracker override. It is not a claim that a live Linear issue exists.
+approved tracker override. It is not a claim that a live phase-one Linear issue
+exists. The later JSC-346 runtime-evidence trust-boundary tracker state is
+recorded separately below.
+
+## JSC-346 Runtime-Evidence Trust-Boundary Addendum
+
+This section records governed JSC-346 trust-boundary hardening evidence. It is a
+local runtime-truth and tracker-reconciliation artifact. It does not claim
+remote PR, CI, CodeRabbit, CircleCI, or merge readiness until those surfaces are
+created and rechecked.
+
+| Slice | Status | Evidence |
+| --- | --- | --- |
+| PU-001 / JSC-348 | complete locally | subagent-artifact-contract scorer version 1.1.0 now matches ArtifactExpected and ArtifactWritten by artifact type, artifact path, and subagent ownership. |
+| PU-001 drift scenarios | covered by local tests | wrong artifact path, wrong artifact type, wrong subagent, missing artifact identity, traversal artifact path, and ambiguous duplicate writes. |
+| PU-002 / JSC-349 | complete locally | runtime-evidence policy coverage fails closed for declared unscored policy families unless an explicit scaffold reason is present. |
+| PU-003 / JSC-347 | complete locally | runtime state schema version 2 includes runtime-evidence contract health and downgrades readiness when the runtime-evidence suite fails. |
+| PU-004 / JSC-350 | complete locally | credential scan proof roots now include fixtures, schemas, src, scripts, test, tests, .harness/evals, .harness/research, .harness/specs, .harness/plan, and .harness/linear with redacted rg and Node fallback behavior. |
+| Review artifacts | pass locally | artifacts/reviews/pu001-* through artifacts/reviews/pu004-* record architecture, simplification, testing, docs/language, and coordination outcomes. |
+| Local validation | pass | pnpm test; pnpm evals state --json; pnpm evals check --json; pnpm verify; EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js. |
+| Linear parent and children | in review | JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 were rechecked live and moved from Todo to In Review on 2026-05-23 with a parent comment containing validation evidence. |
+| Remote delivery lane | not yet proven | `gh pr list --repo jscraik/evals --state open --json number,title,headRefName,baseRefName,url` returned no open PRs. Remote CI, CodeRabbit review, CircleCI status, and mergeability proof have not been established for the current local change set. Do not mark Linear issues Done until those surfaces are verified. |
+
+### JSC-346 Parent Reconciliation
+
+Parent-loop reconciliation decision: keep JSC-346 and children in Linear
+`In Review` until branch, PR, remote check, review-thread, and mergeability
+evidence exist. Local runtime implementation is complete enough for review, but
+not complete enough for a remote delivery closeout claim.
+
+| Issue | Live Linear State | Local Runtime State | Decision |
+| --- | --- | --- | --- |
+| JSC-346 | In Review | parent evidence reconciled | hold open for PR, CI, review, and mergeability proof |
+| JSC-347 | In Review | runtime-state readiness enforcement implemented and tested | hold open for PR review |
+| JSC-348 | In Review | subagent artifact identity enforcement implemented and tested | hold open for PR review |
+| JSC-349 | In Review | policy coverage enforcement implemented and tested | hold open for PR review |
+| JSC-350 | In Review | credential scan proof roots and fallback parity implemented and tested | hold open for PR review |
 
 ## Command Output
 

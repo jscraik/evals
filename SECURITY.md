@@ -29,12 +29,14 @@ spec explicitly adds that behavior.
 Before sharing or committing fixture/eval artifacts, run:
 
 ~~~bash
-rg -n "sk-|api[_-]?key|token|secret|password|BEGIN (RSA|OPENSSH|PRIVATE) KEY" fixtures .harness/evals
+credential_pattern='sk-[A-Za-z0-9_-]{20,}|(api[_-]?key|token|secret|password)\s*[:=]\s*["'"'"']?[A-Za-z0-9_./+=-]{16,}|-{5}BEGIN (RSA|OPENSSH|PRIVATE) KEY-{5}'
+rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/linear
 ~~~
 
 No output means the lightweight phase-one credential pattern check found no
-matches. This check is not a full secret scanner and does not replace human
-review.
+matches. This check looks for credential-shaped values instead of standalone
+prose words, redacts matched values, and is not a full secret scanner or a
+replacement for human review.
 
 ## Dependency And Runtime Boundary
 

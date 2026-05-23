@@ -8,6 +8,58 @@ export const runtimeEvidenceFixtureDir = join(repoRoot, "fixtures", "runtime-evi
 
 const runtimeEvidenceScorers = new Set(["permission-drift", "subagent-artifact-contract", "plugin-attribution"]);
 
+const policyFamilies = [
+  {
+    family: "permissions",
+    declarationPath: "declared_contract.permission_profile",
+    scorerId: "permission-drift",
+    errorCode: "RTE_POLICY_PERMISSION_UNSCORED",
+    declared: () => true
+  },
+  {
+    family: "subagent_artifacts",
+    declarationPath: "declared_contract.artifact_contract",
+    scorerId: "subagent-artifact-contract",
+    errorCode: "RTE_POLICY_SUBAGENT_ARTIFACT_UNSCORED",
+    declared: (contract) => contract.artifact_contract?.subagent_artifacts_required === true
+  },
+  {
+    family: "plugin_attribution",
+    declarationPath: "declared_contract.plugin_policy",
+    scorerId: "plugin-attribution",
+    errorCode: "RTE_POLICY_PLUGIN_UNSCORED",
+    declared: (contract) => contract.plugin_policy?.plugin_id_required === true || contract.plugin_policy?.plugin_source_required === true
+  },
+  {
+    family: "goal",
+    declarationPath: "declared_contract.goal_policy",
+    scaffoldKey: "goal",
+    errorCode: "RTE_POLICY_GOAL_UNSCORED",
+    declared: (contract) => Object.hasOwn(contract, "goal_policy")
+  },
+  {
+    family: "thread",
+    declarationPath: "declared_contract.thread_policy",
+    scaffoldKey: "thread",
+    errorCode: "RTE_POLICY_THREAD_UNSCORED",
+    declared: (contract) => Object.hasOwn(contract, "thread_policy")
+  },
+  {
+    family: "network",
+    declarationPath: "declared_contract.network_policy",
+    scaffoldKey: "network",
+    errorCode: "RTE_POLICY_NETWORK_UNSCORED",
+    declared: (contract) => Object.hasOwn(contract, "network_policy")
+  },
+  {
+    family: "package_provenance",
+    declarationPath: "declared_contract.package_provenance_policy",
+    scaffoldKey: "package_provenance",
+    errorCode: "RTE_POLICY_PACKAGE_PROVENANCE_UNSCORED",
+    declared: (contract) => Object.hasOwn(contract, "package_provenance_policy")
+  }
+];
+
 /**
  * Validate and score all local runtime-evidence contract fixtures.
  * @param {string} fixturesDir Directory containing runtime-evidence *.case.json files.
@@ -16,6 +68,7 @@ const runtimeEvidenceScorers = new Set(["permission-drift", "subagent-artifact-c
 export function validateRuntimeEvidenceSuite(fixturesDir = runtimeEvidenceFixtureDir) {
   const checks = [];
   const errors = [];
+  const policyCoverage = emptyPolicyCoverage();
   if (!existsSync(fixturesDir)) {
     const message = "runtime evidence fixture directory does not exist: " + rel(fixturesDir);
     return suiteFailure(fixturesDir, message);
@@ -45,9 +98,11 @@ export function validateRuntimeEvidenceSuite(fixturesDir = runtimeEvidenceFixtur
     const check = validateRuntimeEvidenceCase(casePath);
     checks.push(check);
     errors.push(...check.errors.map((error) => check.label + " " + error));
+    mergePolicyCoverage(policyCoverage, check.policy_coverage);
   }
 
-  return { checks, errors };
+  policyCoverage.status = policyCoverage.errors.length === 0 ? "pass" : "fail";
+  return { checks, errors, policy_coverage: policyCoverage };
 }
 
 function suiteFailure(fixturesDir, message) {
@@ -59,7 +114,12 @@ function suiteFailure(fixturesDir, message) {
       status: "fail",
       errors: [message]
     }],
-    errors: [message]
+    errors: [message],
+    policy_coverage: {
+      status: "fail",
+      families: [],
+      errors: [message]
+    }
   };
 }
 
@@ -83,9 +143,10 @@ export function validateRuntimeEvidenceCase(casePath) {
   }
 
   const scorerErrors = unknownScorerErrors(testCase.scorers);
+  const policyCoverage = policyCoverageForCase(testCase);
   const scored = scoreRuntimeEvidenceCase(testCase);
-  const expectationErrors = scorerErrors.concat(expectationDriftErrors(testCase, scored));
-  return runtimeEvidenceCheck(dataPath, "runtime evidence: " + testCase.case_id, expectationErrors, scored.scorer_results);
+  const expectationErrors = scorerErrors.concat(policyCoverage.errors, expectationDriftErrors(testCase, scored));
+  return runtimeEvidenceCheck(dataPath, "runtime evidence: " + testCase.case_id, expectationErrors, scored.scorer_results, policyCoverage);
 }
 
 /**
@@ -115,14 +176,15 @@ export function scoreRuntimeEvidenceCase(testCase) {
   };
 }
 
-function runtimeEvidenceCheck(dataPath, label, errors, scorerResults) {
+function runtimeEvidenceCheck(dataPath, label, errors, scorerResults, policyCoverage = emptyPolicyCoverage()) {
   return {
     label,
     schema_path: rel(schemaTargets.runtimeEvidenceCase.schema),
     data_path: dataPath,
     status: errors.length === 0 ? "pass" : "fail",
     errors,
-    scorer_results: scorerResults
+    scorer_results: scorerResults,
+    policy_coverage: policyCoverage
   };
 }
 
@@ -141,6 +203,84 @@ function expectationDriftErrors(testCase, scored) {
     errors.push("expected classification " + testCase.expected.classification + ", got " + scored.classification);
   }
   return errors;
+}
+
+function emptyPolicyCoverage() {
+  return {
+    status: "pass",
+    families: [],
+    errors: []
+  };
+}
+
+function mergePolicyCoverage(target, source) {
+  if (!source) return;
+  target.families.push(...source.families);
+  target.errors.push(...source.errors);
+  target.status = target.errors.length === 0 ? "pass" : "fail";
+}
+
+function policyCoverageForCase(testCase) {
+  const coverage = emptyPolicyCoverage();
+  const contract = testCase.declared_contract;
+  const scorers = new Set(testCase.scorers);
+  const scaffolds = contract.policy_scaffolds || {};
+
+  for (const family of policyFamilies) {
+    if (!family.declared(contract)) continue;
+    if (family.scorerId) {
+      if (scorers.has(family.scorerId)) {
+        coverage.families.push({
+          case_id: testCase.case_id,
+          family: family.family,
+          declaration_path: family.declarationPath,
+          enforcement_status: "implemented_enforced",
+          scorer_id: family.scorerId
+        });
+      } else {
+        const error = policyCoverageError(testCase.case_id, family, "missing enforcing scorer " + family.scorerId);
+        coverage.families.push(missingCoverageEntry(testCase.case_id, family, error));
+        coverage.errors.push(error.code + ": " + error.message);
+      }
+      continue;
+    }
+
+    const scaffold = scaffolds[family.scaffoldKey];
+    if (scaffold?.status === "scaffolded_not_enforced" && scaffold.reason) {
+      coverage.families.push({
+        case_id: testCase.case_id,
+        family: family.family,
+        declaration_path: family.declarationPath,
+        enforcement_status: "scaffolded_not_enforced",
+        scaffold_reason: scaffold.reason
+      });
+    } else {
+      const error = policyCoverageError(testCase.case_id, family, "declared without scaffolded_not_enforced status and reason");
+      coverage.families.push(missingCoverageEntry(testCase.case_id, family, error));
+      coverage.errors.push(error.code + ": " + error.message);
+    }
+  }
+
+  coverage.status = coverage.errors.length === 0 ? "pass" : "fail";
+  return coverage;
+}
+
+function policyCoverageError(caseId, family, reason) {
+  return {
+    code: family.errorCode,
+    message: "case " + caseId + " policy family " + family.family + " at " + family.declarationPath + " has missing enforcement: " + reason
+  };
+}
+
+function missingCoverageEntry(caseId, family, error) {
+  return {
+    case_id: caseId,
+    family: family.family,
+    declaration_path: family.declarationPath,
+    enforcement_status: "missing_enforcement",
+    error_code: error.code,
+    failure_reason: error.message
+  };
 }
 
 function scorePermissionDrift(testCase) {
@@ -203,10 +343,14 @@ function scoreSubagentArtifactContract(testCase) {
   }
 
   const starts = new Map();
-  const expected = new Map();
-  const written = new Map();
+  const expectedBySubagent = new Map();
+  const writtenByIdentity = new Map();
   const errors = [];
   const bump = (map, key) => map.set(key, (map.get(key) || 0) + 1);
+  const push = (map, key, value) => {
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(value);
+  };
   for (const event of testCase.observed_events) {
     if (event.type === "SubagentStart") {
       if (!event.subagent_id) errors.push("SubagentStart missing subagent_id");
@@ -214,28 +358,114 @@ function scoreSubagentArtifactContract(testCase) {
       if (!event.reason) errors.push("SubagentStart " + event.subagent_id + " missing reason");
       if (event.subagent_id) bump(starts, event.subagent_id);
     }
-    if (event.type === "ArtifactExpected" && event.subagent_id) bump(expected, event.subagent_id);
-    if (event.type === "ArtifactWritten" && event.subagent_id) bump(written, event.subagent_id);
+    if (event.type === "ArtifactExpected") {
+      const identity = artifactIdentity(event, "ArtifactExpected", errors);
+      if (identity) {
+        push(expectedBySubagent, event.subagent_id, identity);
+      }
+    }
+    if (event.type === "ArtifactWritten") {
+      const identity = artifactIdentity(event, "ArtifactWritten", errors);
+      if (identity) {
+        push(writtenByIdentity, identity.key, event);
+      }
+    }
+  }
+
+  const writtenBySubagent = new Map();
+  for (const [identityKey, events] of writtenByIdentity) {
+    for (const event of events) {
+      bump(writtenBySubagent, event.subagent_id);
+    }
+    if (events.length > 1) {
+      errors.push("ArtifactWritten identity " + identityKey + " has ambiguous duplicate write events: " + events.map(eventLabel).join(", "));
+    }
   }
 
   for (const [subagentId, startCount] of starts) {
-    if ((expected.get(subagentId) || 0) < startCount) {
+    const expectedIdentities = expectedBySubagent.get(subagentId) || [];
+    if (expectedIdentities.length < startCount) {
       errors.push("SubagentStart " + subagentId + " has fewer ArtifactExpected events than starts");
     }
-    if ((written.get(subagentId) || 0) < startCount) {
+    if ((writtenBySubagent.get(subagentId) || 0) < startCount) {
       errors.push("SubagentStart " + subagentId + " has fewer ArtifactWritten events than starts");
+    }
+  }
+
+  for (const [subagentId, identities] of expectedBySubagent) {
+    for (const identity of identities) {
+      const writtenEvents = writtenByIdentity.get(identity.key) || [];
+      if (writtenEvents.length === 0) {
+        errors.push("ArtifactExpected " + identity.event_id + " for " + subagentId + " is missing matching ArtifactWritten identity " + identity.key);
+        continue;
+      }
+      const matchingSubagent = writtenEvents.some((event) => event.subagent_id === subagentId);
+      if (!matchingSubagent) {
+        errors.push("ArtifactExpected " + identity.event_id + " for " + subagentId + " only has ArtifactWritten events from a different subagent for identity " + identity.key);
+      }
     }
   }
 
   return {
     scorer_id: "subagent-artifact-contract",
-    scorer_version: "1.0.0",
+    scorer_version: "1.1.0",
     status: errors.length === 0 ? "pass" : "fail",
     failure_class: errors.length === 0 ? null : "missing_subagent_artifact",
     inputs_inspected: ["observed_events.SubagentStart", "observed_events.ArtifactExpected", "observed_events.ArtifactWritten"],
-    evidence: errors.length === 0 ? "every SubagentStart has expected and written artifact evidence" : errors.join("; "),
-    failure_reason: errors.length === 0 ? null : "subagent lifecycle evidence is missing required artifact closeout"
+    evidence: errors.length === 0 ? "every SubagentStart has expected and written artifact identity evidence" : errors.join("; "),
+    failure_reason: errors.length === 0 ? null : "subagent lifecycle evidence is missing required artifact identity closeout"
   };
+}
+
+function artifactIdentity(event, eventType, errors) {
+  const label = eventType + " " + eventLabel(event);
+  if (!event.subagent_id) {
+    errors.push(label + " missing subagent_id");
+    return null;
+  }
+  if (!event.artifact_type) {
+    errors.push(label + " missing artifact_type");
+    return null;
+  }
+  if (!event.artifact_path) {
+    errors.push(label + " missing artifact_path");
+    return null;
+  }
+  const artifactType = String(event.artifact_type).trim();
+  if (artifactType.length === 0) {
+    errors.push(label + " has blank artifact_type");
+    return null;
+  }
+  const artifactPath = normalizeArtifactPath(event.artifact_path);
+  if (!artifactPath) {
+    errors.push(label + " has unsafe artifact_path " + event.artifact_path);
+    return null;
+  }
+  return {
+    event_id: eventLabel(event),
+    subagent_id: event.subagent_id,
+    artifact_type: artifactType,
+    artifact_path: artifactPath,
+    key: artifactType + ":" + artifactPath
+  };
+}
+
+function normalizeArtifactPath(artifactPath) {
+  if (typeof artifactPath !== "string") return null;
+  const normalizedSeparators = artifactPath.trim().replace(/\\/g, "/");
+  if (normalizedSeparators.length === 0 || normalizedSeparators.startsWith("/")) return null;
+  const segments = [];
+  for (const segment of normalizedSeparators.split("/")) {
+    if (segment === "" || segment === ".") continue;
+    if (segment === "..") return null;
+    segments.push(segment);
+  }
+  if (segments.length === 0) return null;
+  return segments.join("/");
+}
+
+function eventLabel(event) {
+  return event.event_id || "unknown-event";
 }
 
 function scorePluginAttribution(testCase) {
