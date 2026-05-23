@@ -1,6 +1,6 @@
 # PU-005 Review Coordination
 
-STATUS: pass
+STATUS: complete
 
 ## Review Stack
 
@@ -25,27 +25,24 @@ STATUS: pass
 
 ## Validation Evidence
 
-- `pnpm test`: pass, 106 tests.
+- `pnpm test`: pass, 106 tests at the PU-005 checkpoint; later remediation expanded the suite to 108 tests.
 - `pnpm evals state --json`: pass, schema_version 2, runtime evidence ready.
 - `pnpm evals check --json`: pass, runtime_evidence.policy_coverage.status pass.
 - `pnpm verify`: pass.
 - `EVALS_VERIFY_FORCE_NODE_CREDENTIAL_SCAN=1 node scripts/verify.js`: pass.
-- `gh pr list --repo jscraik/evals --state open --json number,title,headRefName,baseRefName,url`: pass, returned `[]`.
+- PR #13 final recheck: merged to `main`, zero unresolved review threads, deterministic gates/Semgrep/Socket/Snyk passed, CodeRabbit blocked by insufficient review credits.
 
 ## Governor Decision
 
-PU-005 is locally review-ready after final validation reruns. Linear issues stay
-`In Review` because local runtime proof is green but remote PR, CI,
-CodeRabbit, CircleCI, and mergeability evidence are not yet present.
+PU-005 is complete after final validation, PR #13 merge, resolved review-thread
+state, and live Linear Done recheck. CodeRabbit's final status was an external
+review-credit capacity failure, not an unresolved emitted code finding.
 
 ## Git Triage Handoff
 
-The local delivery commit was created on
-`jscraik/jsc-346-runtime-evidence-trust-boundary`. Pushing the branch was
-blocked by policy because destination trust or explicit approval was not
-established for a large external code and artifact transfer. Remote triage
-cannot claim green CI or mergeability until the owner approves a trusted push
-path and a PR exists.
+The delivery branch `jscraik/jsc-346-runtime-evidence-trust-boundary` was
+pushed after owner approval, PR #13 was created, review findings were
+remediated, and the PR merged to `main`.
 
 No unresolved blocker or high review finding remains for local runtime
 readiness.

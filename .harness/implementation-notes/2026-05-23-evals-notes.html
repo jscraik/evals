@@ -129,8 +129,8 @@
       <tbody>
         <tr>
           <td>Governance board</td>
-          <td><span class="badge pass">active</span></td>
-          <td>Created <code>goal.md</code>, <code>state.yaml</code>, and <code>receipts.jsonl</code>.</td>
+          <td><span class="badge pass">complete</span></td>
+          <td>Created and closed <code>goal.md</code>, <code>state.yaml</code>, and <code>receipts.jsonl</code> after final PR #13 and Linear reconciliation.</td>
         </tr>
         <tr>
           <td>Implementation lane</td>
@@ -144,8 +144,8 @@
         </tr>
         <tr>
           <td>Delivery lane</td>
-          <td><span class="badge risk">PR triage active</span></td>
-          <td>PR #13 exists and is ready for review. Receipt <code>pu005_pr_created_remote_triage</code> records push, PR, check, and CodeRabbit remediation state.</td>
+          <td><span class="badge pass">merged</span></td>
+          <td>PR #13 merged to <code>main</code> at head <code>e0160cdcfd66a7c38132be1590fd828e50c4afcb</code>. Receipt <code>pu005_final_merged_closeout</code> records final PR, review-thread, check, and Linear state.</td>
         </tr>
       </tbody>
     </table>
@@ -313,7 +313,7 @@
         <tr>
           <td><code>Linear live recheck</code></td>
           <td><span class="badge pass">pass</span></td>
-          <td>JSC-346 through JSC-350 existed and were still <code>Todo</code>; this contradicted local implementation state, so they were moved to <code>In Review</code> and the parent issue received a validation-evidence comment.</td>
+          <td>JSC-346 through JSC-350 existed and were still <code>Todo</code>; this contradicted local implementation state, so they were moved to <code>In Review</code>, later rechecked as <code>Done</code> after PR #13 merged, and the parent issue received validation and final-triage comments.</td>
         </tr>
         <tr>
           <td><code>GitHub open PR recheck</code></td>
@@ -346,14 +346,14 @@
       </thead>
       <tbody>
         <tr>
-          <td>Keep Linear issues open in review state.</td>
-          <td>Local implementation and validation are complete, but no PR or remote merge-safety proof exists.</td>
-          <td>JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 are <code>In Review</code>, not <code>Done</code>.</td>
+          <td>Close Linear issues after remote delivery reconciliation.</td>
+          <td>PR #13 merged, review threads resolved, deterministic and security checks passed, and CodeRabbit had no unresolved emitted finding.</td>
+          <td>JSC-346, JSC-347, JSC-348, JSC-349, and JSC-350 are <code>Done</code>.</td>
         </tr>
         <tr>
           <td>Do not treat local validation as delivery closeout.</td>
           <td><code>pnpm test</code>, <code>pnpm evals state --json</code>, <code>pnpm evals check --json</code>, <code>pnpm verify</code>, and forced Node credential scan passed locally.</td>
-          <td>Runtime truth is green locally; delivery truth remains pending remote evidence.</td>
+          <td>Runtime truth and delivery truth are now reconciled; local validation was not used as a substitute for PR merge proof.</td>
         </tr>
         <tr>
           <td>Preserve phase-one boundaries.</td>
@@ -365,6 +365,7 @@
     <p><strong>Blocked audit:</strong> On the third consecutive goal turn with the same remote-delivery blocker, the repo goal board was marked blocked. The blocker was not local runtime validation; it was missing owner approval for pushing the large local code and artifact set to origin so PR, CI, review, and mergeability evidence can exist.</p>
     <p><strong>Resume decision:</strong> The owner later clarified, "i asked you to commit and triage it". The board was resumed for the intended origin delivery path so branch push, PR creation, and remote triage could continue.</p>
     <p><strong>Heartbeat triage:</strong> At 2026-05-23T16:34:58Z, PR #13 was rechecked. GitHub reported the PR as mergeable, deterministic gates and security checks passed, and CodeRabbit failed with insufficient review credits rather than an actionable code finding. Local follow-up remediation tightened report execution-mode provenance, manifest retention wording, goal-board stage/status separation, stop-condition validation mapping, PU-005 testing evidence, and media artifact portability.</p>
+    <p><strong>Final merged closeout:</strong> At 2026-05-23T22:21:22Z, PR #13 was rechecked as merged. GitHub review threads were fully resolved; deterministic gates, Semgrep, Socket, and Snyk passed; Linear JSC-346 through JSC-350 were Done. CodeRabbit remained blocked by insufficient review credits, but no emitted actionable CodeRabbit finding remained unresolved before merge.</p>
   </section>
 
   <section id="risks">
@@ -390,8 +391,8 @@
         </tr>
         <tr>
           <td>Review or delivery state may drift while local implementation continues.</td>
-          <td>medium</td>
-          <td>Pending CodeRabbit capacity recovery or owner acceptance of that external blocker. Receipts now include owner-approved push resume, PR #13 remote triage state, and heartbeat triage state; local tests are not treated as mergeability proof.</td>
+          <td>low</td>
+          <td>Resolved for JSC-346 by final PR #13 merge and Linear Done recheck. CodeRabbit capacity failure is recorded as residual external-state evidence, not an unresolved code-review finding.</td>
         </tr>
       </tbody>
     </table>
