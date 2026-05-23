@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">From Ambiguous Runtime Proof Contract to Enforced Runtime Evidence Boundary</title>
+  <desc id="desc">Fallback review artifact for the JSC-346 runtime evidence trust-boundary spec showing the transformation from ambiguous proof wording to explicit machine-readable validation contracts.</desc>
+  <rect width="1600" height="900" fill="#f7f8fa"/>
+  <rect x="70" y="70" width="1460" height="760" rx="18" fill="#ffffff" stroke="#d8dee8" stroke-width="3"/>
+  <text x="110" y="135" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#182230">From Ambiguous Runtime Proof Contract -> Enforced Runtime Evidence Boundary</text>
+  <text x="112" y="180" font-family="Arial, sans-serif" font-size="22" fill="#475467">JSC-346 Runtime Evidence Trust Boundary Spec review artifact</text>
+  <rect x="110" y="235" width="610" height="420" rx="14" fill="#fff5f5" stroke="#f2b8b5" stroke-width="2"/>
+  <text x="145" y="290" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#7a271a">Before</text>
+  <text x="145" y="345" font-family="Arial, sans-serif" font-size="24" fill="#4a1f17">- Vague equivalent output path</text>
+  <text x="145" y="392" font-family="Arial, sans-serif" font-size="24" fill="#4a1f17">- Stale policy status wording</text>
+  <text x="145" y="439" font-family="Arial, sans-serif" font-size="24" fill="#4a1f17">- Tracker recheck hidden as non-issue</text>
+  <text x="145" y="486" font-family="Arial, sans-serif" font-size="24" fill="#4a1f17">- Qualitative confidence claim</text>
+  <text x="145" y="555" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#7a271a">Main risk: false readiness</text>
+  <rect x="880" y="235" width="610" height="420" rx="14" fill="#effaf5" stroke="#91d6af" stroke-width="2"/>
+  <text x="915" y="290" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#05603a">After</text>
+  <text x="915" y="345" font-family="Arial, sans-serif" font-size="24" fill="#074d31">- Public fields governed by contract</text>
+  <text x="915" y="392" font-family="Arial, sans-serif" font-size="24" fill="#074d31">- Missing-enforcement status required</text>
+  <text x="915" y="439" font-family="Arial, sans-serif" font-size="24" fill="#074d31">- Live Linear recheck explicit</text>
+  <text x="915" y="486" font-family="Arial, sans-serif" font-size="24" fill="#074d31">- Confidence capped at 88%</text>
+  <text x="915" y="555" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#05603a">Main gain: fail-closed proof</text>
+  <path d="M750 445 H845" stroke="#344054" stroke-width="8" stroke-linecap="round"/>
+  <path d="M830 420 L860 445 L830 470" fill="none" stroke="#344054" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="110" y="700" width="1380" height="80" rx="12" fill="#f2f4f7" stroke="#d0d5dd"/>
+  <text x="145" y="750" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#182230">Evidence:</text>
+  <text x="255" y="750" font-family="Arial, sans-serif" font-size="24" fill="#344054">spec-shape checks pass; repo gates run separately; runtime implementation remains untested; imagegen unavailable</text>
+</svg>

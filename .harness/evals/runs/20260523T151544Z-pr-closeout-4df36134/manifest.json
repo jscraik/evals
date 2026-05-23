@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "run_id": "20260523T151544Z-pr-closeout-4df36134",
+  "case_id": "pr-closeout",
+  "created_at": "2026-05-23T15:15:44.948Z",
+  "retention": {
+    "status": "retained_local",
+    "policy": "Phase-one run artifacts are retained locally; automatic retention duration is not defined yet."
+  },
+  "privacy": {
+    "class": "synthetic_public",
+    "redaction_status": "synthetic_no_redaction_needed",
+    "contains_private_content": false,
+    "contains_credentials": false
+  },
+  "artifacts": [
+    {
+      "type": "result",
+      "path": ".harness/evals/runs/20260523T151544Z-pr-closeout-4df36134/result.json",
+      "sha256": "3dbb454916a0992dd52dec2ea7fa242461105716ef8827505185658b1b66acff",
+      "required": true
+    },
+    {
+      "type": "report",
+      "path": ".harness/evals/runs/20260523T151544Z-pr-closeout-4df36134/report.md",
+      "sha256": "697281fd73330d3cd85a3864fb8ed4c59028f7547da5ecd91c547442b91cb768",
+      "required": true
+    },
+    {
+      "type": "command-log",
+      "path": ".harness/evals/runs/20260523T151544Z-pr-closeout-4df36134/command-log.json",
+      "sha256": "6b530941d41595f8d75748aac95a322c25da9f5032fb6aeb4205e6de8343fa8c",
+      "required": true
+    },
+    {
+      "type": "scorer-results",
+      "path": ".harness/evals/runs/20260523T151544Z-pr-closeout-4df36134/scorer-results.json",
+      "sha256": "687369a805d3101b30090415a53a7d94f94818aab3a965e557b7d255d0bf1723",
+      "required": true
+    },
+    {
+      "type": "baseline-result",
+      "path": ".harness/evals/runs/20260523T151544Z-pr-closeout-4df36134/baseline-result.json",
+      "sha256": "a81b625d489dd382a5b0f2374e25dc2fdd8ffcb88bf594ae0b1dde4b967fdc84",
+      "required": true
+    },
+    {
+      "type": "trace-events",
+      "path": ".harness/evals/runs/20260523T151544Z-pr-closeout-4df36134/trace-events.jsonl",
+      "sha256": "1c8b54ed370386e83074fdc2c63689f4367220cd64792e4d99235c5c799c4038",
+      "required": true
+    }
+  ]
+}
