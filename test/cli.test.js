@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
+import { scoreMissingEvidence } from "../src/lib/claim-evidence-contract.js";
 import { sha256File } from "../src/lib/hash.js";
 import { writeJsonAtomic } from "../src/lib/json.js";
 import { validateCaseFile } from "../src/lib/latest-run.js";
@@ -403,15 +404,80 @@ test("state reports ready runtime packet for the latest proof bundle", () => {
     assert.equal(state.schema_version, 2);
     assert.equal(state.contract_health.runtime_evidence.status, "ready");
     assert.equal(state.contract_health.runtime_evidence.policy_coverage_status, "pass");
+    assert.equal(state.evidence_packet.schema_version, 1);
+    assert.equal(state.evidence_packet.repo.name, "evals");
+    assert.equal(state.evidence_packet.runtime_state.status, "ready");
+    assert.equal(state.evidence_packet.runtime_evidence_contract_health.status, "ready");
+    assert.ok(state.evidence_packet.runtime_evidence_contract_health.policy_coverage.families.some((entry) => (
+      entry.family === "thread" &&
+      entry.enforcement_status === "scaffolded_not_enforced"
+    )));
+    assert.equal(state.evidence_packet.missing_evidence_scorer.status, "pass");
+    assert.equal(state.evidence_packet.readiness_verdict.status, "pass");
+    assert.deepEqual(state.evidence_packet.readiness_verdict.blocking_fields, []);
+    assert.ok(state.evidence_packet.claims.some((claim) => claim.claim_id === "latest-validation-passed"));
+    assert.ok(state.evidence_packet.evidence.some((item) => item.evidence_id === "latest-validation" && item.status === "pass"));
+    const artifactClaim = state.evidence_packet.claims.find((claim) => claim.claim_id === "artifact-exists:result-path");
+    assert.ok(artifactClaim);
+    const artifactEvidence = state.evidence_packet.evidence.find((item) => item.evidence_id === artifactClaim.required_evidence[0]);
+    assert.ok(artifactEvidence.sha256);
+    assert.equal(artifactEvidence.manifest_path, output.manifest_path);
     assert.equal(state.non_ready_reason_code, null);
     assert.ok(state.recommended_commands.includes("pnpm evals check --json"));
     assert.ok(state.artifacts.every((artifact) => artifact.status === "present"));
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
     assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+    const packetSchema = schemaCheckFromObject("runtimeEvidencePacket", state.evidence_packet, ".harness/evals/runs/latest.json");
+    assert.equal(packetSchema.status, "pass", packetSchema.errors.join("\n"));
   } finally {
     cleanup(repo);
   }
+});
+
+test("missing-evidence scorer rejects validation success claims without evidence", () => {
+  const result = scoreMissingEvidence([
+    {
+      schema_version: 1,
+      claim_id: "latest-validation-passed",
+      claim_type: "validation-passed",
+      claim_text: "Latest validation passed.",
+      required_evidence: ["latest-validation"],
+      confidence: "high"
+    }
+  ], []);
+
+  assert.equal(result.status, "fail");
+  assert.match(result.evidence, /missing required evidence latest-validation/);
+});
+
+test("missing-evidence scorer rejects artifact claims without manifest hash evidence", () => {
+  const result = scoreMissingEvidence([
+    {
+      schema_version: 1,
+      claim_id: "artifact-exists:result-path",
+      claim_type: "artifact-exists",
+      claim_text: "Result artifact exists.",
+      required_evidence: ["artifact:result-path"],
+      confidence: "advisory"
+    }
+  ], [
+    {
+      schema_version: 1,
+      evidence_id: "artifact:result-path",
+      evidence_type: "artifact",
+      status: "present",
+      observed_at: "2026-05-24T00:00:00.000Z",
+      path: ".harness/evals/runs/example/result.json",
+      command: null,
+      sha256: null,
+      manifest_path: null,
+      detail: "path exists but integrity evidence is absent"
+    }
+  ]);
+
+  assert.equal(result.status, "fail");
+  assert.match(result.evidence, /requires manifest\/hash evidence/);
 });
 
 test("state reports missing runtime packet without failing the command", () => {
@@ -425,10 +491,21 @@ test("state reports missing runtime packet without failing the command", () => {
     assert.equal(state.validation.status, "not_run");
     assert.equal(state.contract_health.runtime_evidence.status, "ready");
     assert.equal(state.non_ready_reason_code, "latest_missing");
+    assert.equal(state.evidence_packet.missing_evidence_scorer.status, "pass");
+    assert.equal(state.evidence_packet.readiness_verdict.status, "fail");
+    assert.equal(state.evidence_packet.readiness_verdict.reason, "runtime state is missing");
+    assert.deepEqual(state.evidence_packet.readiness_verdict.blocking_fields, ["runtime_state.status"]);
+    assert.equal(state.evidence_packet.blockers[0].code, "latest_missing");
+    assert.equal(
+      state.evidence_packet.blockers[0].reason,
+      ".harness/evals/runs/latest.json is missing; run pnpm evals run fixtures/smoke/pr-closeout.case.json --json"
+    );
     assert.ok(state.recommended_commands.includes("pnpm evals run fixtures/smoke/pr-closeout.case.json --json"));
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
     assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+    const packetSchema = schemaCheckFromObject("runtimeEvidencePacket", state.evidence_packet, ".harness/evals/runs/latest.json");
+    assert.equal(packetSchema.status, "pass", packetSchema.errors.join("\n"));
   } finally {
     cleanup(repo);
   }

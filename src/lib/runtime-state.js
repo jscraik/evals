@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { latestArtifactContracts } from "./artifact-bundle.js";
+import { buildRuntimeEvidencePacket } from "./claim-evidence-contract.js";
 import { readJson } from "./json.js";
 import { validateLatestRun } from "./latest-run.js";
 import { rel, repoRelativePath, repoRoot } from "./paths.js";
@@ -54,11 +55,11 @@ export function buildRuntimeState(now = new Date()) {
   };
 
   if (!existsSync(latestPath)) {
-    return withSchemaGuard({
+    return finalizeRuntimeState({
       ...base,
       status: runtimeEvidenceHealth.status === "ready" ? "missing" : "invalid",
       validation: runtimeEvidenceValidationState({ status: "not_run", errors: [] }, runtimeEvidenceHealth)
-    });
+    }, null, runtimeEvidenceHealth);
   }
 
   let latest;
@@ -70,7 +71,7 @@ export function buildRuntimeState(now = new Date()) {
       errors: [rel(latestPath) + ": JSON parse failed: " + error.message]
     };
     const validation = runtimeEvidenceValidationState(latestValidation, runtimeEvidenceHealth);
-    return withSchemaGuard({
+    return finalizeRuntimeState({
       ...base,
       status: "invalid",
       latest: {
@@ -94,7 +95,7 @@ export function buildRuntimeState(now = new Date()) {
         latestValidationStatus: latestValidation.status,
         runtimeEvidenceHealth
       })
-    });
+    }, null, runtimeEvidenceHealth);
   }
 
   const latestCheck = schemaCheckFromObject("latest", latest, latestPath);
@@ -117,7 +118,7 @@ export function buildRuntimeState(now = new Date()) {
     runtimeEvidenceHealth
   });
 
-  return withSchemaGuard({
+  return finalizeRuntimeState({
     ...base,
     status,
     latest: {
@@ -132,7 +133,7 @@ export function buildRuntimeState(now = new Date()) {
     recommended_commands: status === "ready"
       ? ["pnpm evals check --json", "pnpm verify"]
       : ["pnpm evals run fixtures/smoke/pr-closeout.case.json --json", "pnpm evals check --json"]
-  });
+  }, latest, runtimeEvidenceHealth);
 }
 
 function runtimeEvidenceContractHealth() {
@@ -141,6 +142,7 @@ function runtimeEvidenceContractHealth() {
     return {
       status: validation.errors.length === 0 ? "ready" : "failing",
       policy_coverage_status: validation.policy_coverage?.status || "unavailable",
+      policy_coverage: validation.policy_coverage || { status: "unavailable", families: [], errors: [] },
       check_count: validation.checks.length,
       errors: validation.errors
     };
@@ -148,6 +150,7 @@ function runtimeEvidenceContractHealth() {
     return {
       status: "unavailable",
       policy_coverage_status: "unavailable",
+      policy_coverage: { status: "unavailable", families: [], errors: [] },
       check_count: 0,
       errors: ["runtime evidence validation unavailable: " + error.message]
     };
@@ -208,6 +211,23 @@ function artifactStates(latest) {
 
 function stringOrNull(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function finalizeRuntimeState(packet, rawLatest, runtimeEvidenceHealth) {
+  return withSchemaGuard({
+    ...packet,
+    evidence_packet: buildRuntimeEvidencePacket({
+      generatedAt: packet.generated_at,
+      status: packet.status,
+      latestPath: packet.latest_path,
+      latest: rawLatest ? { ...packet.latest, ...rawLatest } : packet.latest,
+      artifacts: packet.artifacts,
+      validation: packet.validation,
+      runtimeEvidenceHealth,
+      nonReadyReasonCode: packet.non_ready_reason_code,
+      recommendedCommands: packet.recommended_commands
+    })
+  });
 }
 
 function withSchemaGuard(packet) {
