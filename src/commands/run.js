@@ -1,14 +1,15 @@
-import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, statSync, writeFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
 import { expectedLatestPath } from "../lib/artifact-bundle.js";
 import { parseCase } from "../lib/case-contract.js";
 import { clearActiveRunContext, emitFailure, setActiveRunContext } from "../lib/failures.js";
 import { sha256File, sha256Text } from "../lib/hash.js";
-import { writeJson } from "../lib/json.js";
+import { writeJson, writeJsonAtomic } from "../lib/json.js";
 import { validateLatestRun } from "../lib/latest-run.js";
-import { rel, repoRelativePath, repoRoot, utcBasic } from "../lib/paths.js";
+import { rel, repoRelativePath, repoRoot } from "../lib/paths.js";
 import { buildReport } from "../lib/report.js";
+import { createRunBundle } from "../lib/run-bundle.js";
 import { scoreArtifactCompleteness, scoreBaselinePresence, scoreRuntime, simulatedRunOutput, verdictFor } from "../lib/scoring.js";
 import { buildTraceEvents, writeTraceEvents } from "../lib/trace-events.js";
 
@@ -130,10 +131,11 @@ export function runCase(casePath, jsonMode) {
   const { rawCase, testCase } = parseCase(casePath, jsonMode);
 
   const startedAt = new Date();
-  const inputHash = sha256Text(rawCase).slice(0, 8);
-  const runId = utcBasic(startedAt) + "-" + testCase.case_id + "-" + inputHash;
-  const runDir = join(repoRoot, ".harness", "evals", "runs", runId);
-  mkdirSync(runDir, { recursive: true });
+  const { runId, runDir, artifactRoot } = createRunBundle({
+    startedAt,
+    caseId: testCase.case_id,
+    rawCase
+  });
 
   const resultPath = join(repoRoot, expectedLatestPath(runId, "result_path"));
   const reportPath = join(repoRoot, expectedLatestPath(runId, "report_path"));
@@ -252,7 +254,10 @@ export function runCase(casePath, jsonMode) {
   const latest = {
     run_id: runId,
     case_id: testCase.case_id,
+    suite_id: testCase.suite_id,
     execution_mode: execution.execution_mode,
+    generated_at: startedAt.toISOString(),
+    artifact_root: artifactRoot,
     manifest_path: rel(manifestPath),
     result_path: rel(resultPath),
     report_path: rel(reportPath),
@@ -261,9 +266,10 @@ export function runCase(casePath, jsonMode) {
     scorer_results_path: rel(scorerResultsPath),
     trace_events_path: rel(traceEventsPath)
   };
-  writeJson(latestPath, latest);
+  const latestCandidatePath = join(runDir, "latest-candidate.json");
+  writeJson(latestCandidatePath, latest);
 
-  const preTraceValidation = validateLatestRun(latestPath, { validateTraceEvents: false });
+  const preTraceValidation = validateLatestRun(latestCandidatePath, { validateTraceEvents: false });
   if (preTraceValidation.errors.length > 0) {
     emitFailure(jsonMode, {
       status: "failed",
@@ -300,7 +306,8 @@ export function runCase(casePath, jsonMode) {
   manifestArtifacts.find((artifact) => artifact.type === "result").sha256 = sha256File(resultPath);
   writeJson(manifestPath, manifest);
 
-  const validation = validateLatestRun(latestPath);
+  writeJson(latestCandidatePath, latest);
+  const validation = validateLatestRun(latestCandidatePath);
   if (validation.errors.length > 0) {
     emitFailure(jsonMode, {
       status: "failed",
@@ -309,13 +316,16 @@ export function runCase(casePath, jsonMode) {
       recovery: "Fix generated artifact shape before trusting this run."
     });
   }
+  writeJsonAtomic(latestPath, latest);
 
   const output = {
     verdict: deterministicVerdict,
     status,
     run_id: runId,
     case_id: testCase.case_id,
+    suite_id: testCase.suite_id,
     execution_mode: execution.execution_mode,
+    artifact_root: artifactRoot,
     manifest_path: rel(manifestPath),
     result_path: rel(resultPath),
     report_path: rel(reportPath),

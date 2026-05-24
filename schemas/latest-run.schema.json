@@ -7,7 +7,10 @@
   "required": [
     "run_id",
     "case_id",
+    "suite_id",
     "execution_mode",
+    "generated_at",
+    "artifact_root",
     "manifest_path",
     "result_path",
     "report_path",
@@ -19,7 +22,10 @@
   "properties": {
     "run_id": { "type": "string", "minLength": 1 },
     "case_id": { "type": "string", "minLength": 1 },
+    "suite_id": { "type": "string", "minLength": 1 },
     "execution_mode": { "type": "string", "enum": ["synthetic", "real"] },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "artifact_root": { "type": "string", "minLength": 1 },
     "manifest_path": { "type": "string", "minLength": 1 },
     "result_path": { "type": "string", "minLength": 1 },
     "report_path": { "type": "string", "minLength": 1 },

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 import { emitFailure } from "../lib/failures.js";
-import { validateCaseFile, validateLatestRun } from "../lib/latest-run.js";
+import { expectedProofContextFromCase, validateCaseFile, validateLatestRun } from "../lib/latest-run.js";
 import { insideRepo, rel, repoRoot } from "../lib/paths.js";
 import { validateRuntimeEvidenceSuite } from "../lib/runtime-evidence-contract.js";
 
@@ -79,8 +79,14 @@ export function validateCommand(targetPath, jsonMode) {
  */
 export function checkCommand(jsonMode) {
   const latestPath = join(repoRoot, ".harness", "evals", "runs", "latest.json");
-  const caseCheck = validateCaseFile("fixtures/smoke/pr-closeout.case.json");
-  const latestValidation = validateLatestRun(latestPath);
+  const smokeCasePath = "fixtures/smoke/pr-closeout.case.json";
+  const smokeRecoveryCommand = "pnpm evals run " + smokeCasePath + " --json";
+  const caseCheck = validateCaseFile(smokeCasePath);
+  const expectedContext = caseCheck.status === "pass" ? expectedProofContextFromCase(caseCheck.testCase) : null;
+  const latestValidation = validateLatestRun(latestPath, {
+    expectedContext,
+    recoveryCommand: smokeRecoveryCommand
+  });
   const runtimeEvidenceValidation = validateRuntimeEvidenceSuite();
   const checks = [caseCheck].concat(latestValidation.checks, runtimeEvidenceValidation.checks);
   const errors = caseCheck.errors.concat(latestValidation.errors, runtimeEvidenceValidation.errors);
@@ -88,6 +94,11 @@ export function checkCommand(jsonMode) {
     status: errors.length === 0 ? "passed" : "failed",
     latest_path: rel(latestPath),
     run_id: latestValidation.run_id,
+    expected_context: latestValidation.expected_context || expectedContext,
+    observed_latest_context: latestValidation.observed_latest_context || null,
+    context_match: latestValidation.context_match === true,
+    context_mismatch_reason: latestValidation.context_mismatch_reason || (expectedContext ? null : "expected_context_unavailable"),
+    recovery_command: latestValidation.recovery_command || null,
     runtime_evidence: {
       policy_coverage: runtimeEvidenceValidation.policy_coverage
     },

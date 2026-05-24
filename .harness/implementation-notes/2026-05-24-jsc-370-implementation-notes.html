@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="3">
+  <title>JSC-370 Implementation Notes</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f5;
+      --ink: #1f2933;
+      --muted: #5b6570;
+      --line: #d8d8d2;
+      --panel: #ffffff;
+      --accent: #155e75;
+      --warn: #92400e;
+      --ok: #166534;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    h1, h2 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+    h1 {
+      font-size: 2rem;
+    }
+    h2 {
+      font-size: 1.15rem;
+      margin-top: 28px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+    p {
+      margin: 0 0 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin: 12px 0 22px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+    }
+    th {
+      background: #ecefeb;
+      font-weight: 700;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .status {
+      display: inline-block;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .refresh {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      margin: -32px -20px 24px;
+      padding: 10px 20px;
+      background: #e9f3f4;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .ok {
+      color: var(--ok);
+      font-weight: 700;
+    }
+    .warn {
+      color: var(--warn);
+      font-weight: 700;
+    }
+    .module-map {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 18px;
+      margin: 14px 0 24px;
+    }
+    .module-card {
+      background: #111827;
+      color: #f9fafb;
+      border: 4px solid var(--module-color);
+      border-radius: 8px;
+      min-height: var(--module-height, 150px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+    }
+    .module-card h3 {
+      margin: 0;
+      padding: 10px 14px;
+      border-bottom: 4px solid var(--module-color);
+      font-size: 1rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .module-card p,
+    .module-card ul {
+      margin: 12px 14px;
+      color: #d1d5db;
+    }
+    .module-card li {
+      margin: 6px 0;
+    }
+    .module-card code {
+      color: #fef3c7;
+    }
+    .span-two {
+      grid-column: span 2;
+    }
+    @media (max-width: 760px) {
+      .module-map {
+        grid-template-columns: 1fr;
+      }
+      .span-two {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <p class="refresh">Auto-refreshes every 3 seconds. Last updated: <code>2026-05-24 17:10 Europe/London</code>.</p>
+  <h1>JSC-370 Implementation Notes</h1>
+  <p class="meta">Running notes for <code>codex-jsc-370-latest-proof-context</code> in <code>/private/tmp/evals-jsc370</code>. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
+
+  <h2>Current Slice</h2>
+  <table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>Active issue</td><td>JSC-370</td></tr>
+    <tr><td>Goal</td><td>Close latest/run false-success risks before adding suite breadth.</td></tr>
+    <tr><td>Branch</td><td><code>codex-jsc-370-latest-proof-context</code></td></tr>
+    <tr><td>Status</td><td><span class="ok">review findings patched; local gates green</span></td></tr>
+    <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
+  </table>
+
+  <h2>Decisions and Tradeoffs</h2>
+  <table>
+    <tr><th>Time</th><th>Decision / Tradeoff</th><th>Why It Matters</th></tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Use a separate worktree instead of the original checkout.</td>
+      <td>The original checkout already contains planning, media, review, and generated eval artifacts. An isolated worktree keeps JSC-370 implementation changes clean enough to commit and review.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Use branch <code>codex-jsc-370-latest-proof-context</code> instead of a slash-prefixed <code>codex/...</code> branch.</td>
+      <td>The repo currently has a ref namespace issue where <code>refs/heads/codex</code> blocks <code>codex/...</code> branch creation. This preserves the Codex prefix while avoiding a ref conflict.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Use a self-refreshing local HTML file as the running implementation notebook.</td>
+      <td>Jamie asked to see decisions as they happen. Self-refresh keeps the page readable and current without adding a dev server or runtime dependency.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Serve the notes over <code>127.0.0.1:4370</code> instead of opening the file URL directly.</td>
+      <td>The Browser plugin blocks direct <code>file://</code> navigation by policy. A localhost static server stays local, avoids external network, and lets the Browser plugin show the live page.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Keep direct <code>validate latest.json</code> artifact-focused, and put expected-context binding in <code>check --json</code>.</td>
+      <td>Direct validation can still inspect any latest pointer. The acceptance command is what knows the expected smoke proof context and can reject stale latest evidence deterministically.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Write <code>latest-candidate.json</code> inside the run directory before publishing the shared <code>latest.json</code> pointer.</td>
+      <td>This keeps incomplete or schema-invalid bundles from replacing the last known latest pointer. The shared pointer only moves after final bundle validation passes.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Fold proof-context comparison into the existing <code>src/lib/latest-run.js</code> deep module instead of keeping a separate <code>latest-proof-context.js</code>.</td>
+      <td>Jamie called out the architecture rule correctly: latest provenance and artifact trust are one boundary. Keeping them in the current latest validation owner avoids a shallow helper module and keeps the public seam tighter.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Patch reviewer timing findings at owner boundaries instead of in CLI glue.</td>
+      <td>The adversarial review found a second smoke-fixture read and a non-atomic latest write. <code>case-contract</code> now returns the validated document, <code>check</code> uses that single read, and latest publication uses atomic JSON replacement.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Keep the parsed case document internal to the validation seam.</td>
+      <td>The first single-read fix briefly leaked the full parsed fixture into <code>check --json</code>. The seam is now non-enumerable, so callers can avoid the second read without expanding machine output or future privacy exposure.</td>
+    </tr>
+  </table>
+
+  <h2>Planned Implementation Shape</h2>
+  <table>
+    <tr><th>Concern</th><th>Selected Shape</th><th>Rejected Shape</th></tr>
+    <tr>
+      <td>Run ID collisions</td>
+      <td>Create the run directory atomically and append a numeric suffix when the base second-level ID already exists.</td>
+      <td>Using randomness only, because it is harder to assert deterministically and does not use the filesystem as the actual collision arbiter.</td>
+    </tr>
+    <tr>
+      <td>Latest proof context</td>
+      <td>Add explicit latest provenance fields and compare expected vs observed context in the validation owner module.</td>
+      <td>Letting <code>check</code> infer correctness from independent smoke fixture and latest artifact validation.</td>
+    </tr>
+    <tr>
+      <td>Latest publication</td>
+      <td>Validate the complete bundle before publishing <code>latest.json</code>, using a temporary latest candidate for validation.</td>
+      <td>Publishing <code>latest.json</code> before trace/result/manifest hashes settle.</td>
+    </tr>
+  </table>
+
+  <h2>How the Deep Modules Work</h2>
+  <p>This is the JSC-370 implementation map. The point is to put each trust boundary behind one owner module, then make callers use that owner instead of copying rules across commands, tests, docs, or agent prompts.</p>
+  <div class="module-map" aria-label="JSC-370 deep module ownership map">
+    <section class="module-card" style="--module-color: #38a8ff; --module-height: 330px;">
+      <h3>Owner Module: Run Bundle Allocation</h3>
+      <ul>
+        <li><code>src/lib/run-bundle.js</code> owns run ID and artifact directory allocation.</li>
+        <li>It creates the directory atomically, then retries with a numeric suffix only on collision.</li>
+        <li>Callers receive <code>runId</code>, <code>runDir</code>, and <code>artifactRoot</code>; they do not construct competing paths.</li>
+        <li>Seam proof: two identical runs in the same second must not share a directory.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fb6a12; --module-height: 160px;">
+      <h3>Owner Module: Latest Proof Context</h3>
+      <ul>
+        <li><code>src/lib/latest-run.js</code> compares expected smoke context with observed latest context.</li>
+        <li>It returns match, mismatch reason, and recovery command.</li>
+        <li>The recovery command is supplied by the caller that owns the expected smoke path.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #34c759; --module-height: 155px;">
+      <h3>Validation Owner</h3>
+      <ul>
+        <li><code>src/lib/latest-run.js</code> stays responsible for artifact-bundle validation and proof-context validation.</li>
+        <li>When expected context is supplied, context mismatch fails before artifact paths are trusted.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #ef3340; --module-height: 260px;">
+      <h3>Caller Contract</h3>
+      <ul>
+        <li><code>src/commands/run.js</code> writes a run-local latest candidate first.</li>
+        <li>It publishes <code>.harness/evals/runs/latest.json</code> only after result, manifest, trace, scorer, baseline, command log, and report validate together.</li>
+        <li><code>src/commands/validation.js</code> derives expected context from the canonical smoke case, not from prose or prior run memory.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #a855f7; --module-height: 165px;">
+      <h3>Public Interface</h3>
+      <ul>
+        <li><code>check --json</code> adds <code>expected_context</code>, <code>observed_latest_context</code>, <code>context_match</code>, mismatch reason, and recovery command.</li>
+        <li>The JSON change is additive to preserve existing consumers.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fbbf24; --module-height: 100px;">
+      <h3>Rollback and Tracer Proof</h3>
+      <p>Rollback is a revert of the owner modules and callers. Trace remains explanatory evidence inside the final bundle; artifacts still decide.</p>
+    </section>
+  </div>
+
+  <h2>Validation Ledger</h2>
+  <table>
+    <tr><th>Command / Check</th><th>Status</th><th>Notes</th></tr>
+    <tr><td><code>git status --short --branch</code></td><td class="ok">pass</td><td>Worktree starts clean on <code>codex-jsc-370-latest-proof-context</code>.</td></tr>
+    <tr><td>Browser live view</td><td class="ok">pass</td><td>Opened through Browser plugin at the localhost URL. Direct <code>file://</code> route was blocked by policy.</td></tr>
+    <tr><td>Deep module fix packet</td><td class="ok">pass</td><td>Added <code>.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md</code> before runtime edits.</td></tr>
+    <tr><td>Runtime owner module patch</td><td class="status">in progress</td><td>Added <code>src/lib/run-bundle.js</code>, folded proof-context behavior into <code>src/lib/latest-run.js</code>, added latest schema provenance fields, and added regression tests.</td></tr>
+    <tr><td><code>pnpm test</code></td><td class="warn">fail</td><td>First run exposed a narrow bug: <code>run-bundle.js</code> called <code>repoRelativePath</code> without the helper's error accumulator. Fixed by using the fixed phase-one artifact root prefix for run bundles.</td></tr>
+    <tr><td><code>pnpm test</code></td><td class="ok">pass</td><td>111 tests passed, including the new collision seam, latest proof-context mismatch regression, and failed-candidate non-publication regression.</td></tr>
+    <tr><td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code></td><td class="ok">pass</td><td>Run produced <code>20260524T215340Z-pr-closeout-4df36134</code> with <code>suite_id</code> and <code>artifact_root</code> in JSON output.</td></tr>
+    <tr><td><code>pnpm evals check --json</code></td><td class="ok">pass</td><td>Output includes matching <code>expected_context</code> and <code>observed_latest_context</code>, <code>context_match: true</code>, and a passing <code>latest proof context</code> check.</td></tr>
+    <tr><td><code>pnpm evals state --json</code></td><td class="ok">pass</td><td>Runtime state is <code>ready</code> and recommends <code>pnpm evals check --json</code> plus <code>pnpm verify</code>.</td></tr>
+    <tr><td><code>pnpm verify</code></td><td class="ok">pass</td><td>Repo gate passed, including 111 tests, smoke run in text and JSON mode, state, check, and credential-pattern scan.</td></tr>
+    <tr><td><code>pnpm test</code> after architecture correction</td><td class="ok">pass</td><td>111 tests passed after folding proof-context behavior into <code>src/lib/latest-run.js</code>.</td></tr>
+    <tr><td><code>pnpm verify</code> after architecture correction</td><td class="ok">pass</td><td>Aggregate gate passed again after removing the separate proof-context module.</td></tr>
+    <tr><td><code>$simplify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-simplify.md</code>; main cleanup was folding proof-context behavior into <code>latest-run.js</code>.</td></tr>
+    <tr><td><code>$unslopify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-unslopify.md</code>; no phase-one hard blocks introduced.</td></tr>
+    <tr><td><code>$testing</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-testing.md</code> with narrow and aggregate validation evidence.</td></tr>
+    <tr><td><code>$he-code-review</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-he-code-review.md</code>; no blocking local findings remain.</td></tr>
+    <tr><td><code>@adversarial-reviewer</code></td><td class="ok">patched</td><td>Artifact exists. Findings fixed: single-read proof context and atomic latest publication.</td></tr>
+    <tr><td><code>@agent-native-reviewer</code></td><td class="ok">patched</td><td>Artifact exists. Warning fixed by passing a smoke-path-derived recovery command into latest validation.</td></tr>
+    <tr><td><code>pnpm test</code> after review fixes</td><td class="ok">pass</td><td>113 tests passed after single-read, atomic-write, and recovery-command changes.</td></tr>
+    <tr><td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code> after review fixes</td><td class="ok">pass</td><td>Produced proof bundle <code>20260524T221013Z-pr-closeout-4df36134-01</code> during aggregate verification.</td></tr>
+    <tr><td><code>pnpm evals check --json</code> bounded-output check</td><td class="ok">pass</td><td>Confirmed parsed case document seam does not emit <code>testCase</code> or <code>test_case</code> in JSON output.</td></tr>
+    <tr><td><code>pnpm evals check --json</code> after review fixes</td><td class="ok">pass</td><td>Latest proof context matched the canonical smoke fixture and all latest bundle checks passed.</td></tr>
+    <tr><td><code>pnpm evals state --json</code> after review fixes</td><td class="ok">pass</td><td>Runtime state reported <code>ready</code>.</td></tr>
+    <tr><td><code>pnpm verify</code> after review fixes</td><td class="ok">pass</td><td>Aggregate gate passed with 113 tests, smoke run text and JSON modes, state, check, and credential-pattern scan.</td></tr>
+  </table>
+
+  <h2>Open Questions</h2>
+  <table>
+    <tr><th>Question</th><th>Current Handling</th></tr>
+    <tr><td>Should latest provenance be required in <code>latest.json</code>, <code>manifest.json</code>, or both?</td><td>Use <code>latest.json</code> as the pointer authority and mirror suite context into result/manifest consistency checks where already available.</td></tr>
+    <tr><td>Should <code>validate latest.json</code> require an expected context?</td><td>No. Direct validate remains artifact-integrity focused. <code>check --json</code> supplies the expected smoke context and reports match/mismatch fields.</td></tr>
+  </table>
+</main>
+</body>
+</html>
