@@ -92,7 +92,7 @@ with owner-approved rationale.
 | --- | --- | --- | --- | --- |
 | JSC-370 | implemented, validated, committed, pushed | PR #15 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-370 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
 | JSC-371 | implemented, validated, committed, pushed | PR #16 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-371 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
-| JSC-372 | implemented, validated, committed, pushed, PR triage artifact committed | PR #17 open, draft, mergeable, merge state UNSTABLE because Semgrep remains pending; deterministic-gates, Socket, Snyk, and CodeRabbit pass | Linear JSC-372 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until Semgrep resolves and PR state is advanced/merged or owner defers |
+| JSC-372 | implemented, validated, committed, pushed, PR triage artifact committed | PR #17 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-372 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
 | JSC-369 | parent reconciliation active | no parent PR yet | Linear JSC-369 status Triage | keep parent open; do not claim closeout |
 
 ### Deep Module Architecture Decision
@@ -131,7 +131,8 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 ### Remaining Blockers Before Parent Completion
 
 - PR #15 and PR #16 remain draft even though all visible checks pass.
-- PR #17 remains draft and Semgrep is still pending, so merge state is UNSTABLE.
+- PR #17 remains draft; its visible checks now pass and merge state is CLEAN.
+- PR #18 remains draft and Semgrep is still pending, so merge state is UNSTABLE.
 - Linear JSC-369 is still Triage; JSC-370, JSC-371, and JSC-372 remain Todo
   despite PR attachments. Do not represent local implementation as live tracker
   completion.
