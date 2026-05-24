@@ -27,6 +27,9 @@ truth findings remain after local review.
 
 ## Residual Risk
 
-Generated validation artifacts are present in the worktree. Only the final
-latest-compatible evidence bundle should be staged if this slice commits
-validation artifacts.
+Review artifacts under artifacts/reviews/* are intentionally committed as
+shareable Project Brain evidence for this governed slice. They contain
+sanitized findings, validation summaries, and WROTE markers only; they do not
+contain credentials, private transcripts, or unbounded working notes. Generated
+run bundles should still be limited to cited proof bundles whose latest.json
+pointer and manifest hashes validate.

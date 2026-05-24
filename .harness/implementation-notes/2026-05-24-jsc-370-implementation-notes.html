@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="3">
+  <!-- Auto-refresh is disabled in the committed artifact; refresh the local browser manually while using it as a live notebook. -->
   <title>JSC-370 Implementation Notes</title>
   <style>
     :root {
@@ -143,9 +143,9 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Auto-refreshes every 3 seconds. Last updated: <code>2026-05-24 23:58 Europe/London</code>.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 00:05 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
-  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 and JSC-371 are implemented and handed to PR triage; JSC-372 is implemented, pushed, and under PR triage in <code>/private/tmp/evals-jsc372</code>. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
+  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 CodeRabbit repair and JSC-371 suite-contract evidence are propagated into this stacked branch; JSC-372 remains the active runtime evidence packet slice. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
   <h2>Current Slice</h2>
   <table>
@@ -153,7 +153,7 @@
     <tr><td>Active issue</td><td>JSC-372</td></tr>
     <tr><td>Goal</td><td>Add claim/evidence schemas, the missing-evidence scorer, and runtime evidence packet v1 without reclassifying scaffolded runtime-evidence families as enforced.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-372-claim-evidence-runtime-packet</code></td></tr>
-    <tr><td>Status</td><td><span class="status">implementation patched; narrow test green</span></td></tr>
+    <tr><td>Status</td><td><span class="status">JSC-370/JSC-371 propagation applied; JSC-372 PR recheck still required after push</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
@@ -423,6 +423,10 @@
     <tr><td><code>pnpm verify</code></td><td class="ok">pass</td><td>Repo gate passed, including 111 tests, smoke run in text and JSON mode, state, check, and credential-pattern scan.</td></tr>
     <tr><td><code>pnpm test</code> after architecture correction</td><td class="ok">pass</td><td>111 tests passed after folding proof-context behavior into <code>src/lib/latest-run.js</code>.</td></tr>
     <tr><td><code>pnpm verify</code> after architecture correction</td><td class="ok">pass</td><td>Aggregate gate passed again after removing the separate proof-context module.</td></tr>
+    <tr><td>CodeRabbit review repair</td><td class="ok">patched</td><td>Kept malformed/latest-schema failure proof-context fields inside <code>src/lib/latest-run.js</code>; removed committed auto-refresh from the HTML snapshot; added review-artifact resolution notes.</td></tr>
+    <tr><td><code>pnpm test -- --runInBand</code></td><td class="warn">fail</td><td>Invalid command for this repo&apos;s Node test runner; command selection error, not a product regression.</td></tr>
+    <tr><td><code>pnpm test</code> after CodeRabbit repair</td><td class="ok">pass</td><td>114 tests passed after adding malformed/latest-schema proof-context regression coverage.</td></tr>
+    <tr><td><code>pnpm verify</code> after CodeRabbit repair</td><td class="ok">pass</td><td>Aggregate gate passed and wrote fresh proof bundle <code>20260524T235025Z-pr-closeout-4df36134-01</code>.</td></tr>
     <tr><td><code>$simplify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-simplify.md</code>; main cleanup was folding proof-context behavior into <code>latest-run.js</code>.</td></tr>
     <tr><td><code>$unslopify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-unslopify.md</code>; no phase-one hard blocks introduced.</td></tr>
     <tr><td><code>$testing</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-testing.md</code> with narrow and aggregate validation evidence.</td></tr>
