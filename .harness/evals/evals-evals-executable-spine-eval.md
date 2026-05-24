@@ -132,7 +132,9 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 
 - PR #15 and PR #16 remain draft even though all visible checks pass.
 - PR #17 remains draft; its visible checks now pass and merge state is CLEAN.
-- PR #18 remains draft and Semgrep is still pending, so merge state is UNSTABLE.
+- PR #18 remains draft. Its visible checks passed on the latest live recheck
+  before this evidence update; final closeout still requires a fresh live PR
+  recheck because any new evidence commit can rerun hosted checks.
 - Linear JSC-369 is still Triage; JSC-370, JSC-371, and JSC-372 remain Todo
   despite PR attachments. Do not represent local implementation as live tracker
   completion.
@@ -145,9 +147,10 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 ### Current Parent Verdict
 
 JSC-369 is active and evidence-backed, but not complete. The safe next action is
-to continue PR triage in order: advance or merge JSC-370, then JSC-371, then
-resolve JSC-372 Semgrep/PR state, then patch README if needed and re-run the
-parent validation gate.
+to continue lifecycle triage in order: advance or merge JSC-370, then JSC-371,
+then JSC-372, or record owner-approved deferrals. After the child queue is
+reconciled, patch README if needed, re-run the parent validation gate, and
+perform one final live PR and Linear recheck.
 
 ## Command Output
 
