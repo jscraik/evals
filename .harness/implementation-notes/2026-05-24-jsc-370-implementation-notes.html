@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="3">
+  <!-- Auto-refresh is disabled in the committed artifact; refresh the local browser manually while using it as a live notebook. -->
   <title>JSC-370 Implementation Notes</title>
   <style>
     :root {
@@ -143,23 +143,151 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Auto-refreshes every 3 seconds. Last updated: <code>2026-05-24 17:10 Europe/London</code>.</p>
-  <h1>JSC-370 Implementation Notes</h1>
-  <p class="meta">Running notes for <code>codex-jsc-370-latest-proof-context</code> in <code>/private/tmp/evals-jsc370</code>. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 00:05 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <h1>Proof Spine Implementation Notes</h1>
+  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 is back in active PR-review repair after CodeRabbit found proof-context edge cases; JSC-371 and JSC-372 remain stacked behind it, and JSC-369 remains parent reconciliation only. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
   <h2>Current Slice</h2>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
     <tr><td>Active issue</td><td>JSC-370</td></tr>
-    <tr><td>Goal</td><td>Close latest/run false-success risks before adding suite breadth.</td></tr>
+    <tr><td>Goal</td><td>Repair PR-review findings while keeping latest proof context inside the existing <code>src/lib/latest-run.js</code> deep module.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-370-latest-proof-context</code></td></tr>
-    <tr><td>Status</td><td><span class="ok">review findings patched; local gates green</span></td></tr>
+    <tr><td>Status</td><td><span class="status">CodeRabbit fixes applied locally; pushed PR recheck still required</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
+
+  <h2>JSC-371 Architecture Decision</h2>
+  <p>Jamie asked whether suite-contract implementation should be built into the project&apos;s current deep modules. Yes. The chosen shape adds one suite normalization owner and extends the existing proof-spine owners; it does not create a second runner stack or move proof authority into CLI glue.</p>
+  <table>
+    <tr><th>Boundary</th><th>Owner</th><th>JSC-371 Rule</th></tr>
+    <tr><td>Suite contract</td><td><code>src/lib/suite-contract.js</code></td><td>Own suite schema validation, suite-root path resolution, phase-one policy rejection, and normalized data-only suite requests.</td></tr>
+    <tr><td>Artifact root</td><td><code>src/lib/run-bundle.js</code></td><td>Extend the current run-bundle owner to allocate artifacts under the evaluated repo root. Do not hand-roll suite artifact paths in callers.</td></tr>
+    <tr><td>Latest proof</td><td><code>src/lib/latest-run.js</code></td><td>Extend the latest validator to validate pointers under an evaluated repo root. Do not duplicate latest validation in suite code.</td></tr>
+    <tr><td>Case parsing</td><td><code>src/lib/case-contract.js</code></td><td>Suite execution feeds resolved case paths into the existing case parser. It does not parse case JSON itself.</td></tr>
+    <tr><td>Path containment</td><td><code>src/lib/paths.js</code></td><td>Use root-scoped containment helpers for suite roots and evaluated repo roots.</td></tr>
+    <tr><td>Schema registry</td><td><code>src/lib/schema.js</code></td><td>Add <code>suite</code> as another named schema target instead of inventing separate validation mechanics.</td></tr>
+  </table>
+
+  <h2>JSC-371 Deep Module Map</h2>
+  <p>The suite contract is now a thin normalization boundary that hands work to the existing proof-spine owners. The important correction from review is that the <code>.evals</code> directory is now the authority boundary: no discovered <code>.evals</code>, no artifact publication.</p>
+  <div class="module-map" aria-label="JSC-371 deep module ownership map">
+    <section class="module-card" style="--module-color: #38a8ff; --module-height: 330px;">
+      <h3>Suite Contract Owner</h3>
+      <ul>
+        <li><code>src/lib/suite-contract.js</code> loads <code>suite.json</code>, validates schema, resolves suite-local paths, and returns a data-only request.</li>
+        <li>It rejects paths outside a discovered <code>.evals</code> boundary before the runner can write artifacts.</li>
+        <li>It fails closed for <code>allow_network: true</code>, executable scorer hooks, and unsupported local-retention policy.</li>
+        <li>Seam proof: misplaced suite files and unsupported artifact policies exit before <code>.harness/evals/runs</code> exists.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fb6a12; --module-height: 165px;">
+      <h3>Artifact Allocation Owner</h3>
+      <ul>
+        <li><code>src/lib/run-bundle.js</code> still allocates run IDs and bundle directories.</li>
+        <li>Suite execution passes the evaluated repo root into the same owner instead of creating suite-specific path logic.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #34c759; --module-height: 155px;">
+      <h3>Latest Validation Owner</h3>
+      <ul>
+        <li><code>src/lib/latest-run.js</code> validates latest pointers under the evaluated repo root.</li>
+        <li>Suite code does not duplicate latest, manifest, trace, scorer, or baseline validation.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #ef3340; --module-height: 260px;">
+      <h3>Caller Contract</h3>
+      <ul>
+        <li><code>src/commands/run.js</code> only chooses case versus suite execution and sequences cases.</li>
+        <li>It calls the suite-contract owner first, then executes each resolved case through the existing case runner.</li>
+        <li>It suppresses per-case stdout so suite <code>--json</code> output remains a single parseable document.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #a855f7; --module-height: 165px;">
+      <h3>Schema and Case Owners</h3>
+      <ul>
+        <li><code>src/lib/schema.js</code> adds <code>suite</code> as a named schema target.</li>
+        <li><code>src/lib/case-contract.js</code> keeps case parsing and validation ownership.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fbbf24; --module-height: 100px;">
+      <h3>Deferred Agent Surface</h3>
+      <p>Agent-native review found no first-class agent tool surface. That is real, but adding one in JSC-371 would widen phase-one authority; it is tracked as a parent-program parity gap.</p>
+    </section>
+  </div>
+
+  <h2>JSC-372 Deep Module Map</h2>
+  <p>Yes: this implementation belongs inside the project&apos;s current deep modules. The runtime state command publishes the packet, runtime-evidence keeps policy-family truth, schema keeps contract validation, and the only new owner is the claim/evidence contract. That avoids a parallel proof stack while still giving the packet one tested authority for evidence sufficiency.</p>
+  <div class="module-map" aria-label="JSC-372 deep module ownership map">
+    <section class="module-card" style="--module-color: #38a8ff; --module-height: 300px;">
+      <h3>Claim/Evidence Owner</h3>
+      <ul>
+        <li><code>src/lib/claim-evidence-contract.js</code> owns claim/evidence packet assembly and the deterministic <code>missing-evidence</code> scorer.</li>
+        <li><code>validation-passed</code> claims require matching validation evidence.</li>
+        <li><code>artifact-exists</code> claims require manifest/hash evidence, not just path presence.</li>
+        <li>Advisory confidence is recorded as data only and cannot change the scorer verdict.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fb6a12; --module-height: 170px;">
+      <h3>Runtime State Publisher</h3>
+      <ul>
+        <li><code>src/lib/runtime-state.js</code> remains the owner of <code>pnpm evals state --json</code>.</li>
+        <li>It embeds the v1 evidence packet additively under <code>evidence_packet</code>.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #34c759; --module-height: 170px;">
+      <h3>Runtime-Evidence Family Owner</h3>
+      <ul>
+        <li><code>src/lib/runtime-evidence-contract.js</code> still decides enforced versus scaffolded policy families.</li>
+        <li>The packet carries <code>policy_coverage</code> so <code>scaffolded_not_enforced</code> remains visible.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #ef3340; --module-height: 240px;">
+      <h3>Schema Contract</h3>
+      <ul>
+        <li>Added <code>claim.schema.json</code>, <code>evidence.schema.json</code>, and <code>runtime-evidence-packet.schema.json</code>.</li>
+        <li><code>runtime-state.schema.json</code> validates the embedded packet.</li>
+        <li><code>scorer-result.schema.json</code> recognizes <code>missing-evidence</code>.</li>
+      </ul>
+    </section>
+
+    <section class="module-card span-two" style="--module-color: #a855f7; --module-height: 150px;">
+      <h3>Tracer Proof</h3>
+      <p><code>pnpm test</code> now covers success-claim-without-evidence failure, artifact-claim-without-manifest-hash failure, schema-valid packet output, and preservation of <code>scaffolded_not_enforced</code> policy coverage in <code>state --json</code>.</p>
+    </section>
+
+    <section class="module-card span-two" style="--module-color: #fbbf24; --module-height: 135px;">
+      <h3>Architecture Decision</h3>
+      <p>The selected design is the interface move, not the smallest patch: callers ask existing owners for state and policy truth, then <code>claim-evidence-contract</code> assembles and scores the packet. Tests prove the seam, and the parent closeout must cite the packet rather than mailbox or PR prose.</p>
+    </section>
+  </div>
 
   <h2>Decisions and Tradeoffs</h2>
   <table>
     <tr><th>Time</th><th>Decision / Tradeoff</th><th>Why It Matters</th></tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Build JSC-372 into the existing runtime-state and runtime-evidence deep modules.</td>
+      <td>The plan asks for a runtime evidence packet, but the project already has runtime state and runtime-evidence family owners. The safer architecture is one new claim/evidence owner plugged into those modules, not a second state command or parallel validation stack.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Use the interface design over a caller-level patch for JSC-372.</td>
+      <td>The smallest caller patch would have scattered claim/evidence checks through <code>state</code>, tests, and closeout prose. The deep-module design keeps sufficiency rules hidden behind <code>scoreMissingEvidence</code> and <code>buildRuntimeEvidencePacket</code>, with schema and regression tests as the seam.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Expose runtime-evidence <code>policy_coverage</code> in the packet.</td>
+      <td>This preserves the difference between <code>implemented_enforced</code> and <code>scaffolded_not_enforced</code>. Without it, the packet could look ready while hiding scaffolded families.</td>
+    </tr>
     <tr>
       <td>2026-05-24</td>
       <td>Use a separate worktree instead of the original checkout.</td>
@@ -295,6 +423,10 @@
     <tr><td><code>pnpm verify</code></td><td class="ok">pass</td><td>Repo gate passed, including 111 tests, smoke run in text and JSON mode, state, check, and credential-pattern scan.</td></tr>
     <tr><td><code>pnpm test</code> after architecture correction</td><td class="ok">pass</td><td>111 tests passed after folding proof-context behavior into <code>src/lib/latest-run.js</code>.</td></tr>
     <tr><td><code>pnpm verify</code> after architecture correction</td><td class="ok">pass</td><td>Aggregate gate passed again after removing the separate proof-context module.</td></tr>
+    <tr><td>CodeRabbit review repair</td><td class="ok">patched</td><td>Kept malformed/latest-schema failure proof-context fields inside <code>src/lib/latest-run.js</code>; removed committed auto-refresh from the HTML snapshot; added review-artifact resolution notes.</td></tr>
+    <tr><td><code>pnpm test -- --runInBand</code></td><td class="warn">fail</td><td>Invalid command for this repo&apos;s Node test runner; command selection error, not a product regression.</td></tr>
+    <tr><td><code>pnpm test</code> after CodeRabbit repair</td><td class="ok">pass</td><td>114 tests passed after adding malformed/latest-schema proof-context regression coverage.</td></tr>
+    <tr><td><code>pnpm verify</code> after CodeRabbit repair</td><td class="ok">pass</td><td>Aggregate gate passed and wrote fresh proof bundle <code>20260524T235025Z-pr-closeout-4df36134-01</code>.</td></tr>
     <tr><td><code>$simplify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-simplify.md</code>; main cleanup was folding proof-context behavior into <code>latest-run.js</code>.</td></tr>
     <tr><td><code>$unslopify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-unslopify.md</code>; no phase-one hard blocks introduced.</td></tr>
     <tr><td><code>$testing</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-testing.md</code> with narrow and aggregate validation evidence.</td></tr>
@@ -307,6 +439,36 @@
     <tr><td><code>pnpm evals check --json</code> after review fixes</td><td class="ok">pass</td><td>Latest proof context matched the canonical smoke fixture and all latest bundle checks passed.</td></tr>
     <tr><td><code>pnpm evals state --json</code> after review fixes</td><td class="ok">pass</td><td>Runtime state reported <code>ready</code>.</td></tr>
     <tr><td><code>pnpm verify</code> after review fixes</td><td class="ok">pass</td><td>Aggregate gate passed with 113 tests, smoke run text and JSON modes, state, check, and credential-pattern scan.</td></tr>
+    <tr><td>JSC-371 deep module fix packet</td><td class="ok">pass</td><td>Updated <code>.harness/refactors/2026-05-24-jsc-371-repo-local-suite-contract.md</code> to require current deep-module ownership, <code>.evals</code> containment, and fail-closed local artifact policy.</td></tr>
+    <tr><td><code>pnpm test</code> for JSC-371</td><td class="ok">pass</td><td>119 tests passed, including external temp consumer suite execution, traversal rejection, misplaced suite rejection, local-retention policy rejection, network rejection, and executable scorer rejection.</td></tr>
+    <tr><td><code>pnpm verify</code> for JSC-371</td><td class="ok">pass</td><td>Aggregate gate passed with 119 tests plus smoke run, <code>state --json</code>, <code>check --json</code>, and credential-pattern scan.</td></tr>
+    <tr><td><code>@adversarial-reviewer</code> for JSC-371</td><td class="warn">artifact retry needed</td><td>Mailbox found two real issues and no artifact yet. Both issues are patched: mandatory <code>.evals</code> boundary and fail-closed <code>write_bundle</code>/<code>retain_locally</code>.</td></tr>
+    <tr><td><code>@agent-native-reviewer</code> for JSC-371</td><td class="warn">deferred finding</td><td>Artifact exists. It asks for first-class agent tools; that is a valid parent-program parity gap but is not safe to add inside JSC-371 phase-one scope.</td></tr>
+    <tr><td>JSC-372 deep module fix packet</td><td class="ok">pass</td><td>Added <code>.harness/refactors/2026-05-24-jsc-372-claim-evidence-runtime-packet.md</code> before runtime/schema edits.</td></tr>
+    <tr><td><code>pnpm test</code> for JSC-372 initial implementation</td><td class="ok">pass</td><td>121 tests passed, including missing-evidence scorer regressions, schema-valid evidence packet output, and <code>scaffolded_not_enforced</code> policy coverage preservation.</td></tr>
+    <tr><td><code>git diff --check</code> for JSC-372</td><td class="ok">pass</td><td>No whitespace or conflict-marker output.</td></tr>
+    <tr><td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code> for JSC-372</td><td class="ok">pass</td><td>Smoke run completed and wrote a validation bundle; generated run output was treated as proof evidence, not committed source.</td></tr>
+    <tr><td><code>pnpm evals check --json</code> for JSC-372</td><td class="ok">pass</td><td>Latest/check validation passed with proof context and runtime-evidence policy coverage intact.</td></tr>
+    <tr><td><code>pnpm evals state --json</code> for JSC-372</td><td class="ok">pass</td><td>State reported <code>ready</code>, <code>evidence_packet.repo.name: evals</code>, <code>missing_evidence_scorer.status: pass</code>, and scaffolded families remained visible.</td></tr>
+    <tr><td><code>pnpm verify</code> for JSC-372</td><td class="ok">pass</td><td>Aggregate gate exited 0 after tests, smoke run, state/check validation, and credential scan.</td></tr>
+    <tr><td><code>$simplify</code> for JSC-372</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-372-simplify.md</code>; no behavior-preserving cleanup remains inside this slice.</td></tr>
+    <tr><td><code>$unslopify</code> for JSC-372</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-372-unslopify.md</code>; no prose-only proof surface or phase-one hard block was introduced.</td></tr>
+    <tr><td><code>$testing</code> for JSC-372</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-372-testing.md</code> with narrow and broad command evidence.</td></tr>
+    <tr><td><code>$he-code-review</code> for JSC-372</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-372-he-code-review.md</code>; no blocking local findings remain.</td></tr>
+    <tr><td>JSC-372 readiness verdict patch</td><td class="ok">patched</td><td>Adversarial mailbox finding fixed by adding packet-level <code>readiness_verdict</code>; <code>missing-evidence</code> stays evidence-completeness-only.</td></tr>
+    <tr><td>JSC-372 latest-missing blocker detail</td><td class="ok">patched</td><td>Agent-native warning fixed by emitting the missing <code>latest.json</code> path and recovery command in packet blockers.</td></tr>
+    <tr><td><code>pnpm test</code> after JSC-372 review fixes</td><td class="ok">pass</td><td>122 tests passed, including ready/latest-missing readiness verdict assertions and runtime-state/packet schema parity.</td></tr>
+    <tr><td><code>pnpm verify</code> after JSC-372 review fixes</td><td class="ok">pass</td><td>Aggregate gate exited 0 after reviewer-driven fixes.</td></tr>
+    <tr><td><code>@agent-native-reviewer</code> for JSC-372</td><td class="ok">pass</td><td>Artifact exists at <code>artifacts/reviews/jsc-372-agent-native-reviewer.md</code>; warning remediated.</td></tr>
+    <tr><td><code>@adversarial-reviewer</code> for JSC-372</td><td class="warn">coverage gap</td><td>Reviewer returned mailbox findings twice but did not write the required artifact after one retry. Wrote coordinator coverage gap at <code>artifacts/reviews/jsc-372-review-coordination.md</code>.</td></tr>
+    <tr><td>JSC-372 schema parity guard</td><td class="ok">pass</td><td>Added a deterministic test to keep the embedded <code>state.evidence_packet</code> schema aligned with the standalone runtime evidence packet schema until <code>$ref</code> support exists.</td></tr>
+    <tr><td>JSC-372 commit</td><td class="ok">pass</td><td>Committed <code>519bde6 feat(jsc-372): add runtime evidence packet</code>.</td></tr>
+    <tr><td>JSC-372 PR</td><td class="ok">pass</td><td>Opened draft PR <code>#17</code> stacked on <code>codex-jsc-371-repo-local-suite-contract</code>.</td></tr>
+    <tr><td>JSC-372 PR green sweep</td><td class="warn">blocked external</td><td>Artifact committed and pushed at <code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code>. PR #17 is open and draft; after the evidence commit, deterministic-gates and Semgrep are queued/pending, Socket is in progress, and Snyk/CodeRabbit are passing.</td></tr>
+    <tr><td>JSC-372 PR recheck</td><td class="ok">pass</td><td>PR #17 is now open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit are passing.</td></tr>
+    <tr><td>JSC-369 parent reconciliation</td><td class="ok">committed</td><td>Committed <code>73ac620 docs(jsc-369): reconcile parent proof state</code> with May 24 plan/spec/audit artifacts, docs/AGENTS review artifacts, updated closure evidence, and fresh <code>pnpm verify</code> proof bundles.</td></tr>
+    <tr><td>JSC-369 parent PR</td><td class="warn">lifecycle blocked</td><td>Opened draft PR <code>#18</code> stacked on JSC-372. Hosted checks are clean on the latest recheck, but the parent stays open/draft because child PRs #15, #16, and #17 are still draft/open and Linear still shows the queue as Todo.</td></tr>
+    <tr><td>JSC-369 PR green sweep</td><td class="warn">patched stale claim</td><td>Subagent wrote <code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code> and found stale PR #17 Semgrep wording. Parent closure evidence was patched to show PR #17 CLEAN and PR #18 as the remaining Semgrep-pending PR.</td></tr>
   </table>
 
   <h2>Open Questions</h2>

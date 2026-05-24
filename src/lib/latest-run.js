@@ -43,11 +43,23 @@ export function validateLatestRun(latestPath, options = {}) {
   try {
     latest = readJson(absoluteLatestPath);
   } catch (error) {
-    return { status: "failed", errors: [error.message], checks: [] };
+    const proofComparison = options.expectedContext
+      ? compareProofContext(options.expectedContext, null, options.recoveryCommand)
+      : null;
+    return {
+      status: "failed",
+      errors: [error.message],
+      checks: [],
+      ...proofContextFields(proofComparison)
+    };
   }
 
   const checks = [schemaCheckFromObject("latest", latest, absoluteLatestPath)];
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
+
+  const proofComparison = options.expectedContext
+    ? compareProofContext(options.expectedContext, observedProofContextFromLatest(latest), options.recoveryCommand)
+    : null;
 
   if (errors.length > 0) {
     return {
@@ -56,13 +68,10 @@ export function validateLatestRun(latestPath, options = {}) {
       run_id: latest.run_id,
       checks,
       errors,
-      ...proofContextFields(null)
+      ...proofContextFields(proofComparison)
     };
   }
 
-  const proofComparison = options.expectedContext
-    ? compareProofContext(options.expectedContext, observedProofContextFromLatest(latest), options.recoveryCommand)
-    : null;
   if (proofComparison) {
     const check = proofContextCheck(proofComparison, rel(absoluteLatestPath));
     checks.push(check);
