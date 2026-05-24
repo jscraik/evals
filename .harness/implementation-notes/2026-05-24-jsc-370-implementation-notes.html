@@ -145,7 +145,7 @@
 <main>
   <p class="refresh">Auto-refreshes every 3 seconds. Last updated: <code>2026-05-24 23:58 Europe/London</code>.</p>
   <h1>Proof Spine Implementation Notes</h1>
-  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 and JSC-371 are implemented and handed to PR triage; JSC-372 is now active in <code>/private/tmp/evals-jsc372</code>. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
+  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 and JSC-371 are implemented and handed to PR triage; JSC-372 is implemented, pushed, and under PR triage in <code>/private/tmp/evals-jsc372</code>. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
   <h2>Current Slice</h2>
   <table>
@@ -222,7 +222,7 @@
   </div>
 
   <h2>JSC-372 Deep Module Map</h2>
-  <p>Claim/evidence proof is now an explicit owner boundary. The runtime state command publishes the packet, but it does not decide whether evidence is sufficient; that decision lives in <code>src/lib/claim-evidence-contract.js</code>.</p>
+  <p>Yes: this implementation belongs inside the project&apos;s current deep modules. The runtime state command publishes the packet, runtime-evidence keeps policy-family truth, schema keeps contract validation, and the only new owner is the claim/evidence contract. That avoids a parallel proof stack while still giving the packet one tested authority for evidence sufficiency.</p>
   <div class="module-map" aria-label="JSC-372 deep module ownership map">
     <section class="module-card" style="--module-color: #38a8ff; --module-height: 300px;">
       <h3>Claim/Evidence Owner</h3>
@@ -263,6 +263,11 @@
       <h3>Tracer Proof</h3>
       <p><code>pnpm test</code> now covers success-claim-without-evidence failure, artifact-claim-without-manifest-hash failure, schema-valid packet output, and preservation of <code>scaffolded_not_enforced</code> policy coverage in <code>state --json</code>.</p>
     </section>
+
+    <section class="module-card span-two" style="--module-color: #fbbf24; --module-height: 135px;">
+      <h3>Architecture Decision</h3>
+      <p>The selected design is the interface move, not the smallest patch: callers ask existing owners for state and policy truth, then <code>claim-evidence-contract</code> assembles and scores the packet. Tests prove the seam, and the parent closeout must cite the packet rather than mailbox or PR prose.</p>
+    </section>
   </div>
 
   <h2>Decisions and Tradeoffs</h2>
@@ -272,6 +277,11 @@
       <td>2026-05-24</td>
       <td>Build JSC-372 into the existing runtime-state and runtime-evidence deep modules.</td>
       <td>The plan asks for a runtime evidence packet, but the project already has runtime state and runtime-evidence family owners. The safer architecture is one new claim/evidence owner plugged into those modules, not a second state command or parallel validation stack.</td>
+    </tr>
+    <tr>
+      <td>2026-05-24</td>
+      <td>Use the interface design over a caller-level patch for JSC-372.</td>
+      <td>The smallest caller patch would have scattered claim/evidence checks through <code>state</code>, tests, and closeout prose. The deep-module design keeps sufficiency rules hidden behind <code>scoreMissingEvidence</code> and <code>buildRuntimeEvidencePacket</code>, with schema and regression tests as the seam.</td>
     </tr>
     <tr>
       <td>2026-05-24</td>
@@ -450,7 +460,7 @@
     <tr><td>JSC-372 schema parity guard</td><td class="ok">pass</td><td>Added a deterministic test to keep the embedded <code>state.evidence_packet</code> schema aligned with the standalone runtime evidence packet schema until <code>$ref</code> support exists.</td></tr>
     <tr><td>JSC-372 commit</td><td class="ok">pass</td><td>Committed <code>519bde6 feat(jsc-372): add runtime evidence packet</code>.</td></tr>
     <tr><td>JSC-372 PR</td><td class="ok">pass</td><td>Opened draft PR <code>#17</code> stacked on <code>codex-jsc-371-repo-local-suite-contract</code>.</td></tr>
-    <tr><td>JSC-372 PR green sweep</td><td class="status">in progress</td><td>Launched <code>/root/jsc_372_pr_green_sweep</code>; expected artifact <code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code>.</td></tr>
+    <tr><td>JSC-372 PR green sweep</td><td class="warn">blocked external</td><td>Artifact written at <code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code>. PR #17 is open and draft; deterministic gates passed, with <code>semgrep-cloud-platform/scan</code> pending at triage time.</td></tr>
   </table>
 
   <h2>Open Questions</h2>
