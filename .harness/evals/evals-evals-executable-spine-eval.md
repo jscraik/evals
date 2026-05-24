@@ -70,6 +70,84 @@ capacity failure, not an unresolved emitted code finding.
 | JSC-349 | Done | policy coverage enforcement implemented and tested | closed after parent reconciliation |
 | JSC-350 | Done | credential scan proof roots and fallback parity implemented and tested | closed after parent reconciliation |
 
+## JSC-369 Proof-Spine Suite Contract Addendum
+
+This section records the May 24 governed parent loop for JSC-369 through
+JSC-372. It is a reconciliation record, not a completion claim. Parent closeout
+is still blocked until the stacked child PRs are merged or explicitly deferred
+with owner-approved rationale.
+
+### Source Artifacts
+
+| Artifact | Status | Path |
+| --- | --- | --- |
+| Evidence-led audit | present in parent branch | .harness/research/audits/2026-05-24-evidence-led-codebase-gap-audit.md |
+| HE spec | present in parent branch | .harness/specs/2026-05-24-evals-proof-spine-suite-contract-spec.md |
+| HE plan | present in parent branch | .harness/plan/2026-05-24-evals-proof-spine-suite-contract-plan.md |
+| Linear mutation plan | present in parent branch | .harness/linear/2026-05-24-evals-proof-spine-suite-contract-linear-plan.md |
+
+### Child Slice Reconciliation
+
+| Issue | Local Slice State | PR State Rechecked 2026-05-24 | Tracker State Rechecked 2026-05-24 | Parent Decision |
+| --- | --- | --- | --- | --- |
+| JSC-370 | implemented, validated, committed, pushed | PR #15 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-370 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
+| JSC-371 | implemented, validated, committed, pushed | PR #16 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-371 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
+| JSC-372 | implemented, validated, committed, pushed, PR triage artifact committed | PR #17 open, draft, mergeable, merge state UNSTABLE because Semgrep remains pending; deterministic-gates, Socket, Snyk, and CodeRabbit pass | Linear JSC-372 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until Semgrep resolves and PR state is advanced/merged or owner defers |
+| JSC-369 | parent reconciliation active | no parent PR yet | Linear JSC-369 status Triage | keep parent open; do not claim closeout |
+
+### Deep Module Architecture Decision
+
+The May 24 implementation uses the existing deep-module structure rather than
+creating a parallel proof stack:
+
+- JSC-370 puts run-bundle identity and latest proof-context publication behind
+  runner/latest owner modules.
+- JSC-371 adds a repo-local suite contract through the existing run and
+  schema/case validation path, with data-only scorer references and fail-closed
+  network policy.
+- JSC-372 adds one claim/evidence owner module while leaving runtime-state and
+  runtime-evidence-family ownership in their existing modules.
+
+The selected architecture is an interface move. Callers ask owner modules for
+state, suite, latest, and evidence sufficiency instead of re-implementing proof
+rules in CLI callers, generated artifacts, PR prose, or agent prompts.
+
+### Validation Evidence
+
+| Slice | Command / Artifact | Status | Evidence |
+| --- | --- | --- | --- |
+| JSC-370 | pnpm test; pnpm evals run fixtures/smoke/pr-closeout.case.json --json; pnpm evals check --json; pnpm verify | pass | recorded in PR #15 and JSC-370 review artifacts |
+| JSC-371 | pnpm test; pnpm evals run fixtures/smoke/pr-closeout.case.json --json; pnpm evals check --json; pnpm verify | pass | recorded in PR #16 and JSC-371 review artifacts |
+| JSC-372 | git diff --check; pnpm test; pnpm evals run fixtures/smoke/pr-closeout.case.json --json; pnpm evals check --json; pnpm evals state --json; pnpm verify | pass | recorded in commit 519bde6 and JSC-372 review artifacts |
+| JSC-372 reviewer gate | agent-native-reviewer artifact | pass | artifacts/reviews/jsc-372-agent-native-reviewer.md |
+| JSC-372 adversarial reviewer gate | required artifact | coverage gap | reviewer returned mailbox findings twice but did not write the requested artifact after one retry; coordinator artifact records remediation and gap at artifacts/reviews/jsc-372-review-coordination.md |
+| JSC-372 PR triage | pr-green-sweep artifact | blocked external | artifacts/pr-green-sweep/jsc-372-pr-triage.md records Semgrep pending as external_check_pending |
+| Documentation accuracy | docs-expert fallback artifact | partial | artifacts/reviews/evals-proof-spine-docs-expert.md records README accurate for phase-one doctrine but incomplete for unmerged suite/claim/evidence exposition |
+| AGENTS accuracy | agents-md fallback artifact | pass with follow-up | artifacts/reviews/evals-proof-spine-agents-md.md records no blocking AGENTS.md contradiction |
+| JSC-369 parent branch | git diff --check | pass | no whitespace or conflict-marker output after parent reconciliation edits |
+| JSC-369 parent branch | source artifact existence checks | pass | May 24 plan, spec, Linear plan, audit, docs review artifact, and AGENTS review artifact exist in the parent branch |
+| JSC-369 parent branch | pnpm verify | pass | aggregate gate exited 0 and wrote latest proof bundle 20260524T233444Z-pr-closeout-4df36134 |
+
+### Remaining Blockers Before Parent Completion
+
+- PR #15 and PR #16 remain draft even though all visible checks pass.
+- PR #17 remains draft and Semgrep is still pending, so merge state is UNSTABLE.
+- Linear JSC-369 is still Triage; JSC-370, JSC-371, and JSC-372 remain Todo
+  despite PR attachments. Do not represent local implementation as live tracker
+  completion.
+- README has not yet been updated for JSC-371/JSC-372 because those PRs are not
+  merged; docs are partial rather than complete.
+- The JSC-372 adversarial reviewer artifact is missing after one retry. The
+  mailbox findings were remediated, but the missing artifact remains a coverage
+  gap.
+
+### Current Parent Verdict
+
+JSC-369 is active and evidence-backed, but not complete. The safe next action is
+to continue PR triage in order: advance or merge JSC-370, then JSC-371, then
+resolve JSC-372 Semgrep/PR state, then patch README if needed and re-run the
+parent validation gate.
+
 ## Command Output
 
 Human command:
