@@ -68,6 +68,36 @@ function assertRepoRelativeArtifact(repo, output, key) {
   assert.ok(existsSync(join(repo, artifactPath)), key + " should point to an existing artifact");
 }
 
+function makeConsumerSuite(repo, overrides = {}) {
+  const consumer = mkdtempSync(join(tmpdir(), "evals-consumer-suite-"));
+  mkdirSync(join(consumer, ".evals", "cases"), { recursive: true });
+  mkdirSync(join(consumer, ".evals", "scorers"), { recursive: true });
+  mkdirSync(join(consumer, ".evals", "baselines"), { recursive: true });
+  const copiedCase = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+  copiedCase.suite_id = "consumer-smoke";
+  writeFileSync(join(consumer, ".evals", "cases", "pr-closeout.case.json"), JSON.stringify(copiedCase, null, 2) + "\n");
+  writeFileSync(join(consumer, ".evals", "scorers", "artifact.scorer.json"), JSON.stringify({ scorer_id: "artifact-completeness" }, null, 2) + "\n");
+  writeFileSync(join(consumer, ".evals", "baselines", "main.baseline.json"), JSON.stringify({ status: "not_promoted" }, null, 2) + "\n");
+  const suite = {
+    schema_version: 1,
+    suite_id: "consumer-smoke",
+    owner_repo: "jscraik/consumer",
+    domain: "consumer",
+    purpose: "Verify repo-local suite execution.",
+    cases: ["cases/pr-closeout.case.json"],
+    scorers: ["scorers/artifact.scorer.json"],
+    baseline: "baselines/main.baseline.json",
+    artifact_policy: {
+      write_bundle: true,
+      retain_locally: true,
+      allow_network: false
+    },
+    ...overrides
+  };
+  writeFileSync(join(consumer, ".evals", "suite.json"), JSON.stringify(suite, null, 2) + "\n");
+  return consumer;
+}
+
 test("run bundle allocation gives identical same-second runs unique directories", () => {
   const dir = mkdtempSync(join(tmpdir(), "evals-run-bundle-"));
   try {
@@ -199,6 +229,120 @@ test("run writes a valid local artifact bundle", () => {
     assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
   } finally {
     cleanup(repo);
+  }
+});
+
+test("run accepts a repo-local suite and writes artifacts under the evaluated repo", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  try {
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const output = parseJson(result.stdout);
+    assert.equal(output.status, "passed");
+    assert.equal(output.suite_id, "consumer-smoke");
+    assert.equal(output.evaluated_repo_root, consumer);
+    assert.equal(output.case_results.length, 1);
+    const caseOutput = output.case_results[0];
+    assert.equal(caseOutput.status, "passed");
+    assert.ok(existsSync(join(consumer, caseOutput.result_path)));
+    assert.ok(existsSync(join(consumer, ".harness", "evals", "runs", "latest.json")));
+    assert.equal(existsSync(join(repo, caseOutput.result_path)), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("suite contract rejects traversal before executing cases", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo, { cases: ["../outside.case.json"] });
+  try {
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.equal(output.requirement, "suite validation");
+    assert.match(output.errors.join("\n"), /cases\[0\].*traversal/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("suite contract rejects network-enabled artifact policy", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo, {
+    artifact_policy: {
+      write_bundle: true,
+      retain_locally: true,
+      allow_network: true
+    }
+  });
+  try {
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.match(output.errors.join("\n"), /allow_network/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("suite contract requires suites to live under .evals", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  const misplacedSuite = join(consumer, "suite.json");
+  const suite = JSON.parse(readFileSync(join(consumer, ".evals", "suite.json"), "utf8"));
+  try {
+    writeFileSync(misplacedSuite, JSON.stringify(suite, null, 2) + "\n");
+    const result = runCli(repo, ["run", misplacedSuite, "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.match(output.errors.join("\n"), /inside a \.evals directory/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("suite contract requires local bundle retention in phase one", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo, {
+    artifact_policy: {
+      write_bundle: false,
+      retain_locally: false,
+      allow_network: false
+    }
+  });
+  try {
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.match(output.errors.join("\n"), /write_bundle true/);
+    assert.match(output.errors.join("\n"), /retain_locally true/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("suite contract rejects executable scorer hooks", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo, { scorers: ["scorers/custom.js"] });
+  try {
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.match(output.errors.join("\n"), /executable scorer hooks/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
   }
 });
 

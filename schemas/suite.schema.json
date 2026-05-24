@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/suite.schema.json",
+  "title": "Eval Suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "suite_id", "owner_repo", "domain", "purpose", "cases", "scorers", "artifact_policy"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "suite_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$" },
+    "owner_repo": { "type": "string", "minLength": 1 },
+    "domain": { "type": "string", "minLength": 1 },
+    "purpose": { "type": "string", "minLength": 1 },
+    "cases": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "scorers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "baseline": { "type": ["string", "null"] },
+    "artifact_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["write_bundle", "retain_locally", "allow_network"],
+      "properties": {
+        "write_bundle": { "type": "boolean" },
+        "retain_locally": { "type": "boolean" },
+        "allow_network": { "type": "boolean" },
+        "artifact_root": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

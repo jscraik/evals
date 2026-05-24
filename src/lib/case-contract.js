@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 import { emitFailure } from "./failures.js";
-import { insideRepo } from "./paths.js";
+import { insideRepo, insideRoot } from "./paths.js";
 import { schemaCheck, schemaTargets, validateDocument } from "./schema.js";
 
 /**
@@ -73,8 +73,8 @@ export function validateCaseContract(casePath, testCase) {
  * @param {string} casePath - Absolute or repository-relative path to the case file.
  * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[], testCase?: object}} Validation check.
  */
-export function validateCaseFileContract(casePath) {
-  const absoluteCasePath = insideRepo(casePath);
+export function validateCaseFileContract(casePath, options = {}) {
+  const absoluteCasePath = options.root ? insideRoot(options.root, casePath, "case root") : insideRepo(casePath);
   const check = schemaCheck("case", absoluteCasePath);
   let testCase;
   try {
@@ -101,10 +101,10 @@ export function validateCaseFileContract(casePath) {
  * @param {*} jsonMode - Mode passed to emitFailure that controls how failures are reported.
  * @returns {{ absoluteCasePath: string, rawCase: string, testCase: Object }} An object containing the resolved absolute path, the raw file contents, and the parsed case JSON.
  */
-export function parseCase(casePath, jsonMode) {
+export function parseCase(casePath, jsonMode, options = {}) {
   let absoluteCasePath;
   try {
-    absoluteCasePath = insideRepo(casePath);
+    absoluteCasePath = options.root ? insideRoot(options.root, casePath, "case root") : insideRepo(casePath);
   } catch (error) {
     emitFailure(jsonMode, {
       status: "failed",

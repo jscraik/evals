@@ -18,8 +18,8 @@ export const resultArtifactRefContracts = latestArtifactContracts.filter((contra
  * @param {string} key - One of the latest.json artifact pointer keys.
  * @returns {string} Canonical repository-relative path for that run artifact.
  */
-export function expectedLatestPath(runId, key) {
+export function expectedLatestPath(runId, key, artifactRootPrefix = ".harness/evals/runs") {
   const contract = latestArtifactContracts.find((item) => item.key === key);
   if (!contract) throw new Error("unknown latest artifact key: " + key);
-  return ".harness/evals/runs/" + runId + "/" + contract.filename;
+  return artifactRootPrefix + "/" + runId + "/" + contract.filename;
 }

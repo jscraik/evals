@@ -8,6 +8,10 @@ export const schemaTargets = {
     schema: join(schemaDir, "eval-case.schema.json"),
     label: "eval case"
   },
+  suite: {
+    schema: join(schemaDir, "suite.schema.json"),
+    label: "eval suite"
+  },
   result: {
     schema: join(schemaDir, "eval-result.schema.json"),
     label: "eval result"

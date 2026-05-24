@@ -4,7 +4,7 @@ import { expectedLatestPath, latestArtifactContracts, manifestArtifactContracts,
 import { validateCaseFileContract } from "./case-contract.js";
 import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
-import { insideRepo, rel, repoRelativePath } from "./paths.js";
+import { insideRoot, relFrom, repoRoot, rootRelativePath } from "./paths.js";
 import { schemaCheck, schemaCheckFromObject } from "./schema.js";
 import { validateTraceEventsFile } from "./trace-events.js";
 
@@ -37,7 +37,11 @@ export function validateCaseFile(casePath) {
  *   - proof-context fields when options.expectedContext is supplied.
  */
 export function validateLatestRun(latestPath, options = {}) {
-  const absoluteLatestPath = insideRepo(latestPath);
+  const artifactRepoRoot = options.artifactRepoRoot || repoRoot;
+  const artifactRootPrefix = options.artifactRootPrefix || ".harness/evals/runs";
+  const relativeToArtifactRoot = (path) => relFrom(artifactRepoRoot, path);
+  const artifactRelativePath = (path, label, targetErrors) => rootRelativePath(artifactRepoRoot, path, label, targetErrors);
+  const absoluteLatestPath = insideRoot(artifactRepoRoot, latestPath, "artifact repository");
   const errors = [];
   let latest;
   try {
@@ -52,7 +56,7 @@ export function validateLatestRun(latestPath, options = {}) {
   if (errors.length > 0) {
     return {
       status: "failed",
-      latest_path: rel(absoluteLatestPath),
+      latest_path: relativeToArtifactRoot(absoluteLatestPath),
       run_id: latest.run_id,
       checks,
       errors,
@@ -64,13 +68,13 @@ export function validateLatestRun(latestPath, options = {}) {
     ? compareProofContext(options.expectedContext, observedProofContextFromLatest(latest), options.recoveryCommand)
     : null;
   if (proofComparison) {
-    const check = proofContextCheck(proofComparison, rel(absoluteLatestPath));
+    const check = proofContextCheck(proofComparison, relativeToArtifactRoot(absoluteLatestPath));
     checks.push(check);
     errors.push(...check.errors.map((error) => check.label + " " + error));
     if (!proofComparison.context_match) {
       return {
         status: "failed",
-        latest_path: rel(absoluteLatestPath),
+        latest_path: relativeToArtifactRoot(absoluteLatestPath),
         run_id: latest.run_id,
         checks,
         errors,
@@ -81,7 +85,7 @@ export function validateLatestRun(latestPath, options = {}) {
 
   const latestPaths = {};
   for (const key of requiredLatestKeys) {
-    const absolutePath = repoRelativePath(latest[key], "latest." + key, errors);
+    const absolutePath = artifactRelativePath(latest[key], "latest." + key, errors);
     if (absolutePath) {
       latestPaths[key] = absolutePath;
       if (!existsSync(absolutePath)) errors.push("latest." + key + ": path does not exist: " + latest[key]);
@@ -103,12 +107,12 @@ export function validateLatestRun(latestPath, options = {}) {
   const baseline = readArtifactJson("baseline result", latestPaths.baseline_result_path, errors);
 
   if (manifest) {
-    const consistencyErrors = latestConsistencyErrors(latest, manifest, result, baseline);
+    const consistencyErrors = latestConsistencyErrors(latest, manifest, result, baseline, { artifactRootPrefix, artifactRelativePath });
     errors.push(...consistencyErrors);
     checks.push({
       label: "closure latest consistency",
       schema_path: "latest-run consistency",
-      data_path: rel(absoluteLatestPath),
+      data_path: relativeToArtifactRoot(absoluteLatestPath),
       status: consistencyErrors.length === 0 ? "pass" : "fail",
       errors: consistencyErrors
     });
@@ -117,7 +121,7 @@ export function validateLatestRun(latestPath, options = {}) {
       errors.push("artifact manifest $.artifacts: expected type array");
     }
     for (const artifact of Array.isArray(manifest.artifacts) ? manifest.artifacts : []) {
-      const artifactPath = repoRelativePath(artifact.path, "manifest artifact path", errors);
+      const artifactPath = artifactRelativePath(artifact.path, "manifest artifact path", errors);
       if (!artifactPath) continue;
       if (!existsSync(artifactPath)) {
         errors.push("manifest artifact missing: " + artifact.path);
@@ -130,7 +134,7 @@ export function validateLatestRun(latestPath, options = {}) {
 
   return {
     status: errors.length === 0 ? "passed" : "failed",
-    latest_path: rel(absoluteLatestPath),
+    latest_path: relativeToArtifactRoot(absoluteLatestPath),
     run_id: latest.run_id,
     checks,
     errors,
@@ -231,11 +235,13 @@ function readArtifactJson(label, path, errors) {
   }
 }
 
-function latestConsistencyErrors(latest, manifest, result, baseline) {
+function latestConsistencyErrors(latest, manifest, result, baseline, options = {}) {
+  const artifactRootPrefix = options.artifactRootPrefix || ".harness/evals/runs";
+  const artifactRelativePath = options.artifactRelativePath || rootRelativePath;
   const errors = [];
 
   for (const contract of latestArtifactContracts) {
-    const expectedPath = expectedLatestPath(latest.run_id, contract.key);
+    const expectedPath = expectedLatestPath(latest.run_id, contract.key, artifactRootPrefix);
     if (!sameArtifactPath(latest[contract.key], expectedPath)) {
       errors.push("latest." + contract.key + ": expected " + expectedPath + " for run_id " + latest.run_id + ", got " + latest[contract.key]);
     }
@@ -243,7 +249,7 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
 
   if (manifest.run_id !== latest.run_id) errors.push("manifest.run_id: expected " + latest.run_id + ", got " + manifest.run_id);
   if (manifest.case_id !== latest.case_id) errors.push("manifest.case_id: expected " + latest.case_id + ", got " + manifest.case_id);
-  const expectedArtifactRoot = ".harness/evals/runs/" + latest.run_id;
+  const expectedArtifactRoot = artifactRootPrefix + "/" + latest.run_id;
   if (latest.artifact_root !== expectedArtifactRoot) {
     errors.push("latest.artifact_root: expected " + expectedArtifactRoot + " for run_id " + latest.run_id + ", got " + latest.artifact_root);
   }
@@ -306,7 +312,7 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
     }
   } else if (baselineRef.type === "baseline-artifact") {
     const baselinePathErrors = [];
-    const baselinePath = repoRelativePath(baselineRef.path, "baseline current_artifact_ref.path", baselinePathErrors);
+    const baselinePath = artifactRelativePath(baselineRef.path, "baseline current_artifact_ref.path", baselinePathErrors);
     errors.push(...baselinePathErrors);
     if (baselinePath && existsSync(baselinePath)) {
       const actual = safeSha256File(baselinePath, "baseline current_artifact_ref.path", baselineRef.path, errors);
