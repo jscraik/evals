@@ -33,4 +33,13 @@
 - No regression test simulates mutation/deletion of `fixtures/smoke/pr-closeout.case.json` between the two reads in `checkCommand`.
 - No regression test exercises concurrent `run` publication and `check/state` reads to assert latest-pointer atomicity guarantees.
 
+## Resolution
+
+These findings were remediated in the JSC-370 slice:
+
+- validateCaseFile now delegates to validateCaseFileContract, which returns the parsed case document used by checkCommand. The command no longer performs a second independent readJson call to derive expected proof context.
+- latest.json publication now uses writeJsonAtomic, which writes a same-directory temporary file and renames it into place after run-local latest-candidate validation.
+- Regression coverage includes the smoke-path expected-context flow, latest proof-context mismatch, run ID collision allocation, invalid latest-candidate non-publication, and artifact validation before shared latest publication.
+- A follow-up review found an additional JSON-contract edge case where schema-failed or malformed latest validation could omit proof-context fields. That is now covered by tests for schema-invalid and malformed latest inputs.
+
 WROTE: artifacts/reviews/jsc-370-adversarial-reviewer.md

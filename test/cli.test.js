@@ -1665,9 +1665,44 @@ test("latest validation rejects missing latest schema fields before artifact rea
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
+    assert.deepEqual(validation.expected_context, {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    });
+    assert.equal(validation.context_match, true);
+    assert.equal(validation.context_mismatch_reason, null);
+    assert.equal(validation.recovery_command, null);
     assert.match(validation.errors.join("\n"), /latest run .*result_path.*missing required property/);
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "fail"));
     assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("check --json keeps proof-context fields when latest JSON is malformed", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "{", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.deepEqual(validation.expected_context, {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    });
+    assert.equal(validation.observed_latest_context, null);
+    assert.equal(validation.context_match, false);
+    assert.equal(validation.context_mismatch_reason, "observed_latest_context_missing");
+    assert.equal(validation.recovery_command, "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
+    assert.match(validation.errors.join("\n"), /JSON/);
   } finally {
     cleanup(repo);
   }
