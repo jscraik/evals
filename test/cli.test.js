@@ -12,6 +12,7 @@ import { validateCaseFile } from "../src/lib/latest-run.js";
 import { createRunBundleDirectory } from "../src/lib/run-bundle.js";
 import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
 import { verdictFor } from "../src/lib/scoring.js";
+import { isSuitePath, loadSuite } from "../src/lib/suite-contract.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const expectedTraceEventTypes = [
@@ -388,10 +389,38 @@ test("suite contract requires suites to live under .evals", () => {
   const suite = JSON.parse(readFileSync(join(consumer, ".evals", "suite.json"), "utf8"));
   try {
     writeFileSync(misplacedSuite, JSON.stringify(suite, null, 2) + "\n");
+    assert.equal(isSuitePath(misplacedSuite), false);
+    const suiteContract = loadSuite(misplacedSuite);
+    assert.equal(suiteContract.status, "failed");
+    assert.match(suiteContract.errors.join("\n"), /inside a \.evals directory/);
+
     const result = runCli(repo, ["run", misplacedSuite, "--json"]);
     assert.equal(result.status, 1);
     const output = parseJson(result.stdout);
-    assert.match(output.errors.join("\n"), /inside a \.evals directory/);
+    assert.equal(output.requirement, "case path");
+    assert.match(output.errors.join("\n"), /inside the evals repository/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("suite detection requires suite.json inside .evals", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  const suite = JSON.parse(readFileSync(join(consumer, ".evals", "suite.json"), "utf8"));
+  const suiteShapedFile = join(consumer, ".evals", "not-suite.json");
+  try {
+    writeFileSync(suiteShapedFile, JSON.stringify(suite, null, 2) + "\n");
+
+    assert.equal(isSuitePath(join(consumer, ".evals", "suite.json")), true);
+    assert.equal(isSuitePath(suiteShapedFile), false);
+
+    const result = runCli(repo, ["run", suiteShapedFile, "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.equal(output.requirement, "case path");
     assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
   } finally {
     cleanup(repo);
