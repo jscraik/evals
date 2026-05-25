@@ -492,3 +492,38 @@ JSC-369 remains active and incomplete. Parent checks must be live-rechecked
 after the final evidence push, and the goal cannot be marked complete until
 child PRs, PR #15/#16 CodeRabbit failures, tracker state, and review/coverage
 gaps are reconciled or explicitly deferred by the owner with a recovery path.
+
+## 2026-05-25 12:02 BST Parent State Refresh
+
+This refresh supersedes earlier current-state tables for the remote heads that
+were live at the time of this check. It is not a completion claim.
+
+### Current PR Truth
+
+| PR | Issue | Head | State | Check Truth | Closeout Impact |
+| --- | --- | --- | --- | --- | --- |
+| #15 | JSC-370 | `0649d5e75c385eeea69b5e1e5d715d06e987c975` | OPEN, not draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` with `Insufficient review credits` after the implementation-notes visual update | Child remains externally review-blocked; do not merge or close JSC-370 without CodeRabbit recovery or explicit owner-approved deferral/exception. |
+| #16 | JSC-371 | `41be55b2ed9128010934176a6d1a4a3e65e04297` | OPEN, not draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` with `Insufficient review credits` | Child remains externally review-blocked; do not merge or close JSC-371 without CodeRabbit recovery or explicit owner-approved deferral/exception. |
+| #17 | JSC-372 | `818232b38d5f4448c11b6040d6d91a99fccd9f78` | OPEN, not draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit status pass; CodeRabbit reports review skipped on the stacked non-default base | Child is check-clean but still open and stacked on JSC-371. |
+| #18 | JSC-369 | `63184be89770969762b970e7965e5746d23303bf` | OPEN, draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit status pass; CodeRabbit reports review skipped on the stacked non-default base | Parent PR is check-clean at this head but intentionally draft; parent cannot close until child PR disposition, tracker truth, docs/AGENTS evidence, and final live checks are reconciled. |
+
+### Current Blocker Classification
+
+| Blocker | Classification | Recovery |
+| --- | --- | --- |
+| PR #15 CodeRabbit status is failing because external review credits are exhausted. | external_tooling | Restore/replenish CodeRabbit credits and rerun/recheck the check, or obtain explicit owner approval to defer/except the automated review gate with recovery command. |
+| PR #16 CodeRabbit status is failing because external review credits are exhausted. | external_tooling | Restore/replenish CodeRabbit credits and rerun/recheck the check, or obtain explicit owner approval to defer/except the automated review gate with recovery command. |
+| PR #17 is green but stacked on the still-blocked JSC-371 branch. | lifecycle_dependency | Advance JSC-371 first or rebase/restack only after the lower child disposition is decided. |
+| PR #18 remains draft. | lifecycle_blocker | Keep draft until child PR disposition and parent closeout criteria are reconciled; recheck live PR #18 after the final evidence push. |
+| Linear issues remain In Progress/In Review. | tracker_state | Mutate Linear only after GitHub disposition matches reality. |
+
+### Commands Rechecked
+
+- `gh pr view 15 --json headRefOid,statusCheckRollup,mergeable,state,isDraft,url` -> pass.
+- `gh pr checks 15` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
+- `gh pr view 16 --json headRefOid,state,isDraft,mergeable,url,statusCheckRollup` -> pass.
+- `gh pr checks 16` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
+- `gh pr view 17 --json headRefOid,state,isDraft,mergeable,url,statusCheckRollup` -> pass.
+- `gh pr checks 17` -> pass for visible checks.
+- `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
+- `gh pr checks 18` -> pass for visible checks.

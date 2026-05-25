@@ -65,3 +65,39 @@ Evidence:
 - Additional live-state command: `gh pr view 18 --repo jscraik/evals --json ...` succeeded and confirms current head and draft/lifecycle state.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
+## 2026-05-25 12:02 BST Refresh
+
+### Head And Scope Confirmation
+
+- Observed head: `63184be89770969762b970e7965e5746d23303bf`
+- PR state: OPEN
+- Draft: true
+- Mergeable: MERGEABLE
+- URL: https://github.com/jscraik/evals/pull/18
+
+Evidence:
+- `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup`
+
+### Current Hosted Check State
+
+- deterministic-gates: pass
+- semgrep-cloud-platform/scan: pass
+- Socket Security: Project Report: pass
+- Socket Security: Pull Request Alerts: pass
+- security/snyk (jscraik): pass
+- license/snyk (jscraik): pass
+- CodeRabbit: pass, review skipped on stacked non-default base
+
+Evidence:
+- `gh pr checks 18`
+
+### Actionability Verdict
+
+- Runtime/code defects requiring fixes on PR #18: none identified in the live
+  check snapshot.
+- Remaining blocker: lifecycle/dependency state. PR #18 is intentionally draft
+  and cannot close until PR #15, PR #16, PR #17, tracker truth, documentation
+  truth, and final live checks are reconciled.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
