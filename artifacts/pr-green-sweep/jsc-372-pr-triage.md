@@ -72,4 +72,29 @@ From `gh pr checks 17 --repo jscraik/evals`:
 3. If Semgrep fails, capture failing rule IDs/log excerpt and open a focused repair slice against this branch.
 4. Optional hygiene: if CodeRabbit coverage is required on this non-default base branch, trigger a manual review via the CodeRabbit comment control.
 
+## Follow-up Stack Repair
+
+Checked at: 2026-05-25 00:12 Europe/London
+
+- Repair action: non-destructively merged `origin/codex-jsc-371-repo-local-suite-contract` into `codex-jsc-372-claim-evidence-runtime-packet`.
+- Conflict resolution:
+  - `.harness/evals/runs/latest.json`: preserved the JSC-372 proof bundle, then reran validation to publish fresh latest proof.
+  - `.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html`: preserved JSC-372 active-slice state and added Jamie&apos;s deep-module architecture answer.
+- Local validation:
+  - `pnpm test` -> pass (123 tests)
+  - `pnpm verify` -> pass
+  - `git diff --check` -> pass
+- Pushed merge commit: `f721fc1c45d62bef2ea4cd9b0af9c2eb67c9a588`
+- Live PR #17 after push:
+  - Status: OPEN, DRAFT
+  - Mergeability: MERGEABLE
+  - Merge state: UNSTABLE
+  - Head: `f721fc1c45d62bef2ea4cd9b0af9c2eb67c9a588`
+  - Pending/queued checks: deterministic-gates queued; semgrep-cloud-platform/scan queued; Socket Security: Project Report in progress; CodeRabbit pending; security/snyk pending; license/snyk pending.
+- Current blocker:
+  - STATUS: blocked_validation
+  - blocker_class: external_checks_pending
+  - exact_failure_text: `deterministic-gates queued; semgrep-cloud-platform/scan queued; Socket Security: Project Report in progress; CodeRabbit pending; security/snyk pending; license/snyk pending`
+- Next coordinator action: re-poll hosted checks on head `f721fc1`; repair only if a check returns a concrete failure.
+
 WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
