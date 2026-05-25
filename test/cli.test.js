@@ -124,7 +124,7 @@ test("run bundle allocation gives identical same-second runs unique directories"
 });
 
 test("case validation returns the validated case document for proof context", () => {
-  const check = validateCaseFile("fixtures/smoke/pr-closeout.case.json");
+  const check = validateCaseFile(smokeFixture(sourceRoot));
 
   assert.equal(check.status, "pass", check.errors.join("\n"));
   assert.equal(check.testCase.case_id, "pr-closeout");
