@@ -103,12 +103,22 @@
   - `pnpm evals check --json` -> pass, latest proof context matched `pr-closeout` / `smoke` / `synthetic`.
   - `pnpm verify` -> pass, aggregate deterministic gate passed and refreshed latest proof bundle `20260525T161137Z-pr-closeout-4df36134-01`.
 
-## Coordinator Next Step
+## Coordinator Final Recheck After JSON-Output Patch
 
-1. Commit and push the JSON-output remediation patch to PR #16.
-2. Recheck PR #16 live after GitHub recomputes mergeability and checks.
-3. Recheck unresolved review threads with thread-aware GraphQL state; resolve only threads proven fixed or superseded by the pushed patch.
-4. If hosted deterministic/security checks pass and CodeRabbit still fails only for reviewer-capacity or status-context lag, classify that separately from code blockers.
-5. Do not claim JSC-371 merged/complete until PR state and child tracker state are reconciled.
+- Commit and push: `75f10c3 fix(jsc-371): validate json command-log output` pushed to `codex-jsc-371-repo-local-suite-contract`.
+- Live PR state after push: PR #16 open, not draft, mergeable, head `75f10c373732e092dd73eca5fb65e413ce0b9342`.
+- Hosted checks after push:
+  - `deterministic-gates` -> pass.
+  - `Socket Security: Project Report` -> pass.
+  - `Socket Security: Pull Request Alerts` -> pass.
+  - `license/snyk (jscraik)` -> pass.
+  - `security/snyk (jscraik)` -> pass.
+  - `semgrep-cloud-platform/scan` -> pass.
+  - `CodeRabbit` -> fail, external blocker: `Insufficient review credits`.
+- Thread-aware GraphQL review state:
+  - `PRRT_kwDOShQiR86EgmVb` -> resolved, path `.harness/evals/runs/20260525T093519Z-pr-closeout-4df36134-01/command-log.json`, line 9.
+  - `PRRT_kwDOShQiR86EgmVi` -> resolved, path `.harness/evals/runs/20260525T093519Z-pr-closeout-4df36134-01/scorer-results.json`, line 24.
+- Current blocker classification: no unresolved actionable CodeRabbit review threads remain from this remediation pass; the remaining CodeRabbit status failure is external reviewer-credit exhaustion and cannot be fixed by repository code.
+- Parent-loop note: JSC-371 PR triage is repaired and evidence-backed, but JSC-371 is not marked parent-complete until merge state, tracker state, and downstream parent reconciliation are handled.
 
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
