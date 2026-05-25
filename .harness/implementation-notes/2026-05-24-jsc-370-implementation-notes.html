@@ -178,6 +178,30 @@
     .module-card .placement-badge code {
       color: #7c2d12;
     }
+    .module-card .landing {
+      display: grid;
+      gap: 8px;
+      margin: 10px 14px;
+    }
+    .landing-item {
+      border-left: 4px solid var(--module-color);
+      background: rgba(255, 255, 255, 0.055);
+      padding: 8px 10px;
+    }
+    .landing-item strong {
+      display: block;
+      color: var(--module-color);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .landing-item span {
+      display: block;
+      color: #d1d5db;
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
     .slice-lanes {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -325,10 +349,37 @@
       }
     }
   </style>
+  <script>
+    (() => {
+      let currentSnapshot = "";
+      async function reloadWhenSnapshotChanges() {
+        try {
+          const response = await fetch(location.pathname + "?snapshot=" + Date.now(), { cache: "no-store" });
+          if (!response.ok) return;
+          const html = await response.text();
+          const match = html.match(/<p class="refresh">Generated snapshot: <code>([^<]+)<\/code>/);
+          if (match && match[1] && match[1] !== currentSnapshot) {
+            location.reload();
+          }
+        } catch (_) {
+          // The report remains readable when the local preview server is stopped.
+        }
+      }
+      function startLiveRefresh() {
+        currentSnapshot = document.querySelector(".refresh code")?.textContent || "";
+        window.setInterval(reloadWhenSnapshotChanges, 5000);
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", startLiveRefresh, { once: true });
+      } else {
+        startLiveRefresh();
+      }
+    })();
+  </script>
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 10:42 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 11:08 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -353,7 +404,7 @@
   </table>
 
   <h2>Where the Work Lands</h2>
-  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The lane cards and table below show where every slice is being placed: worktree, branch, PR, owner files, proof files, review files, and parent closeout evidence.</p>
+  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The deep-module boxes now show the concrete landing zones inside each module: which slice writes there, which files carry the behavior, and which artifacts prove it.</p>
   <div class="placement-summary" aria-label="Deep module placement rule summary">
     <div><strong>Rule 1: code enters through an owner</strong><span>Trust-boundary behavior belongs in <code>src/lib/**</code>, not spread through command glue, tests, review prose, or generated artifacts.</span></div>
     <div><strong>Rule 2: callers only sequence</strong><span><code>src/commands/**</code> chooses the flow and output shape, then delegates proof rules to owner modules.</span></div>
@@ -435,6 +486,11 @@
       <h3>Runtime Proof Owners</h3>
       <p class="placement">Where implementation code belongs</p>
       <div class="placement-badge"><strong>Placed in: runtime owner modules</strong><span>JSC-370, JSC-371, and JSC-372 changes enter through <code>src/lib/**</code> owner seams first.</span></div>
+      <div class="landing" aria-label="Runtime owner landing zones">
+        <div class="landing-item"><strong>JSC-370 lands here</strong><span><code>run-bundle</code> owns collision-resistant run IDs and bundle directories; <code>latest-run</code> owns proof-context and latest pointer checks.</span></div>
+        <div class="landing-item"><strong>JSC-371 lands here</strong><span><code>suite-contract</code> owns <code>.evals/suite.json</code> discovery, evaluated repo root resolution, and phase-one fail-closed suite policy.</span></div>
+        <div class="landing-item"><strong>JSC-372 lands here</strong><span><code>claim-evidence-contract</code> owns evidence sufficiency; <code>runtime-state</code> publishes the packet; <code>runtime-evidence-contract</code> keeps scaffolded-family truth visible.</span></div>
+      </div>
       <ul class="paths">
         <li><code>src/lib/run-bundle.js</code> owns run IDs and bundle directories.</li>
         <li><code>src/lib/latest-run.js</code> owns latest pointer and proof-context validation.</li>
@@ -450,6 +506,10 @@
       <h3>CLI Caller Layer</h3>
       <p class="placement">Where sequencing belongs</p>
       <div class="placement-badge"><strong>Placed in: command orchestration</strong><span>Only routing, sequencing, stdout shape, and recovery-command wiring land here.</span></div>
+      <div class="landing" aria-label="Caller landing zones">
+        <div class="landing-item"><strong>Run command landing</strong><span><code>src/commands/run.js</code> selects single-case versus suite execution, then delegates bundle, latest, suite, and case rules to owners.</span></div>
+        <div class="landing-item"><strong>Validation command landing</strong><span><code>src/commands/validation.js</code> wires <code>check --json</code> proof-context output without owning the latest validation rules.</span></div>
+      </div>
       <ul class="paths">
         <li><code>src/commands/run.js</code> sequences case or suite execution and latest publication.</li>
         <li><code>src/commands/validation.js</code> binds <code>check --json</code> to expected proof context.</li>
@@ -460,6 +520,10 @@
       <h3>Schemas and Fixtures</h3>
       <p class="placement">Where contracts are made executable</p>
       <div class="placement-badge"><strong>Placed in: executable proof</strong><span>Every new contract gets a schema and a positive or negative fixture/test seam.</span></div>
+      <div class="landing" aria-label="Executable proof landing zones">
+        <div class="landing-item"><strong>Contract files</strong><span><code>schemas/latest-run.schema.json</code>, <code>suite.schema.json</code>, <code>claim.schema.json</code>, <code>evidence.schema.json</code>, and <code>runtime-evidence-packet.schema.json</code>.</span></div>
+        <div class="landing-item"><strong>Regression files</strong><span><code>test/**</code> and repo-local fixture cases prove collision, mismatch, misplaced suite, fail-closed policy, missing evidence, and traversal containment paths.</span></div>
+      </div>
       <ul class="paths">
         <li><code>schemas/*.schema.json</code> defines suite, latest, claim, evidence, packet, state, and scorer output shape.</li>
         <li><code>fixtures/**</code> and <code>test/**</code> hold positive and negative regression proof.</li>
@@ -470,6 +534,10 @@
       <h3>Deep Module Packets</h3>
       <p class="placement">Where design authority is recorded before edits</p>
       <div class="placement-badge"><strong>Placed in: refactor packets</strong><span>These files explain why the implementation belongs in each owner module.</span></div>
+      <div class="landing" aria-label="Deep module packet landing zones">
+        <div class="landing-item"><strong>Before-code placement proof</strong><span>Each JSC packet records owner module, public interface, hidden implementation rule, caller contract, seam test, tracer proof, rollback path, and validation gate.</span></div>
+        <div class="landing-item"><strong>Parent packet boundary</strong><span>JSC-369 records reconciliation mechanics only; it does not authorize a new runtime module.</span></div>
+      </div>
       <ul class="paths">
         <li><code>.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md</code></li>
         <li><code>.harness/refactors/2026-05-24-jsc-371-repo-local-suite-contract.md</code></li>
@@ -482,6 +550,10 @@
       <h3>Review and Triage Evidence</h3>
       <p class="placement">Where independent proof is stored</p>
       <div class="placement-badge"><strong>Placed in: artifact lanes</strong><span>Subagent/reviewer outputs must be files, not mailbox-only status.</span></div>
+      <div class="landing" aria-label="Review artifact landing zones">
+        <div class="landing-item"><strong>Per-slice reviewers</strong><span><code>artifacts/reviews/jsc-37*-*.md</code> holds simplify, unslopify, testing, he-code-review, adversarial, and agent-native outputs.</span></div>
+        <div class="landing-item"><strong>PR triage lanes</strong><span><code>artifacts/pr-green-sweep/jsc-37*-pr-triage.md</code> records PR checks, review threads, CodeRabbit state, and coordinator next steps.</span></div>
+      </div>
       <ul class="paths">
         <li><code>artifacts/reviews/jsc-37*-*.md</code> stores simplify, unslopify, testing, code review, adversarial, and agent-native outputs.</li>
         <li><code>artifacts/pr-green-sweep/jsc-37*-pr-triage.md</code> stores PR/CI/review triage truth.</li>
@@ -492,6 +564,10 @@
       <h3>Parent Closeout Evidence</h3>
       <p class="placement">Where the parent loop reconciles truth</p>
       <div class="placement-badge"><strong>Placed in: parent evidence</strong><span>JSC-369 cites child states, validation, PR threads, Linear state, docs checks, and deferrals.</span></div>
+      <div class="landing" aria-label="Parent closeout landing zones">
+        <div class="landing-item"><strong>Closure artifact</strong><span><code>.harness/evals/evals-evals-executable-spine-eval.md</code> becomes the parent proof ledger after child PR, tracker, docs, validation, and reviewer truth are reconciled.</span></div>
+        <div class="landing-item"><strong>Live state remains live</strong><span>GitHub PRs and Linear issues are rechecked at closeout; their comments explain status but do not replace repository artifacts.</span></div>
+      </div>
       <ul class="paths">
         <li><code>.harness/evals/evals-evals-executable-spine-eval.md</code> cites command, artifact, schema, scorer, baseline, tracker, docs, security, accessibility, traceability, and PR state.</li>
         <li>GitHub PRs and Linear issues are live state, not substitutes for artifacts.</li>
