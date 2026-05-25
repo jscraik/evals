@@ -210,6 +210,84 @@
     .slice-lane code {
       font-size: 0.84em;
     }
+    .placement-stack {
+      display: grid;
+      gap: 12px;
+      margin: 14px 0 24px;
+    }
+    .placement-row {
+      display: grid;
+      grid-template-columns: 0.9fr 1.12fr 1.18fr 1.18fr 1.12fr;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .placement-row.header {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .placement-cell {
+      position: relative;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--module-color, var(--accent));
+      background: var(--panel);
+      border-radius: 7px;
+      padding: 9px 10px;
+      min-height: 86px;
+      overflow-wrap: anywhere;
+    }
+    .placement-row:not(.header) .placement-cell:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -8px;
+      width: 8px;
+      height: 2px;
+      background: var(--line);
+    }
+    .placement-cell strong,
+    .placement-cell span {
+      display: block;
+    }
+    .placement-cell strong {
+      color: var(--ink);
+      line-height: 1.22;
+      margin-bottom: 5px;
+    }
+    .placement-cell span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+      margin-top: 3px;
+    }
+    .placement-cell code {
+      font-size: 0.82em;
+    }
+    .placement-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 10px 0 20px;
+    }
+    .placement-summary div {
+      border: 1px solid var(--line);
+      background: #fdfdfa;
+      border-radius: 7px;
+      padding: 10px 12px;
+    }
+    .placement-summary strong {
+      display: block;
+      font-size: 0.92rem;
+      margin-bottom: 4px;
+    }
+    .placement-summary span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+    }
     .flow-note {
       margin: 10px 14px 12px;
       padding: 8px 10px;
@@ -231,6 +309,17 @@
       .slice-lanes {
         grid-template-columns: 1fr;
       }
+      .placement-row,
+      .placement-summary {
+        grid-template-columns: 1fr;
+      }
+      .placement-row:not(.header) .placement-cell:not(:last-child)::after {
+        top: auto;
+        right: 50%;
+        bottom: -8px;
+        width: 2px;
+        height: 8px;
+      }
       .span-two {
         grid-column: span 1;
       }
@@ -239,7 +328,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 09:56 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 10:42 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -265,6 +354,48 @@
 
   <h2>Where the Work Lands</h2>
   <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The lane cards and table below show where every slice is being placed: worktree, branch, PR, owner files, proof files, review files, and parent closeout evidence.</p>
+  <div class="placement-summary" aria-label="Deep module placement rule summary">
+    <div><strong>Rule 1: code enters through an owner</strong><span>Trust-boundary behavior belongs in <code>src/lib/**</code>, not spread through command glue, tests, review prose, or generated artifacts.</span></div>
+    <div><strong>Rule 2: callers only sequence</strong><span><code>src/commands/**</code> chooses the flow and output shape, then delegates proof rules to owner modules.</span></div>
+    <div><strong>Rule 3: proof lands beside the slice</strong><span>Each branch carries its own deep-module packet, tests, reviewer files, PR triage artifact, and validation evidence.</span></div>
+  </div>
+  <div class="placement-stack" aria-label="Actual work placement from slice to evidence">
+    <div class="placement-row header" aria-hidden="true">
+      <div>Slice</div>
+      <div>Isolation</div>
+      <div>Deep Owner</div>
+      <div>Executable Proof</div>
+      <div>Delivery Evidence</div>
+    </div>
+    <div class="placement-row">
+      <div class="placement-cell" style="--module-color: #38a8ff;"><strong>JSC-370 latest/run trust</strong><span>Closes false-success risk around latest pointers, run IDs, and bundle publication.</span></div>
+      <div class="placement-cell" style="--module-color: #38a8ff;"><strong><code>/private/tmp/evals-jsc370</code></strong><span><code>codex-jsc-370-latest-proof-context</code><br>PR #15 against <code>main</code></span></div>
+      <div class="placement-cell" style="--module-color: #38a8ff;"><strong><code>src/lib/run-bundle.js</code><br><code>src/lib/latest-run.js</code></strong><span>Run ID allocation, atomic bundle directory ownership, latest pointer validation, proof-context comparison.</span></div>
+      <div class="placement-cell" style="--module-color: #34c759;"><strong>Latest schema + collision/mismatch tests</strong><span><code>schemas/latest-run.schema.json</code>, <code>test/**</code>, smoke bundle under <code>.harness/evals/runs/**</code>.</span></div>
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong>Reviewer + PR triage files</strong><span><code>artifacts/reviews/jsc-370-*.md</code><br><code>artifacts/pr-green-sweep/jsc-370-pr-triage.md</code></span></div>
+    </div>
+    <div class="placement-row">
+      <div class="placement-cell" style="--module-color: #34c759;"><strong>JSC-371 repo-local suite contract</strong><span>Adds domain-neutral suite execution while keeping consumer repos owner of domain truth.</span></div>
+      <div class="placement-cell" style="--module-color: #34c759;"><strong><code>/private/tmp/evals-jsc371</code></strong><span><code>codex-jsc-371-repo-local-suite-contract</code><br>PR #16 against <code>main</code></span></div>
+      <div class="placement-cell" style="--module-color: #38a8ff;"><strong><code>src/lib/suite-contract.js</code></strong><span>Suite-root discovery, <code>.evals/suite.json</code> recognition, data-only scorer references, fail-closed network and local-retention policy.</span></div>
+      <div class="placement-cell" style="--module-color: #34c759;"><strong>Suite schema + repo-local fixtures</strong><span><code>schemas/suite.schema.json</code>, temporary consumer-suite fixtures, root-containment and unsupported-policy regressions.</span></div>
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong>Review artifact + active repair</strong><span><code>artifacts/reviews/jsc-371-*.md</code><br><code>artifacts/pr-green-sweep/jsc-371-pr-triage.md</code><br>Review found permissive suite detection; repair belongs in <code>suite-contract</code>.</span></div>
+    </div>
+    <div class="placement-row">
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong>JSC-372 claim/evidence packet</strong><span>Makes claims fail deterministically when required evidence is missing or only advisory.</span></div>
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong><code>/private/tmp/evals-jsc372</code></strong><span><code>codex-jsc-372-claim-evidence-runtime-packet</code><br>PR #17 stacked on PR #16</span></div>
+      <div class="placement-cell" style="--module-color: #38a8ff;"><strong><code>src/lib/claim-evidence-contract.js</code></strong><span>Packet assembly, missing-evidence scorer, readiness verdict, latest manifest containment. Publishes through <code>runtime-state</code>.</span></div>
+      <div class="placement-cell" style="--module-color: #34c759;"><strong>Claim/evidence schemas + state tests</strong><span><code>claim</code>, <code>evidence</code>, <code>runtime-evidence-packet</code>, and runtime-state schema parity tests.</span></div>
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong>Clean PR triage lane</strong><span><code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code>; PR #17 had clean hosted checks on the last recheck.</span></div>
+    </div>
+    <div class="placement-row">
+      <div class="placement-cell" style="--module-color: #fbbf24;"><strong>JSC-369 parent closeout</strong><span>Reconciles child proof and live tracker/PR truth; it must not create runtime authority.</span></div>
+      <div class="placement-cell" style="--module-color: #fbbf24;"><strong><code>/private/tmp/evals-jsc369</code></strong><span><code>codex-jsc-369-parent-closeout</code><br>PR #18 stacked on PR #17</span></div>
+      <div class="placement-cell" style="--module-color: #fbbf24;"><strong>No new runtime owner</strong><span>Consumes child artifacts, validation commands, PR status, Linear status, docs checks, and review outputs.</span></div>
+      <div class="placement-cell" style="--module-color: #34c759;"><strong>Closure evidence</strong><span><code>.harness/evals/evals-evals-executable-spine-eval.md</code>, docs/AGENTS review artifacts, parent validation bundles.</span></div>
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong>Parent PR triage</strong><span><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code>; final closeout waits on child PR and live hosted-check truth.</span></div>
+    </div>
+  </div>
   <div class="placement-legend" aria-label="Deep-module placement legend">
     <div style="--module-color: #38a8ff;"><strong>Owner modules</strong><span>Runtime rules and trust-boundary decisions land under <code>src/lib/**</code>.</span></div>
     <div style="--module-color: #fb6a12;"><strong>Caller modules</strong><span>CLI commands under <code>src/commands/**</code> sequence owners but do not own proof rules.</span></div>
