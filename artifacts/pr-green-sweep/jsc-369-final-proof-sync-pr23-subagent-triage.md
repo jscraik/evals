@@ -13,7 +13,7 @@
 
 - Local Memory bootstrap was attempted by the subagent and blocked by local permissions:
   - `local-memory bootstrap --mode minimal --include_questions --session_id "repo:evals:task:pr23-triage" --json`
-  - Failure: `failed to write PID file: open /Users/jamiecraik/.local-memory/local-memory.pid: operation not permitted`
+  - Failure: `failed to write PID file: open <USER_HOME>/.local-memory/local-memory.pid: operation not permitted`
 - The subagent continued with direct repo instructions and live GitHub evidence.
 
 ## Live GitHub Evidence
@@ -27,7 +27,7 @@
   - `license/snyk (jscraik)`: pass.
   - `CodeRabbit`: fail, `Insufficient review credits`.
 - Command: `gh pr view 23 --repo jscraik/evals --json statusCheckRollup,mergeStateStatus,headRefOid,state,url` -> pass.
-  - Merge state: `UNSTABLE` due the failing CodeRabbit context.
+  - Merge state: `UNSTABLE` because of the failing CodeRabbit context.
   - Status rollup matches the check evidence above.
 - Command: `gh api graphql ... pullRequest(number:23){ reviewThreads(first:100){ nodes{ id isResolved path line originalLine ... }}}` -> pass.
   - Result: `reviewThreads.nodes = []`.
@@ -39,12 +39,13 @@
 
 ## Classification
 
-### P1 - External tooling blocker: CodeRabbit credit exhaustion
+### P1 - Historical external tooling blocker: CodeRabbit credit exhaustion
 
 - Type: `blocked_external`.
 - Evidence: CodeRabbit status context reports `Insufficient review credits`.
 - Evidence: GitHub review-thread query returns `reviewThreads.nodes = []`.
 - Ownership classification: environment/tooling failure, not introduced by current patch.
+- Current coordinator follow-up: CodeRabbit was retriggered after review credits were available and the status later passed.
 
 ### P2 - Repository-code thread status
 
@@ -56,9 +57,26 @@
 
 - No code changes were implemented by the subagent because no unresolved actionable review thread exists.
 - A code-only change would not clear the external CodeRabbit credit status.
+- Coordinator follow-up: CodeRabbit later emitted one governance finding against this artifact. The finding was valid because the Local Memory failure text exposed a host-specific home path. The implemented remediation redacts that path to `<USER_HOME>/.local-memory/local-memory.pid`.
+
+## Coordinator Follow-Up Evidence
+
+- Command: `gh pr checks 23 --repo jscraik/evals` -> pass at head `23367faba7acf59d8c2e66871b8c339fc2fb011b`.
+  - `deterministic-gates`: pass.
+  - `semgrep-cloud-platform/scan`: pass.
+  - `Socket Security: Project Report`: pass.
+  - `Socket Security: Pull Request Alerts`: pass.
+  - `security/snyk (jscraik)`: pass.
+  - `license/snyk (jscraik)`: pass.
+  - `CodeRabbit`: pass, review completed.
+- Command: `gh api graphql ... pullRequest(number:23){ reviewThreads(first:100) { nodes { id isResolved } } }` -> pass.
+  - Result: unresolved review threads `[]`.
+- CodeRabbit review body: one actionable governance finding requested redaction of the Local Memory PID path in this artifact.
+- Remediation in this commit: host-specific PID path changed to `<USER_HOME>/.local-memory/local-memory.pid`.
+- Merge-readiness note: hosted checks must be rechecked after this remediation commit is pushed.
 
 ## Verdict
 
-PR #23 is blocked only by external CodeRabbit review-credit capacity. Actionable GitHub/CodeRabbit review threads are clear at `[]`.
+The subagent snapshot originally found PR #23 blocked by external CodeRabbit review-credit capacity. Coordinator follow-up later retriggered CodeRabbit successfully, fixed the single emitted governance finding in this artifact, and kept GitHub review-thread evidence clear at `[]`. Hosted checks must be rechecked after the remediation commit.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-final-proof-sync-pr23-subagent-triage.md

@@ -22,15 +22,26 @@
 - After this triage artifact is committed, hosted checks restart and must be rechecked from the new PR head before merge readiness is claimed.
 - CodeRabbit: `fail`, message `Insufficient review credits`.
 
+## Coordinator Follow-Up After CodeRabbit Retrigger
+
+- Command: `gh pr checks 23 --repo jscraik/evals` -> pass at head `23367faba7acf59d8c2e66871b8c339fc2fb011b`.
+- Result: CodeRabbit, deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license all passed.
+- Command: `gh api graphql ... pullRequest(number:23).reviewThreads(first:100)` -> pass.
+- Result: unresolved review threads `[]`.
+- CodeRabbit emitted one actionable governance finding in `artifacts/pr-green-sweep/jsc-369-final-proof-sync-pr23-subagent-triage.md`: redact a host-specific Local Memory PID path.
+- Remediation: the companion PR23 subagent triage artifact now uses `<USER_HOME>/.local-memory/local-memory.pid`.
+- Merge-readiness note: hosted checks must be rechecked again after this remediation commit is pushed.
+
 ## Finding Classification
 
-### P1 - CodeRabbit status is externally blocked, not an actionable thread
+### P1 - Historical CodeRabbit status was externally blocked, then retriggered
 
 - Evidence: CodeRabbit status context reports `Insufficient review credits`.
 - Evidence: GitHub review-thread query returns unresolved `[]`.
 - Impact: the PR cannot be described as fully green while CodeRabbit is a required status and remains failed.
 - Ownership: external service/account capacity; not introduced by repository code in this documentation-only cleanup.
 - Coordinator next step: rerun/recheck CodeRabbit after credits are available, then fix any concrete review thread if CodeRabbit emits one.
+- Follow-up result: CodeRabbit was rerun, passed as a status context, and emitted one actionable governance finding that is fixed by the redaction commit.
 
 ### P2 - Hosted checks require final recheck before merge readiness
 
@@ -46,6 +57,6 @@
 
 ## Current Verdict
 
-PR #23 has no outstanding CodeRabbit review threads. The remaining CodeRabbit issue is a failed status caused by review-credit exhaustion. Hosted checks must be rechecked after the final triage-artifact commit before merge readiness is claimed.
+PR #23 no longer has a CodeRabbit credit blocker at the inspected head. CodeRabbit passed after retriggering and emitted one actionable governance finding; the companion PR23 subagent triage artifact now redacts the host-specific PID path. Hosted checks must be rechecked after this remediation commit before merge readiness is claimed.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-final-proof-sync-pr-triage.md
