@@ -3,17 +3,18 @@
 Date: 2026-05-25
 Repo: jscraik/evals
 PR: https://github.com/jscraik/evals/pull/20
-Head SHA: 7e04fbecc4d76f73120f0277ba152af3f3736392
+Head ref: codex-fix-outstanding-review-threads
 
 ## Scope
 - Requested triage artifact for outstanding review threads and PR green state.
 - Evidence sources: live GitHub API (gh pr view, gh pr checks, GraphQL review thread query, status rollup query) and PR body validation section.
+- Latest live recheck after publishing the triage artifact: deterministic-gates, Socket, Snyk, and Semgrep are success; CodeRabbit remains failure due external review-credit exhaustion.
 
 ## Live PR State
 - Number/title: #20 fix(schema): accept lowercase RFC3339 separators
 - State: OPEN
 - Draft: false
-- Mergeability: MERGEABLE (mergeable_state=unstable due to one failing check context)
+- Mergeability: MERGEABLE with one failing external review context
 - Review decision: empty (no formal review submitted)
 - Changed files: 4
 - PR review comments (inline): 0
