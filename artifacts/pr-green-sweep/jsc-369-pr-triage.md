@@ -115,6 +115,54 @@ Wait for PR #18 Semgrep to finish, then reconcile in stack order:
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
 
+## Coordinator Live Refresh - 2026-05-25
+
+The coordinator corrected the PR triage operating model: child PR triage should
+run in subagents while the coordinator continues the parent queue. The PR #18
+subagent lane is still running at this refresh; the earlier PR #18 retry gap is
+preserved above and not treated as approval evidence.
+
+Current live PR state:
+
+- PR #15: OPEN, not draft, head
+  `255b3a11753c069a74cfa3547481e0fd2da10f57`, mergeable, `UNSTABLE` only
+  because CodeRabbit is pending; deterministic-gates, Semgrep, Socket, and Snyk
+  pass.
+- PR #16: OPEN, not draft, head
+  `d7c02d7f0cb1d5274e406e31f63d8391f87c9c09`, mergeable, `UNSTABLE` only
+  because CodeRabbit is pending; deterministic-gates, Semgrep, Socket, and Snyk
+  pass.
+- PR #17: OPEN, not draft, head
+  `69fd8ff9ea2f4aa3253b66ee10b175a7a21f655e`, mergeable, `CLEAN`, visible
+  checks pass including CodeRabbit.
+- PR #18: OPEN draft, head
+  `b83c51d1ea9f21b1f3171138dd2c3867fe6c0b90`, mergeable, `CLEAN`, visible
+  checks pass including CodeRabbit.
+
+Current parent blockers:
+
+- `external_pending`: PR #15 and PR #16 CodeRabbit contexts are pending.
+- `lifecycle_blocker`: PR #15, PR #16, PR #17, and PR #18 remain open; PR #18
+  remains draft by design until child state is reconciled.
+- `coverage_gap`: PR #15 and earlier PR #18 subagent artifact refreshes failed
+  after retry and must not be counted as approval evidence.
+
+Exact coordinator commands:
+
+- `gh pr view 15 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
+- `gh pr view 16 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
+- `gh pr view 17 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
+- `gh pr view 18 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
+- `gh pr edit 18 --body <refreshed body>` -> pass; parent PR body no longer
+  says PR #15/#16 are draft.
+
+Next coordinator step: keep PR #16 and PR #18 triage workers alive while they
+can produce artifacts, recheck CodeRabbit for PR #15/#16 before any merge/Done
+claim, and keep the parent verdict open until child PR and tracker truth are
+reconciled.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
 ## Subagent Refresh Coverage Gap - 2026-05-25
 
 The coordinator launched a PR #18 parent triage subagent after correcting the

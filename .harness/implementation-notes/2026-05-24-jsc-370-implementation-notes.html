@@ -128,6 +128,19 @@
     .module-card code {
       color: #fef3c7;
     }
+    .module-card .placement {
+      color: #f9fafb;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .module-card .paths {
+      color: #d1d5db;
+      font-size: 0.92rem;
+    }
+    .module-card .paths code {
+      display: inline-block;
+      margin: 2px 0;
+    }
     .span-two {
       grid-column: span 2;
     }
@@ -143,7 +156,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 08:56 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 09:08 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are now represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -163,9 +176,73 @@
     <tr><td>Active issue</td><td>JSC-369</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #18 is clean at latest pushed head 9f721e4. Linear now matches active work: parent In Progress, children In Review. Completion remains blocked by draft child PRs, PR #15/#16 external CodeRabbit review-credit failures, and PR #15/#18 subagent-refresh coverage gaps.</span></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #18 is clean at latest pushed head b83c51d. PR #17 is ready for review and clean. PR #15 and PR #16 are ready for review, mergeable, and blocked only by pending CodeRabbit contexts at the latest live check. Completion remains blocked by child PR closure, pending PR #15/#16 external review contexts, and recorded PR #15/#18 subagent-refresh coverage gaps.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
+
+  <h2>Where the Work Lands</h2>
+  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior should land in the owning deep module first, then callers, tests, artifacts, and PR/Linear state should reference that owner instead of reimplementing it.</p>
+  <div class="module-map" aria-label="Proof-spine work placement map">
+    <section class="module-card" style="--module-color: #38a8ff; --module-height: 360px;">
+      <h3>Runtime Proof Owners</h3>
+      <p class="placement">Where implementation code belongs</p>
+      <ul class="paths">
+        <li><code>src/lib/run-bundle.js</code> owns run IDs and bundle directories.</li>
+        <li><code>src/lib/latest-run.js</code> owns latest pointer and proof-context validation.</li>
+        <li><code>src/lib/suite-contract.js</code> owns repo-local suite normalization and fail-closed suite policy.</li>
+        <li><code>src/lib/claim-evidence-contract.js</code> owns claim/evidence packet assembly and missing-evidence scoring.</li>
+        <li><code>src/lib/runtime-state.js</code> publishes state and embeds the evidence packet.</li>
+        <li><code>src/lib/runtime-evidence-contract.js</code> owns policy-family coverage truth.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fb6a12; --module-height: 175px;">
+      <h3>CLI Caller Layer</h3>
+      <p class="placement">Where sequencing belongs</p>
+      <ul class="paths">
+        <li><code>src/commands/run.js</code> sequences case or suite execution and latest publication.</li>
+        <li><code>src/commands/validation.js</code> binds <code>check --json</code> to expected proof context.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #34c759; --module-height: 175px;">
+      <h3>Schemas and Fixtures</h3>
+      <p class="placement">Where contracts are made executable</p>
+      <ul class="paths">
+        <li><code>schemas/*.schema.json</code> defines suite, latest, claim, evidence, packet, state, and scorer output shape.</li>
+        <li><code>fixtures/**</code> and <code>test/**</code> hold positive and negative regression proof.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #ef3340; --module-height: 280px;">
+      <h3>Deep Module Packets</h3>
+      <p class="placement">Where design authority is recorded before edits</p>
+      <ul class="paths">
+        <li><code>.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md</code></li>
+        <li><code>.harness/refactors/2026-05-24-jsc-371-repo-local-suite-contract.md</code></li>
+        <li><code>.harness/refactors/2026-05-24-jsc-372-claim-evidence-runtime-packet.md</code></li>
+        <li><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code></li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #a855f7; --module-height: 185px;">
+      <h3>Review and Triage Evidence</h3>
+      <p class="placement">Where independent proof is stored</p>
+      <ul class="paths">
+        <li><code>artifacts/reviews/jsc-37*-*.md</code> stores simplify, unslopify, testing, code review, adversarial, and agent-native outputs.</li>
+        <li><code>artifacts/pr-green-sweep/jsc-37*-pr-triage.md</code> stores PR/CI/review triage truth.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fbbf24; --module-height: 185px;">
+      <h3>Parent Closeout Evidence</h3>
+      <p class="placement">Where the parent loop reconciles truth</p>
+      <ul class="paths">
+        <li><code>.harness/evals/evals-evals-executable-spine-eval.md</code> cites command, artifact, schema, scorer, baseline, tracker, docs, security, accessibility, traceability, and PR state.</li>
+        <li>GitHub PRs and Linear issues are live state, not substitutes for artifacts.</li>
+      </ul>
+    </section>
+  </div>
 
   <h2>JSC-371 Architecture Decision</h2>
   <p>Jamie asked whether suite-contract implementation should be built into the project&apos;s current deep modules. Yes. The chosen shape adds one suite normalization owner and extends the existing proof-spine owners; it does not create a second runner stack or move proof authority into CLI glue.</p>
@@ -480,6 +557,7 @@
     <tr><td>PR #18 after evidence-refresh push</td><td class="ok">pass</td><td>Remote head <code>c2e1467055eed0b753b8b129d875a948ce66c0b7</code> is <code>MERGEABLE</code> with merge state <code>CLEAN</code>. Deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass. This local browser-note refresh is intentionally not pushed yet to avoid restarting hosted checks again.</td></tr>
     <tr><td>Linear lifecycle reconciliation</td><td class="ok">pass</td><td>JSC-369 moved to <code>In Progress</code>. JSC-370, JSC-371, and JSC-372 moved to <code>In Review</code>. No issue was moved to <code>Done</code>.</td></tr>
     <tr><td>PR triage lane correction</td><td class="warn">partial</td><td>PR #16 and PR #17 subagent lanes refreshed their artifacts. PR #15 and PR #18 retry lanes failed to write after focused follow-up; coverage gaps were recorded in their triage artifacts instead of treating the gate as approved.</td></tr>
+    <tr><td>PR #17 lifecycle advance</td><td class="ok">pass</td><td>Marked PR #17 ready for review. Follow-up recheck: open, not draft, <code>MERGEABLE</code>, merge state <code>CLEAN</code>, and deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass.</td></tr>
   </table>
 
   <h2>Open Questions</h2>

@@ -54,3 +54,33 @@ Result:
 - `blocked_external_tooling_and_draft`
 - Recovery condition: wait for CodeRabbit review capacity or add credits, then trigger `@coderabbitai review` or push a no-op follow-up only if maintainers explicitly want a retrigger. Mark PR ready for review only when maintainers decide the draft gate can be lifted.
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
+
+## Coordinator Live Refresh - 2026-05-25
+
+The coordinator marked PR #16 ready for review and rechecked live GitHub state.
+The original sweep section above is now stale where it says the PR is draft and
+CodeRabbit failed for review credits; the current live context is pending after
+ready-for-review.
+
+- PR URL: https://github.com/jscraik/evals/pull/16
+- Head SHA: `d7c02d7f0cb1d5274e406e31f63d8391f87c9c09`
+- PR state: OPEN, not draft.
+- Mergeability: `MERGEABLE`; merge state `UNSTABLE`.
+- Passing visible checks:
+  - deterministic-gates
+  - semgrep-cloud-platform/scan
+  - Socket Security: Project Report
+  - Socket Security: Pull Request Alerts
+  - license/snyk (jscraik)
+  - security/snyk (jscraik)
+- Pending visible checks:
+  - CodeRabbit
+- Current blocker classes:
+  - `external_pending`: CodeRabbit is pending after the PR was marked ready.
+  - `lifecycle_blocker`: PR #16 remains open and unmerged.
+- Exact coordinator commands:
+  - `gh pr view 16 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
+- Next coordinator step: wait for CodeRabbit to settle or recheck before merge
+  readiness; do not mark JSC-371 Done from local validation alone.
+
+WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md

@@ -57,6 +57,37 @@ Local fixes are applied and validated. The PR is not green-claimed until the fix
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
 
+## Coordinator Live Refresh - 2026-05-25
+
+The coordinator marked PR #15 ready for review and rechecked live GitHub state
+after the subagent retry failed to write an artifact section.
+
+- PR URL: https://github.com/jscraik/evals/pull/15
+- Head SHA: `255b3a11753c069a74cfa3547481e0fd2da10f57`
+- PR state: OPEN, not draft.
+- Mergeability: `MERGEABLE`; merge state `UNSTABLE`.
+- Passing visible checks:
+  - deterministic-gates
+  - semgrep-cloud-platform/scan
+  - Socket Security: Project Report
+  - Socket Security: Pull Request Alerts
+  - license/snyk (jscraik)
+  - security/snyk (jscraik)
+- Pending visible checks:
+  - CodeRabbit
+- Current blocker classes:
+  - `external_pending`: CodeRabbit is pending after the PR was marked ready.
+  - `lifecycle_blocker`: PR #15 remains open and unmerged.
+  - `coverage_gap`: the requested PR #15 subagent refresh failed to write
+    after one retry and is not counted as approval evidence.
+- Exact coordinator commands:
+  - `gh pr view 15 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
+- Next coordinator step: let the PR triage lane continue only if agent runtime
+  produces artifacts; otherwise recheck CodeRabbit directly before merge or
+  closeout and preserve this coverage gap.
+
+WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
+
 ## Subagent Refresh Coverage Gap - 2026-05-25
 
 The coordinator launched a focused PR #15 triage retry subagent for this artifact
