@@ -13,7 +13,7 @@
 
 - Local Memory bootstrap was attempted by the subagent and blocked by local permissions:
   - `local-memory bootstrap --mode minimal --include_questions --session_id "repo:evals:task:pr23-triage" --json`
-  - Failure: `failed to write PID file: open /Users/jamiecraik/.local-memory/local-memory.pid: operation not permitted`
+  - Failure: `failed to write PID file: open <local-home>/.local-memory/local-memory.pid: operation not permitted`
 - The subagent continued with direct repo instructions and live GitHub evidence.
 
 ## Live GitHub Evidence
