@@ -93,7 +93,7 @@ with owner-approved rationale.
 | JSC-370 | implemented, validated, committed, pushed | PR #15 open, draft, mergeable, merge state UNSTABLE; deterministic-gates, Semgrep, Socket, and Snyk pass; CodeRabbit status is FAILURE due to external review-credit exhaustion, with earlier emitted findings addressed | Linear JSC-370 status Todo; PR #15 and parent PR #18 attachments exist | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers; CodeRabbit is classified as external review-credit blocker, not local code proof |
 | JSC-371 | implemented, validated, committed, pushed | PR #16 open, draft, mergeable, merge state UNSTABLE; deterministic-gates, Semgrep, Socket, and Snyk pass; CodeRabbit status is FAILURE due to external review-credit exhaustion and no inline review comments are present | Linear JSC-371 status Todo; PR #16 and parent PR #18 attachments exist | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers; CodeRabbit is classified as external review-credit blocker |
 | JSC-372 | implemented, validated, committed, pushed, PR triage artifact committed | PR #17 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-372 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
-| JSC-369 | parent reconciliation active | PR #18 open, draft; was CONFLICTING/DIRTY before local stack merge repair; local branch has merged the current JSC-372 base and awaits push/recheck | Linear JSC-369 status Todo; PR #18 attachment exists | keep parent open; do not claim closeout |
+| JSC-369 | parent reconciliation active, pushed after stack repair | PR #18 open, draft, mergeable, merge state CLEAN; remote head `b39c4f4a04e41abf295d1af442ef4198a081f468`; deterministic-gates, CodeRabbit, Semgrep, Socket, and Snyk pass | Linear JSC-369 status Todo; PR #18 attachment exists | keep parent open; do not claim closeout |
 
 ### Deep Module Architecture Decision
 
@@ -128,12 +128,13 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | JSC-369 parent branch | source artifact existence checks | pass | May 24 plan, spec, Linear plan, audit, docs review artifact, and AGENTS review artifact exist in the parent branch |
 | JSC-369 parent branch | pnpm test | pass | 123 tests passed after merging the current JSC-372 base into the parent branch |
 | JSC-369 parent branch | pnpm verify | pass | aggregate gate exited 0 and wrote latest proof bundle 20260525T003124Z-pr-closeout-4df36134-01 |
+| JSC-369 remote PR recheck | gh pr view 18 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url | pass | PR #18 remote head is `b39c4f4a04e41abf295d1af442ef4198a081f468`, mergeable MERGEABLE, merge state CLEAN; deterministic-gates, CodeRabbit, Semgrep, Socket, and Snyk pass |
 
 ### Remaining Blockers Before Parent Completion
 
 - PR #15 and PR #16 remain draft and CodeRabbit-blocked by external review-credit exhaustion even though deterministic-gates, Semgrep, Socket, and Snyk pass.
 - PR #17 remains draft; its visible checks pass and merge state is CLEAN.
-- PR #18 remains draft and required a local merge repair after the JSC-372 base advanced. Final closeout still requires a fresh live PR recheck after the parent branch is pushed because any evidence commit can rerun hosted checks.
+- PR #18 remains draft after the local merge repair was pushed. The branch is remotely mergeable and visible checks pass, but parent completion is still blocked by child PR lifecycle and tracker state.
 - Linear JSC-369, JSC-370, JSC-371, and JSC-372 remain Todo despite PR attachments. Do not represent local implementation as live tracker completion.
 - README has not yet been updated for JSC-371/JSC-372 because those PRs are not
   merged; docs are partial rather than complete.

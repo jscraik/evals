@@ -131,3 +131,30 @@ Checked at: 2026-05-25 00:31 Europe/London
 - Current blocker before push/recheck: PR #18 still reflects old remote head `89c9e96` and remains CONFLICTING/DIRTY until the repaired parent branch is committed, pushed, and rechecked.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
+## Post-Push Parent PR Recheck
+
+Checked at: 2026-05-25 08:35 Europe/London; refreshed at 2026-05-25 08:36 Europe/London
+
+- Remote head: `b39c4f4a04e41abf295d1af442ef4198a081f468`.
+- PR #18 state: open draft.
+- Mergeability: `MERGEABLE`; merge state `CLEAN`.
+- Passing visible checks:
+  - deterministic-gates
+  - CodeRabbit
+  - Socket Security: Project Report
+  - Socket Security: Pull Request Alerts
+  - Snyk license
+  - Snyk security
+  - semgrep-cloud-platform/scan
+- Pending visible checks: none visible in `gh pr view` output.
+
+The parent PR stack repair is now visible remotely and no longer reports the prior
+CONFLICTING/DIRTY state. The parent still cannot close because PR #18 is draft,
+child PRs #15/#16/#17 remain open drafts, and Linear
+JSC-369/JSC-370/JSC-371/JSC-372 remain `Todo`.
+
+Next coordinator action: reconcile the child PR and Linear lifecycle blockers
+before changing the parent verdict to complete.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md

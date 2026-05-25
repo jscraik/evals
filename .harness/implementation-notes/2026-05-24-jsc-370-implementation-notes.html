@@ -143,7 +143,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 00:18 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 08:36 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are now represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -163,7 +163,7 @@
     <tr><td>Active issue</td><td>JSC-369</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active; child PR checks are rechecked live before closeout claims.</span></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #18 is remotely mergeable and clean after stack repair, but remains draft and cannot close until child PR and tracker blockers are reconciled.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
@@ -475,6 +475,8 @@
     <tr><td>JSC-372 commit</td><td class="ok">pass</td><td>Committed <code>519bde6 feat(jsc-372): add runtime evidence packet</code>.</td></tr>
     <tr><td>JSC-372 PR</td><td class="ok">pass</td><td>Opened draft PR <code>#17</code> stacked on <code>codex-jsc-371-repo-local-suite-contract</code>.</td></tr>
     <tr><td>JSC-372 PR green sweep</td><td class="warn">blocked external</td><td>Artifact written at <code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code>. PR #17 is open and draft; deterministic gates passed, with <code>semgrep-cloud-platform/scan</code> pending at triage time.</td></tr>
+    <tr><td>JSC-369 local stack repair</td><td class="ok">pass</td><td>Committed and pushed <code>b39c4f4 docs(jsc-369): reconcile current proof-spine stack</code> after merging the current JSC-372 base and rerunning <code>git diff --check</code>, <code>pnpm test</code>, and <code>pnpm verify</code>.</td></tr>
+    <tr><td>PR #18 post-push recheck</td><td class="ok">pass</td><td>Remote head <code>b39c4f4a04e41abf295d1af442ef4198a081f468</code> is <code>MERGEABLE</code> with merge state <code>CLEAN</code>. Deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass.</td></tr>
   </table>
 
   <h2>Open Questions</h2>
