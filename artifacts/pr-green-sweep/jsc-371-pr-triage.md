@@ -94,12 +94,21 @@
   - `node --test --test-name-pattern "symlinked suite.json|suite detection requires suite.json" test/cli.test.js` -> pass, 2 selected tests passed.
   - `pnpm test` -> pass, 130 tests passed.
   - `pnpm verify` -> pass, aggregate deterministic gate passed and refreshed latest proof bundle `20260525T155654Z-pr-closeout-4df36134-01`.
+- Coordinator validation after CodeRabbit JSON-output remediation patch:
+  - Live unresolved CodeRabbit threads: two non-outdated threads remained on `.harness/evals/runs/20260525T093519Z-pr-closeout-4df36134-01/command-log.json` and `scorer-results.json`, both concerning JSON-mode stdout proof.
+  - Behavioral fix: `src/commands/run.js` now writes command-log `stdout` as parseable JSON when `--json` is used, and `src/lib/scoring.js` now fails the `required-output` scorer when `execution.output_format: json` stdout is not parseable.
+  - `node --test --test-name-pattern "run writes a valid local artifact bundle|required-output scorer fails malformed JSON" test/cli.test.js` -> pass, 2 selected tests passed.
+  - `pnpm test` -> pass, 131 tests passed.
+  - `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass, produced run `20260525T161109Z-pr-closeout-4df36134` with parseable JSON in `command-log.json.stdout`.
+  - `pnpm evals check --json` -> pass, latest proof context matched `pr-closeout` / `smoke` / `synthetic`.
+  - `pnpm verify` -> pass, aggregate deterministic gate passed and refreshed latest proof bundle `20260525T161137Z-pr-closeout-4df36134-01`.
 
 ## Coordinator Next Step
 
-1. Commit and push the CodeRabbit remediation patch to PR #16.
+1. Commit and push the JSON-output remediation patch to PR #16.
 2. Recheck PR #16 live after GitHub recomputes mergeability and checks.
-3. If hosted deterministic/security checks pass and CodeRabbit still fails only for credit exhaustion, classify that as an external reviewer-capacity blocker rather than a code blocker.
-4. Do not claim JSC-371 merged/complete until PR state and child tracker state are reconciled.
+3. Recheck unresolved review threads with thread-aware GraphQL state; resolve only threads proven fixed or superseded by the pushed patch.
+4. If hosted deterministic/security checks pass and CodeRabbit still fails only for reviewer-capacity or status-context lag, classify that separately from code blockers.
+5. Do not claim JSC-371 merged/complete until PR state and child tracker state are reconciled.
 
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md

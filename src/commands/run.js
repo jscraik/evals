@@ -10,7 +10,7 @@ import { validateLatestRun } from "../lib/latest-run.js";
 import { relFrom, repoRelativePath, repoRoot, rootRelativePath } from "../lib/paths.js";
 import { buildReport } from "../lib/report.js";
 import { createRunBundle } from "../lib/run-bundle.js";
-import { scoreArtifactCompleteness, scoreBaselinePresence, scoreRuntime, simulatedRunOutput, verdictFor } from "../lib/scoring.js";
+import { scoreArtifactCompleteness, scoreBaselinePresence, scoreRuntime, simulatedRunOutput, simulatedRunOutputLines, verdictFor } from "../lib/scoring.js";
 import { isSuitePath, loadSuite } from "../lib/suite-contract.js";
 import { buildTraceEvents, writeTraceEvents } from "../lib/trace-events.js";
 
@@ -37,17 +37,28 @@ import { buildTraceEvents, writeTraceEvents } from "../lib/trace-events.js";
  *   - `stderr` {string} : simulated standard error (empty string for synthetic executions).
  *   - `failure_class` {null|string} : failure classification (`null` for successful synthetic runs).
  */
-function syntheticExecution(testCase, casePath, jsonMode, startedAt) {
+function syntheticExecution(testCase, casePath, jsonMode, startedAt, context = {}) {
   const finishedAt = new Date();
+  const outputFormat = jsonMode ? "json" : "text";
+  const stdout = jsonMode
+    ? JSON.stringify({
+      case_id: testCase.case_id,
+      suite_id: testCase.suite_id,
+      execution_mode: "synthetic",
+      artifact_root: context.artifactRoot,
+      logs: simulatedRunOutputLines(testCase)
+    }, null, 2)
+    : simulatedRunOutput(testCase);
   return {
     command: "pnpm evals run " + casePath + (jsonMode ? " --json" : ""),
     input_command: testCase.input.command,
     execution_mode: "synthetic",
+    output_format: outputFormat,
     started_at: startedAt.toISOString(),
     finished_at: finishedAt.toISOString(),
     duration_ms: finishedAt.getTime() - startedAt.getTime(),
     exit_code: 0,
-    stdout: simulatedRunOutput(testCase),
+    stdout,
     stderr: "",
     failure_class: null
   };
@@ -168,7 +179,7 @@ export function executeCase(casePath, jsonMode, options = {}) {
     artifactPaths
   });
 
-  const execution = syntheticExecution(testCase, displayCasePath, jsonMode, startedAt);
+  const execution = syntheticExecution(testCase, displayCasePath, jsonMode, startedAt, { artifactRoot });
   const baseline = buildBaseline(testCase, commandLogPath, execution, { artifactRepoRoot, caseRoot });
 
   const scorerResults = scoreRuntime(testCase, execution)

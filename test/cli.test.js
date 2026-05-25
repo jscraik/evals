@@ -12,7 +12,7 @@ import { writeJsonAtomic } from "../src/lib/json.js";
 import { validateCaseFile } from "../src/lib/latest-run.js";
 import { createRunBundleDirectory } from "../src/lib/run-bundle.js";
 import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
-import { verdictFor } from "../src/lib/scoring.js";
+import { scoreRuntime, verdictFor } from "../src/lib/scoring.js";
 import { isSuitePath, loadSuite } from "../src/lib/suite-contract.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -203,8 +203,15 @@ test("run writes a valid local artifact bundle", () => {
 
     const commandLog = JSON.parse(readFileSync(join(repo, output.command_log_path), "utf8"));
     assert.equal(commandLog.execution_mode, "synthetic");
+    assert.equal(commandLog.output_format, "json");
     assert.equal(commandLog.input_command, "simulate-pr-closeout");
     assert.equal("simulated_command" in commandLog, false);
+    const commandStdout = parseJson(commandLog.stdout);
+    assert.equal(commandStdout.case_id, "pr-closeout");
+    assert.equal(commandStdout.suite_id, "smoke");
+    assert.equal(commandStdout.execution_mode, "synthetic");
+    assert.equal(commandStdout.artifact_root, output.artifact_root);
+    assert.ok(commandStdout.logs.some((line) => line.includes("artifact bundle")));
 
     const result = JSON.parse(readFileSync(join(repo, output.result_path), "utf8"));
     assert.equal(result.execution_mode, "synthetic");
@@ -213,6 +220,11 @@ test("run writes a valid local artifact bundle", () => {
 
     const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
     assert.ok(scorerResults.results.some((item) => item.scorer_id === "baseline-presence" && item.status === "pass"));
+    assert.ok(scorerResults.results.some((item) =>
+      item.scorer_id === "required-output" &&
+      item.status === "pass" &&
+      item.evidence.includes("stdout parsed as JSON")
+    ));
     const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
 
     const traceEvents = readFileSync(join(repo, output.trace_events_path), "utf8")
@@ -2395,6 +2407,25 @@ test("unknown schema keys and empty scorer sets fail closed", () => {
 
   assert.equal(verdictFor([]), "fail");
   assert.equal(verdictFor(null), "fail");
+});
+
+test("required-output scorer fails malformed JSON stdout when output format is json", () => {
+  const testCase = {
+    scorers: ["required-output"],
+    expected: {
+      required_output_contains: ["artifact bundle"]
+    }
+  };
+  const results = scoreRuntime(testCase, {
+    exit_code: 0,
+    output_format: "json",
+    stdout: "{not-json"
+  });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].scorer_id, "required-output");
+  assert.equal(results[0].status, "fail");
+  assert.match(results[0].evidence, /JSON parse failed/);
 });
 
 // --- Unit tests for schemaCheck("latest", ...) and the latest-run.schema.json contract ---

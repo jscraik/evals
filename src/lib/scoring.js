@@ -7,11 +7,29 @@
  *   3. `baseline missing: presence_status=missing comparison_status=not_compared promotion_status=not_requested`
  */
 export function simulatedRunOutput(testCase) {
+  return simulatedRunOutputLines(testCase).join("\n");
+}
+
+/**
+ * Produce the individual simulated stdout log fragments for a run of the given test case.
+ * @param {Object} testCase - Test case object; only `case_id` is read to populate the first line.
+ * @returns {string[]} Ordered synthetic log fragments.
+ */
+export function simulatedRunOutputLines(testCase) {
   return [
     "case " + testCase.case_id + " wrote artifact bundle",
     "deterministic scorers completed",
     "baseline missing: presence_status=missing comparison_status=not_compared promotion_status=not_requested"
-  ].join("\n");
+  ];
+}
+
+function parseJsonStdout(execution) {
+  if (execution.output_format !== "json") return { ok: true, parsed: null };
+  try {
+    return { ok: true, parsed: JSON.parse(execution.stdout) };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
 }
 
 /**
@@ -35,13 +53,29 @@ export function scoreRuntime(testCase, execution) {
     });
   }
   if (testCase.scorers.includes("required-output")) {
+    const jsonStdout = parseJsonStdout(execution);
+    if (!jsonStdout.ok) {
+      results.push({
+        scorer_id: "required-output",
+        scorer_version: "1.0.0",
+        status: "fail",
+        inputs_inspected: ["execution.stdout", "execution.output_format", "expected.required_output_contains"],
+        evidence: "stdout declared output_format=json but JSON parse failed: " + jsonStdout.error,
+        failure_reason: "required output stdout was not parseable JSON"
+      });
+      return results;
+    }
     const missing = testCase.expected.required_output_contains.filter((needle) => !execution.stdout.includes(needle));
     results.push({
       scorer_id: "required-output",
       scorer_version: "1.0.0",
       status: missing.length === 0 ? "pass" : "fail",
-      inputs_inspected: ["execution.stdout", "expected.required_output_contains"],
-      evidence: missing.length === 0 ? "all required output fragments found" : "missing: " + missing.join(", "),
+      inputs_inspected: execution.output_format === "json"
+        ? ["execution.stdout", "execution.output_format", "expected.required_output_contains"]
+        : ["execution.stdout", "expected.required_output_contains"],
+      evidence: missing.length === 0
+        ? (execution.output_format === "json" ? "stdout parsed as JSON; all required output fragments found" : "all required output fragments found")
+        : "missing: " + missing.join(", "),
       failure_reason: missing.length === 0 ? null : "required output fragment missing"
     });
   }

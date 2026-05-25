@@ -13,6 +13,7 @@ Source trace from parent plan/spec:
 - SA-008: repo-local suite artifacts write to the evaluated repo, not implicitly to evals.
 - Reviewer remediation: suite files must live under a discovered `.evals` boundary so a misplaced suite cannot publish artifacts to an arbitrary parent directory.
 - Reviewer remediation: phase one requires `artifact_policy.write_bundle: true` and `artifact_policy.retain_locally: true`; unsupported false values fail closed instead of becoming ignored policy.
+- CodeRabbit remediation: command-log evidence for `--json` invocations must record parseable JSON stdout, and the deterministic output scorer must fail if a JSON-formatted execution stdout is not parseable.
 
 ## Owner Module
 
@@ -25,6 +26,8 @@ The implementation must build into the current deep modules rather than creating
 - `src/lib/case-contract.js` remains the case parsing and case schema validation owner. Suite execution should feed it resolved case paths rather than re-implementing case parsing.
 - `src/lib/paths.js` remains the path containment primitive owner. Suite-specific containment rules should use root-scoped helpers from this module.
 - `src/lib/schema.js` remains the JSON Schema validation owner. Suite schema support should be added as another named schema target.
+- `src/commands/run.js` remains the synthetic execution record owner. It must decide whether command-log stdout is text or JSON instead of leaving callers or generated artifacts to retrofit output shape.
+- `src/lib/scoring.js` remains the deterministic runtime scorer owner. It must validate JSON-formatted stdout before applying required-output checks.
 
 ## Public Interface
 
@@ -61,6 +64,8 @@ The returned object is data-only. It does not load plugins, execute scorer code,
 - Treat `artifact_policy.write_bundle !== true` and `artifact_policy.retain_locally !== true` as validation failures in phase one.
 - Treat scorer references that look like executable hooks, command strings, JS files, shell scripts, or package imports as validation failures in phase one.
 - Preserve the existing smoke case path and smoke runner compatibility.
+- When `--json` is present, write command-log `stdout` as a parseable JSON object that carries the same synthetic log fragments in a structured `logs` array.
+- When execution stdout declares `output_format: json`, parse it in the required-output scorer and fail closed before substring evidence can pass on malformed JSON.
 - Do not introduce registry, plugin, adapter, dashboard, cloud, source-mining, or judge-gate behavior.
 
 ## Caller Contract
@@ -69,6 +74,7 @@ The returned object is data-only. It does not load plugins, execute scorer code,
 - Run artifact allocation for suite execution must use the evaluated repository root, not the evals package root, when the suite is outside evals.
 - Suite validation failures must return structured JSON errors in `--json` mode.
 - `src/commands/run.js` may orchestrate case versus suite execution, but it must not own suite policy, artifact-root allocation, latest validation, schema validation, or path traversal rules.
+- Command-log consumers may use `execution.output_format` to distinguish structured JSON stdout from legacy text stdout. This field is additive and does not remove `stdout`, `stderr`, `command`, or `input_command`.
 
 ## Seam Tests
 
@@ -79,6 +85,8 @@ The returned object is data-only. It does not load plugins, execute scorer code,
 - `artifact_policy.write_bundle: false` and `artifact_policy.retain_locally: false` fail validation.
 - Executable scorer hook references fail validation.
 - Suite execution writes artifacts under the evaluated repo `.harness/evals/runs`, not under the evals package checkout.
+- A `--json` smoke run writes parseable JSON in `command-log.json.stdout`.
+- A malformed JSON execution stdout cannot pass the `required-output` scorer merely because substrings are present.
 
 ## Tracer Proof
 
