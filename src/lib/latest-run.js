@@ -52,6 +52,7 @@ export function validateLatestRun(latestPath, options = {}) {
       : null;
     return {
       status: "failed",
+      latest_path: relativeToArtifactRoot(absoluteLatestPath),
       errors: [error.message],
       checks: [],
       ...proofContextFields(proofComparison)

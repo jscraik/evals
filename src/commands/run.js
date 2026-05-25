@@ -421,6 +421,9 @@ export function runSuite(suitePath, jsonMode) {
 }
 
 export function runTarget(targetPath, jsonMode) {
-  if (isSuitePath(targetPath)) runSuite(targetPath, jsonMode);
+  if (isSuitePath(targetPath)) {
+    runSuite(targetPath, jsonMode);
+    return;
+  }
   runCase(targetPath, jsonMode);
 }

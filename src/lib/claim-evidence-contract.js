@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 
-import { repoRoot } from "./paths.js";
+import { repoRelativePath, repoRoot } from "./paths.js";
 
 const usefulEvidenceStatuses = new Set(["pass", "present", "verified"]);
 
@@ -215,7 +215,9 @@ function blockerReason(context) {
 function manifestEvidenceByPath(latest) {
   const entries = new Map();
   if (!latest?.manifest_path) return entries;
-  const manifestPath = join(repoRoot, latest.manifest_path);
+  const errors = [];
+  const manifestPath = repoRelativePath(latest.manifest_path, "latest.manifest_path", errors);
+  if (!manifestPath) return entries;
   if (!existsSync(manifestPath)) return entries;
   let manifest;
   try {
