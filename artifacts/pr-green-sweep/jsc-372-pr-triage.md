@@ -124,3 +124,39 @@ Checked at: 2026-05-25 00:25 Europe/London
 - Current blocker: lifecycle only. PR #17 remains draft/open and must be advanced or explicitly deferred before parent closeout.
 
 WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
+
+## Subagent Refresh - 2026-05-25
+
+- Live PR state:
+  - PR #17: OPEN, DRAFT.
+  - Title: feat(jsc-372): add runtime evidence packet.
+  - URL: https://github.com/jscraik/evals/pull/17
+  - Head branch: `codex-jsc-372-claim-evidence-runtime-packet`.
+  - Base branch: `codex-jsc-371-repo-local-suite-contract`.
+  - Merge state: CLEAN.
+- Checks:
+  - deterministic-gates: pass.
+  - CodeRabbit: pass status context, but automated review was skipped because the base branch is not the default branch.
+  - Socket Security: Project Report: pass.
+  - Socket Security: Pull Request Alerts: pass.
+  - security/snyk (jscraik): pass.
+  - license/snyk (jscraik): pass.
+  - semgrep-cloud-platform/scan: pass.
+- Review/comments:
+  - Latest reviews: none.
+  - Inline review comments: none found in the live PR summary.
+  - PR comments include Linear linkback to JSC-372, CodeRabbit skip notice/manual-review control, and Snyk pass summary.
+- Fault classification:
+  - No current code-level failure surfaced by live checks.
+  - No review-thread repair item is currently visible.
+  - Remaining fault class: lifecycle/state only, because PR #17 is still draft/open.
+- Required coordinator action:
+  - Decide whether to advance PR #17 from draft to ready-for-review/merge flow or explicitly defer it in the parent closeout queue.
+  - If CodeRabbit human-readable review coverage is required despite the green status context, trigger `@coderabbitai review` manually because automatic review was skipped on the non-default base branch.
+- Status:
+  - STATUS: ready_lifecycle_action
+  - blocker_class: draft_pr_state
+  - exact_failure_text: `PR #17 remains draft/open; automated CodeRabbit review skipped on non-default base branch`
+  - coordinator_next_step: advance or defer PR #17 before claiming parent closeout.
+
+WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md

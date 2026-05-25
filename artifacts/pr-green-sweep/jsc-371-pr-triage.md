@@ -1,7 +1,7 @@
 # JSC-371 PR Green Sweep Triage
 
 - PR URL: https://github.com/jscraik/evals/pull/16
-- Checked at: 2026-05-24 Europe/London
+- Checked at: 2026-05-24 Europe/London; refreshed 2026-05-25 Europe/London
 - Branch: `codex-jsc-371-repo-local-suite-contract`
 - Base: `main`
 
@@ -12,10 +12,10 @@
 - Review decision: none set (`""`)
 
 ## CI / Required Checks State
-Observed via `gh pr view 16 --repo jscraik/evals --json statusCheckRollup`.
+Observed via `gh pr view 16 --repo jscraik/evals --json statusCheckRollup` and `gh pr checks 16 --repo jscraik/evals`.
 
 - `deterministic-gates` (Deterministic Evals CI): `SUCCESS`
-- `CodeRabbit` status context: `SUCCESS` (note: comment indicates rate-limit event, but status is successful)
+- `CodeRabbit` status context: `FAILURE` with exact check summary `Insufficient review credits`
 - `Socket Security: Project Report`: `SUCCESS`
 - `Socket Security: Pull Request Alerts`: `SUCCESS`
 - `license/snyk (jscraik)`: `SUCCESS`
@@ -31,6 +31,7 @@ Observed via:
 Result:
 - No unresolved inline review threads found.
 - No review requests or blocking review states found.
+- CodeRabbit issue comment reports review limit / organization usage-credit exhaustion. This is an external review-capacity failure, not an introduced source defect.
 
 ## Faults Found and Fixes Made
 - Faults requiring code/config changes: none found.
@@ -46,9 +47,10 @@ Result:
 
 ## Remaining Blockers
 - PR is still in draft state. This is a delivery-state blocker for merge despite green checks.
-- Live PR checks must be rechecked after the JSC-370 repair propagation push.
+- CodeRabbit is failing because review credits are exhausted. Class: `external_tooling`.
+- PR is still in draft state. Class: `lifecycle_blocker`.
 
 ## Final Status
-- `blocked_draft_only`
-- Recovery condition: mark PR ready for review (`Ready for review`) when maintainers decide the draft gate can be lifted.
+- `blocked_external_tooling_and_draft`
+- Recovery condition: wait for CodeRabbit review capacity or add credits, then trigger `@coderabbitai review` or push a no-op follow-up only if maintainers explicitly want a retrigger. Mark PR ready for review only when maintainers decide the draft gate can be lifted.
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md

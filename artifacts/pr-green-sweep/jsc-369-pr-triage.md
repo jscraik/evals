@@ -115,6 +115,42 @@ Wait for PR #18 Semgrep to finish, then reconcile in stack order:
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
 
+## Subagent Refresh Coverage Gap - 2026-05-25
+
+The coordinator launched a PR #18 parent triage subagent after correcting the
+handoff model so PR green-sweep lanes run independently of coordinator progress.
+The PR #18 subagent did not append the requested
+\`## Subagent Refresh - 2026-05-25\` section after a focused follow-up and was
+closed by the coordinator.
+
+Latest coordinator live recheck before recording this gap:
+
+- PR #18 remains OPEN and DRAFT.
+- Remote head: \`9f721e4a88b137445ac0868d26b0512243cdae74\`.
+- Mergeability is \`MERGEABLE\`; merge state is \`CLEAN\`.
+- deterministic-gates, CodeRabbit, semgrep-cloud-platform/scan, Socket Security
+  project report, Socket pull-request alerts, Snyk license, and Snyk security
+  pass.
+- Linear state has been reconciled without completion claims:
+  - JSC-369: \`In Progress\`.
+  - JSC-370, JSC-371, JSC-372: \`In Review\`.
+- Current blocker classes:
+  - \`lifecycle_blocker\`: parent PR and child PRs remain draft/open.
+  - \`external_tooling\`: PR #15 and PR #16 CodeRabbit failures are due review
+    credit exhaustion.
+  - \`coverage_gap\`: PR #18 subagent triage artifact refresh missing after
+    retry.
+
+STATUS: blocked_missing_artifact
+blocker_class: subagent_artifact_missing_after_retry
+exact_failure_text: PR #18 triage subagent did not append the requested artifact
+section before coordinator shutdown.
+coordinator_next_step: preserve this coverage gap, avoid parent completion
+claims, and retry PR #18 triage only when agent runtime is stable or the parent
+is ready for final closeout.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
 ## Local Stack Repair And Validation Refresh
 
 Checked at: 2026-05-25 00:31 Europe/London

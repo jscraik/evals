@@ -56,3 +56,31 @@ Local fixes are applied and validated. The PR is not green-claimed until the fix
 
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
+
+## Subagent Refresh Coverage Gap - 2026-05-25
+
+The coordinator launched a focused PR #15 triage retry subagent for this artifact
+after the parent loop corrected the intended handoff model. The retry agent did
+not write the requested \`## Subagent Refresh - 2026-05-25\` section after an
+interrupting follow-up and was closed by the coordinator.
+
+Latest coordinator live recheck before recording this gap:
+
+- PR #15 remains OPEN and DRAFT.
+- Mergeability is \`MERGEABLE\`; merge state is \`UNSTABLE\`.
+- deterministic-gates, semgrep-cloud-platform/scan, Socket Security project
+  report, Socket pull-request alerts, Snyk license, and Snyk security pass.
+- CodeRabbit status is FAILURE due external review-credit exhaustion.
+- Current blocker classes:
+  - \`external_tooling\`: CodeRabbit insufficient review credits.
+  - \`lifecycle_blocker\`: PR remains draft/open.
+
+STATUS: blocked_missing_artifact
+blocker_class: subagent_artifact_missing_after_retry
+exact_failure_text: PR #15 focused triage retry did not append the requested
+artifact section before coordinator shutdown.
+coordinator_next_step: preserve this coverage gap, avoid completion claims, and
+retry PR #15 triage only when agent runtime is stable or CodeRabbit credits are
+available.
+
+WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md

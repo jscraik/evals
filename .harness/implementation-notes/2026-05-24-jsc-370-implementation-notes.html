@@ -143,7 +143,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 08:46 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 08:56 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are now represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -163,7 +163,7 @@
     <tr><td>Active issue</td><td>JSC-369</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #18 is clean at the latest pushed head c2e1467. Linear now matches active work: parent In Progress, children In Review. Completion remains blocked by draft child PRs and external CodeRabbit review-credit failures on PR #15/#16.</span></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #18 is clean at latest pushed head 9f721e4. Linear now matches active work: parent In Progress, children In Review. Completion remains blocked by draft child PRs, PR #15/#16 external CodeRabbit review-credit failures, and PR #15/#18 subagent-refresh coverage gaps.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
@@ -479,6 +479,7 @@
     <tr><td>PR #18 post-push recheck</td><td class="ok">pass</td><td>Remote head <code>b39c4f4a04e41abf295d1af442ef4198a081f468</code> is <code>MERGEABLE</code> with merge state <code>CLEAN</code>. Deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass.</td></tr>
     <tr><td>PR #18 after evidence-refresh push</td><td class="ok">pass</td><td>Remote head <code>c2e1467055eed0b753b8b129d875a948ce66c0b7</code> is <code>MERGEABLE</code> with merge state <code>CLEAN</code>. Deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass. This local browser-note refresh is intentionally not pushed yet to avoid restarting hosted checks again.</td></tr>
     <tr><td>Linear lifecycle reconciliation</td><td class="ok">pass</td><td>JSC-369 moved to <code>In Progress</code>. JSC-370, JSC-371, and JSC-372 moved to <code>In Review</code>. No issue was moved to <code>Done</code>.</td></tr>
+    <tr><td>PR triage lane correction</td><td class="warn">partial</td><td>PR #16 and PR #17 subagent lanes refreshed their artifacts. PR #15 and PR #18 retry lanes failed to write after focused follow-up; coverage gaps were recorded in their triage artifacts instead of treating the gate as approved.</td></tr>
   </table>
 
   <h2>Open Questions</h2>
