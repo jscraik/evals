@@ -78,12 +78,12 @@ PR #17 no longer has the Semgrep-pending blocker recorded in the parent PR body.
 
 | Issue | Status | Parent | Attachments |
 | --- | --- | --- | --- |
-| JSC-369 | `Todo` / unstarted | none | PR #18 attached |
-| JSC-370 | `Todo` / unstarted | JSC-369 | PR #15 and PR #18 attached |
-| JSC-371 | `Todo` / unstarted | JSC-369 | PR #16 and PR #18 attached |
-| JSC-372 | `Todo` / unstarted | JSC-369 | PR #17 and PR #18 attached |
+| JSC-369 | `In Progress` / started | none | PR #18 attached |
+| JSC-370 | `In Review` / started | JSC-369 | PR #15 and PR #18 attached |
+| JSC-371 | `In Review` / started | JSC-369 | PR #16 and PR #18 attached |
+| JSC-372 | `In Review` / started | JSC-369 | PR #17 and PR #18 attached |
 
-Linear exists for this queue now, so the older tracker override is no longer the live parent issue truth for JSC-369. Do not represent local implementation or PR artifacts as Linear completion while all four issues remain `Todo`.
+Linear exists for this queue now, so the older tracker override is no longer the live parent issue truth for JSC-369. Do not represent local implementation or PR artifacts as Linear completion while the parent is only In Progress and children are only In Review.
 
 ## Fixes Attempted
 
@@ -100,7 +100,7 @@ No implementation patch was applied. The only safe local edit candidate is a doc
 1. PR #18 Semgrep is still `IN_PROGRESS`, so parent merge state is `UNSTABLE`.
 2. PR #18 is intentionally draft.
 3. Child PRs #15, #16, and #17 are still open drafts and must be merged or explicitly deferred with owner-approved rationale before parent closeout.
-4. Linear JSC-369, JSC-370, JSC-371, and JSC-372 remain `Todo`; tracker state does not support completion claims.
+4. Linear JSC-369 is In Progress; JSC-370, JSC-371, and JSC-372 are In Review. Tracker state does not support completion claims.
 5. CodeRabbit did not perform a substantive PR #18 review because the base branch is non-default; the success status is a skipped-review status, not approval.
 
 ## Next Coordinator Action
@@ -134,9 +134,9 @@ WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
 
 ## Post-Push Parent PR Recheck
 
-Checked at: 2026-05-25 08:35 Europe/London; refreshed at 2026-05-25 08:36 Europe/London
+Checked at: 2026-05-25 08:35 Europe/London; refreshed at 2026-05-25 08:43 Europe/London
 
-- Remote head: `b39c4f4a04e41abf295d1af442ef4198a081f468`.
+- Remote head: `c2e1467055eed0b753b8b129d875a948ce66c0b7`.
 - PR #18 state: open draft.
 - Mergeability: `MERGEABLE`; merge state `CLEAN`.
 - Passing visible checks:
@@ -151,10 +151,22 @@ Checked at: 2026-05-25 08:35 Europe/London; refreshed at 2026-05-25 08:36 Europe
 
 The parent PR stack repair is now visible remotely and no longer reports the prior
 CONFLICTING/DIRTY state. The parent still cannot close because PR #18 is draft,
-child PRs #15/#16/#17 remain open drafts, and Linear
-JSC-369/JSC-370/JSC-371/JSC-372 remain `Todo`.
+child PRs #15/#16/#17 remain open drafts, PR #15/#16 CodeRabbit remains
+externally blocked by review-credit exhaustion, and no Linear issue is Done.
 
 Next coordinator action: reconcile the child PR and Linear lifecycle blockers
 before changing the parent verdict to complete.
+
+## Linear Lifecycle Reconciliation
+
+Checked and updated at: 2026-05-25 08:46 Europe/London
+
+- JSC-369 moved from `Todo` to `In Progress`.
+- JSC-370 moved from `Todo` to `In Review`.
+- JSC-371 moved from `Todo` to `In Review`.
+- JSC-372 moved from `Todo` to `In Review`.
+
+No issue was moved to `Done`. This aligns tracker state with the live PR stack
+without claiming parent completion.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
