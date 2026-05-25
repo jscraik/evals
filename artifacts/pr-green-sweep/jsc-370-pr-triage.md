@@ -56,3 +56,49 @@ Local fixes are applied and validated. The PR is not green-claimed until the fix
 
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
+
+## 2026-05-25 Symlink Containment Repair
+
+Live PR recheck found one additional CodeRabbit finding on PR #15:
+\`src/lib/paths.js\` used \`path.resolve()\` plus a string-prefix comparison for
+root containment. That normalizes traversal but does not dereference symlinks,
+so a path that is syntactically inside the repository could still resolve
+outside the repository through an intermediate symlink.
+
+### Fixes Made
+
+- \`src/lib/paths.js\`: changed \`insideRepo()\` to compare the repository root and
+  candidate path after filesystem realpath resolution. Missing candidate paths
+  resolve through the nearest existing ancestor, so an in-repo symlink ancestor
+  still cannot redirect a future proof path outside the repository.
+- \`test/cli.test.js\`: added a negative CLI regression that creates an in-repo
+  symlink under \`fixtures/smoke/\` pointing at an outside temporary directory and
+  proves \`pnpm evals run ... --json\` rejects the escaped case path before
+  reading it.
+- \`.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md\`: updated the
+  deep-module packet to make \`src/lib/paths.js\` the containment owner for this
+  trust-boundary repair.
+
+### Local Validation
+
+- \`node --test --test-name-pattern "symlink" test/cli.test.js\` -> pass.
+- \`git diff --check\` -> pass.
+- \`pnpm test\` -> pass. 115 tests passed, including the symlink escape
+  regression.
+- \`pnpm evals run fixtures/smoke/pr-closeout.case.json --json\` -> pass.
+  Wrote run bundle
+  \`.harness/evals/runs/20260525T092732Z-pr-closeout-4df36134/\`.
+- \`pnpm evals check --json\` -> pass. Latest proof context matched the smoke
+  case and suite.
+- \`pnpm verify\` -> pass. Fresh proof bundles were written under
+  \`.harness/evals/runs/20260525T092748Z-pr-closeout-4df36134/\` and
+  \`.harness/evals/runs/20260525T092748Z-pr-closeout-4df36134-01/\`.
+
+### Remaining Blockers
+
+1. The symlink-containment repair still requires push and live PR recheck.
+   - Class: post-fix external validation.
+   - Recovery condition: push the repair commit, recheck PR #15 checks and
+     review comments, and update this artifact if new faults appear.
+
+WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md

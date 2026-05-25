@@ -128,11 +128,107 @@
     .module-card code {
       color: #fef3c7;
     }
+    .module-card .placement {
+      color: #f9fafb;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .module-card .paths {
+      color: #d1d5db;
+      font-size: 0.92rem;
+    }
+    .module-card .paths code {
+      display: inline-block;
+      margin: 2px 0;
+    }
+    .placement-legend {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+    .placement-legend div,
+    .placement-badge {
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--module-color, var(--accent));
+      background: var(--panel);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--ink);
+    }
+    .placement-legend strong,
+    .placement-badge strong {
+      display: block;
+      font-size: 0.9rem;
+      line-height: 1.25;
+    }
+    .placement-legend span,
+    .placement-badge span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+      margin-top: 2px;
+    }
+    .module-card .placement-badge {
+      margin: 10px 14px;
+      background: #f9fafb;
+      color: #111827;
+    }
+    .module-card .placement-badge code {
+      color: #7c2d12;
+    }
+    .slice-lanes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 10px 0 18px;
+    }
+    .slice-lane {
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--module-color);
+      background: var(--panel);
+      border-radius: 7px;
+      padding: 10px;
+      min-height: 150px;
+    }
+    .slice-lane strong,
+    .slice-lane span {
+      display: block;
+    }
+    .slice-lane strong {
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 5px;
+    }
+    .slice-lane span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+    .slice-lane code {
+      font-size: 0.84em;
+    }
+    .flow-note {
+      margin: 10px 14px 12px;
+      padding: 8px 10px;
+      border: 1px dashed rgba(249, 250, 251, 0.45);
+      border-radius: 6px;
+      color: #f9fafb;
+      font-size: 0.9rem;
+    }
     .span-two {
       grid-column: span 2;
     }
     @media (max-width: 760px) {
       .module-map {
+        grid-template-columns: 1fr;
+      }
+      .placement-legend {
+        grid-template-columns: 1fr;
+      }
+      .slice-lanes {
         grid-template-columns: 1fr;
       }
       .span-two {
@@ -143,9 +239,9 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 00:18 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 09:56 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
-  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 is back in active PR-review repair after CodeRabbit found proof-context edge cases; JSC-371 and JSC-372 remain stacked behind it, and JSC-369 remains parent reconciliation only. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
+  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
   <h2>Architecture Answer</h2>
   <p>Yes. This implementation should be built into the project&apos;s current deep modules wherever a current owner already exists. The architecture rule for this program is: use the existing owner module for an existing trust boundary, add a new owner only for a genuinely new contract, and keep callers thin enough that they sequence work rather than owning proof rules.</p>
@@ -160,11 +256,150 @@
   <h2>Current Slice</h2>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Active issue</td><td>JSC-370</td></tr>
-    <tr><td>Goal</td><td>Repair PR-review findings while keeping latest proof context inside the existing <code>src/lib/latest-run.js</code> deep module.</td></tr>
-    <tr><td>Branch</td><td><code>codex-jsc-370-latest-proof-context</code></td></tr>
-    <tr><td>Status</td><td><span class="status">CodeRabbit fixes applied locally; pushed PR recheck still required</span></td></tr>
+    <tr><td>Active issue</td><td>JSC-369 parent reconciliation, with the browser mirror served from the JSC-370 worktree for continuity</td></tr>
+    <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
+    <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code> for parent evidence; this browser mirror remains under <code>/private/tmp/evals-jsc370</code>.</td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active. JSC-371 repair is pushed, JSC-372 manifest-path containment is committed and pushed, PR #17 is clean on the latest recheck, and PR #18 is still draft while parent closeout waits for live child PR and tracker reconciliation.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
+  </table>
+
+  <h2>Where the Work Lands</h2>
+  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The table below the visual shows the exact branch, worktree, PR, and durable artifact placement for each slice.</p>
+  <div class="placement-legend" aria-label="Deep-module placement legend">
+    <div style="--module-color: #38a8ff;"><strong>Owner modules</strong><span>Runtime rules and trust-boundary decisions land under <code>src/lib/**</code>.</span></div>
+    <div style="--module-color: #fb6a12;"><strong>Caller modules</strong><span>CLI commands under <code>src/commands/**</code> sequence owners but do not own proof rules.</span></div>
+    <div style="--module-color: #34c759;"><strong>Executable contracts</strong><span>Schemas, fixtures, and tests prove the interface and negative cases.</span></div>
+    <div style="--module-color: #ef3340;"><strong>Design packets</strong><span>Deep-module packets record owner, seam, rollback, tracer proof, and validation gate before edits.</span></div>
+    <div style="--module-color: #a855f7;"><strong>Review lanes</strong><span>Reviewer and PR-green-sweep artifacts live under <code>artifacts/**</code>.</span></div>
+    <div style="--module-color: #fbbf24;"><strong>Parent closeout</strong><span>JSC-369 reconciles child proof in closure evidence; it does not create runtime authority.</span></div>
+  </div>
+  <div class="slice-lanes" aria-label="Slice landing lanes">
+    <div class="slice-lane" style="--module-color: #38a8ff;">
+      <strong>JSC-370 lands in latest/run proof</strong>
+      <span><code>/private/tmp/evals-jsc370</code></span>
+      <span><code>src/lib/run-bundle.js</code> and <code>src/lib/latest-run.js</code></span>
+      <span>PR #15 owns false-success latest publication and run ID collision proof.</span>
+    </div>
+    <div class="slice-lane" style="--module-color: #34c759;">
+      <strong>JSC-371 lands in suite contract</strong>
+      <span><code>/private/tmp/evals-jsc371</code></span>
+      <span><code>src/lib/suite-contract.js</code>, suite schema, and repo-local fixtures</span>
+      <span>PR #16 owns domain-neutral suite roots, artifact placement, and fail-closed scorer/network policy.</span>
+    </div>
+    <div class="slice-lane" style="--module-color: #a855f7;">
+      <strong>JSC-372 lands in evidence packet</strong>
+      <span><code>/private/tmp/evals-jsc372</code></span>
+      <span><code>src/lib/claim-evidence-contract.js</code>, runtime state, packet schemas, and traversal regression</span>
+      <span>PR #17 owns claim/evidence sufficiency and manifest-path containment.</span>
+    </div>
+    <div class="slice-lane" style="--module-color: #fbbf24;">
+      <strong>JSC-369 lands in reconciliation</strong>
+      <span><code>/private/tmp/evals-jsc369</code></span>
+      <span><code>.harness/evals/evals-evals-executable-spine-eval.md</code> and PR triage artifacts</span>
+      <span>PR #18 records parent truth only; it does not add a second runtime owner.</span>
+    </div>
+  </div>
+  <div class="module-map" aria-label="Proof-spine work placement map">
+    <section class="module-card" style="--module-color: #38a8ff; --module-height: 360px;">
+      <h3>Runtime Proof Owners</h3>
+      <p class="placement">Where implementation code belongs</p>
+      <div class="placement-badge"><strong>Placed in: runtime owner modules</strong><span>JSC-370, JSC-371, and JSC-372 changes enter through <code>src/lib/**</code> owner seams first.</span></div>
+      <ul class="paths">
+        <li><code>src/lib/run-bundle.js</code> owns run IDs and bundle directories.</li>
+        <li><code>src/lib/latest-run.js</code> owns latest pointer and proof-context validation.</li>
+        <li><code>src/lib/suite-contract.js</code> owns repo-local suite normalization and fail-closed suite policy.</li>
+        <li><code>src/lib/claim-evidence-contract.js</code> owns claim/evidence packet assembly and missing-evidence scoring.</li>
+        <li><code>src/lib/runtime-state.js</code> publishes state and embeds the evidence packet.</li>
+        <li><code>src/lib/runtime-evidence-contract.js</code> owns policy-family coverage truth.</li>
+      </ul>
+      <p class="flow-note">Flow: owner decides -> caller invokes -> schema/test proves -> artifact records.</p>
+    </section>
+
+    <section class="module-card" style="--module-color: #fb6a12; --module-height: 175px;">
+      <h3>CLI Caller Layer</h3>
+      <p class="placement">Where sequencing belongs</p>
+      <div class="placement-badge"><strong>Placed in: command orchestration</strong><span>Only routing, sequencing, stdout shape, and recovery-command wiring land here.</span></div>
+      <ul class="paths">
+        <li><code>src/commands/run.js</code> sequences case or suite execution and latest publication.</li>
+        <li><code>src/commands/validation.js</code> binds <code>check --json</code> to expected proof context.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #34c759; --module-height: 175px;">
+      <h3>Schemas and Fixtures</h3>
+      <p class="placement">Where contracts are made executable</p>
+      <div class="placement-badge"><strong>Placed in: executable proof</strong><span>Every new contract gets a schema and a positive or negative fixture/test seam.</span></div>
+      <ul class="paths">
+        <li><code>schemas/*.schema.json</code> defines suite, latest, claim, evidence, packet, state, and scorer output shape.</li>
+        <li><code>fixtures/**</code> and <code>test/**</code> hold positive and negative regression proof.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #ef3340; --module-height: 280px;">
+      <h3>Deep Module Packets</h3>
+      <p class="placement">Where design authority is recorded before edits</p>
+      <div class="placement-badge"><strong>Placed in: refactor packets</strong><span>These files explain why the implementation belongs in each owner module.</span></div>
+      <ul class="paths">
+        <li><code>.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md</code></li>
+        <li><code>.harness/refactors/2026-05-24-jsc-371-repo-local-suite-contract.md</code></li>
+        <li><code>.harness/refactors/2026-05-24-jsc-372-claim-evidence-runtime-packet.md</code></li>
+        <li><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code></li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #a855f7; --module-height: 185px;">
+      <h3>Review and Triage Evidence</h3>
+      <p class="placement">Where independent proof is stored</p>
+      <div class="placement-badge"><strong>Placed in: artifact lanes</strong><span>Subagent/reviewer outputs must be files, not mailbox-only status.</span></div>
+      <ul class="paths">
+        <li><code>artifacts/reviews/jsc-37*-*.md</code> stores simplify, unslopify, testing, code review, adversarial, and agent-native outputs.</li>
+        <li><code>artifacts/pr-green-sweep/jsc-37*-pr-triage.md</code> stores PR/CI/review triage truth.</li>
+      </ul>
+    </section>
+
+    <section class="module-card" style="--module-color: #fbbf24; --module-height: 185px;">
+      <h3>Parent Closeout Evidence</h3>
+      <p class="placement">Where the parent loop reconciles truth</p>
+      <div class="placement-badge"><strong>Placed in: parent evidence</strong><span>JSC-369 cites child states, validation, PR threads, Linear state, docs checks, and deferrals.</span></div>
+      <ul class="paths">
+        <li><code>.harness/evals/evals-evals-executable-spine-eval.md</code> cites command, artifact, schema, scorer, baseline, tracker, docs, security, accessibility, traceability, and PR state.</li>
+        <li>GitHub PRs and Linear issues are live state, not substitutes for artifacts.</li>
+      </ul>
+    </section>
+  </div>
+
+  <h2>Work Placement by Slice</h2>
+  <p>Each slice is isolated in its own worktree and branch. Runtime changes belong in owner modules under <code>src/lib</code>; command orchestration belongs under <code>src/commands</code>; proof surfaces live in schemas, fixtures, tests, eval run bundles, review artifacts, and PR triage artifacts. The parent slice records reconciliation only; it should not add a second runtime path.</p>
+  <table>
+    <tr><th>Slice</th><th>Worktree / Branch / PR</th><th>Runtime Owner Placement</th><th>Executable Proof Placement</th><th>Delivery Evidence Placement</th></tr>
+    <tr>
+      <td>JSC-370 latest/run trust boundary</td>
+      <td><code>/private/tmp/evals-jsc370</code><br><code>codex-jsc-370-latest-proof-context</code><br>PR #15, base <code>main</code></td>
+      <td><code>src/lib/run-bundle.js</code> for collision-resistant run IDs and artifact directories.<br><code>src/lib/latest-run.js</code> for latest pointer and proof-context validation.</td>
+      <td><code>schemas/latest-run.schema.json</code>, focused tests for collision/latest mismatch/non-publication, and smoke run bundles under <code>.harness/evals/runs/</code>.</td>
+      <td><code>.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md</code><br><code>artifacts/reviews/jsc-370-*.md</code><br><code>artifacts/pr-green-sweep/jsc-370-pr-triage.md</code></td>
+    </tr>
+    <tr>
+      <td>JSC-371 repo-local suite contract</td>
+      <td><code>/private/tmp/evals-jsc371</code><br><code>codex-jsc-371-repo-local-suite-contract</code><br>PR #16, base <code>main</code></td>
+      <td><code>src/lib/suite-contract.js</code> for suite normalization and fail-closed policy.<br>Existing <code>run-bundle</code>, <code>latest-run</code>, <code>case-contract</code>, <code>schema</code>, and <code>paths</code> owners keep their boundaries.</td>
+      <td><code>schemas/suite.schema.json</code>, repo-local <code>.evals</code> fixtures, suite execution regressions, and negative fixtures for unsupported network/executable scorer/root behavior.</td>
+      <td><code>.harness/refactors/2026-05-24-jsc-371-repo-local-suite-contract.md</code><br><code>artifacts/reviews/jsc-371-*.md</code><br><code>artifacts/pr-green-sweep/jsc-371-pr-triage.md</code></td>
+    </tr>
+    <tr>
+      <td>JSC-372 claim/evidence and runtime packet</td>
+      <td><code>/private/tmp/evals-jsc372</code><br><code>codex-jsc-372-claim-evidence-runtime-packet</code><br>PR #17, base <code>codex-jsc-371-repo-local-suite-contract</code></td>
+      <td><code>src/lib/claim-evidence-contract.js</code> for packet assembly, missing-evidence scoring, and manifest-evidence path containment.<br><code>src/lib/runtime-state.js</code> publishes the packet.<br><code>src/lib/runtime-evidence-contract.js</code> keeps scaffolded-family truth.</td>
+      <td><code>schemas/claim.schema.json</code>, <code>schemas/evidence.schema.json</code>, <code>schemas/runtime-evidence-packet.schema.json</code>, runtime state schema updates, missing-evidence regression tests, and the traversal-manifest seam test.</td>
+      <td><code>.harness/refactors/2026-05-24-jsc-372-claim-evidence-runtime-packet.md</code><br><code>artifacts/reviews/jsc-372-*.md</code><br><code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code></td>
+    </tr>
+    <tr>
+      <td>JSC-369 parent reconciliation</td>
+      <td><code>/private/tmp/evals-jsc369</code><br><code>codex-jsc-369-parent-closeout</code><br>PR #18, draft, base <code>codex-jsc-372-claim-evidence-runtime-packet</code></td>
+      <td>No new runtime owner. Parent closeout consumes child proof, live PR/Linear state, docs checks, and generated eval run evidence.</td>
+      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T091459Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
+      <td><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code><br><code>.harness/evals/evals-evals-executable-spine-eval.md</code><br><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code><br><code>artifacts/reviews/evals-proof-spine-*.md</code></td>
+    </tr>
   </table>
 
   <h2>JSC-371 Architecture Decision</h2>
@@ -240,6 +475,7 @@
         <li><code>src/lib/claim-evidence-contract.js</code> owns claim/evidence packet assembly and the deterministic <code>missing-evidence</code> scorer.</li>
         <li><code>validation-passed</code> claims require matching validation evidence.</li>
         <li><code>artifact-exists</code> claims require manifest/hash evidence, not just path presence.</li>
+        <li><code>latest.manifest_path</code> is validated as repository-relative before this module reads manifest evidence.</li>
         <li>Advisory confidence is recorded as data only and cannot change the scorer verdict.</li>
       </ul>
     </section>
@@ -271,7 +507,7 @@
 
     <section class="module-card span-two" style="--module-color: #a855f7; --module-height: 150px;">
       <h3>Tracer Proof</h3>
-      <p><code>pnpm test</code> now covers success-claim-without-evidence failure, artifact-claim-without-manifest-hash failure, schema-valid packet output, and preservation of <code>scaffolded_not_enforced</code> policy coverage in <code>state --json</code>.</p>
+      <p><code>pnpm test</code> now covers success-claim-without-evidence failure, artifact-claim-without-manifest-hash failure, schema-valid packet output, preservation of <code>scaffolded_not_enforced</code> policy coverage in <code>state --json</code>, and the narrow traversal-manifest regression now passes with <code>node --test --test-name-pattern "traversal latest path|state reports ready runtime packet"</code>.</p>
     </section>
 
     <section class="module-card span-two" style="--module-color: #fbbf24; --module-height: 135px;">

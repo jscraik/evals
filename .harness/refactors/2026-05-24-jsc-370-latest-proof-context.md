@@ -19,6 +19,10 @@ runtime gaps:
 - src/lib/latest-run.js owns latest pointer validation, artifact-bundle
   validation, expected/observed proof-context comparison, and mismatch recovery
   metadata.
+- src/lib/paths.js owns repository root containment for case paths, latest
+  paths, manifest artifact paths, and other repo-relative proof artifacts.
+  Containment must be symlink-aware before any trust-boundary owner reads an
+  artifact.
 - src/commands/run.js calls the run-bundle owner and publishes latest.json
   only after final bundle validation.
 - src/commands/validation.js supplies the expected smoke context to
@@ -62,6 +66,9 @@ is additive.
   pointer.
 - Validate latest provenance before trusting artifact paths when expected
   context is supplied.
+- Resolve repository containment through real filesystem paths, not only
+  string-prefix checks, so an in-repo symlink cannot redirect case or artifact
+  validation to a path outside the evaluated repository.
 - Validate a run-local latest candidate before publishing .harness/evals/runs/latest.json.
 - Keep latest.json data-only. Do not introduce plugin hooks, executable scorer
   references, dashboards, cloud execution, networked suite execution, or
@@ -88,6 +95,8 @@ is additive.
   for the current smoke run.
 - A runner regression proves incomplete latest candidates are not advertised as
   passing latest evidence.
+- A path-containment regression proves case validation rejects a path that is
+  syntactically inside the repository but escapes through an in-repo symlink.
 
 ## Tracer Proof
 
@@ -104,6 +113,7 @@ Rollback is a revert of:
 - modifications to src/commands/run.js
 - modifications to src/commands/validation.js
 - modifications to src/lib/latest-run.js
+- modifications to src/lib/paths.js
 - schemas/latest-run.schema.json
 - related tests and fixtures
 
@@ -121,4 +131,5 @@ Minimum local gate before marking JSC-370 ready:
 - pnpm verify
 
 The narrow proof must include the new negative regression for context mismatch
-and the run-allocation collision seam.
+and the run-allocation collision seam. Review-thread repair also requires the
+symlink escape regression.
