@@ -18,7 +18,7 @@
     {
       "type": "command-log",
       "path": ".harness/evals/runs/20260525T093519Z-pr-closeout-4df36134/command-log.json",
-      "sha256": "0bcb26b96642d7f07359747358984e8942674b092436dd1a0781c6c056b9b8b0"
+      "sha256": "f214212ccdd1903ac22e95ac14df39113ae2480e24302f4752317b792cef2ab2"
     },
     {
       "type": "scorer-results",
@@ -28,12 +28,12 @@
     {
       "type": "baseline-result",
       "path": ".harness/evals/runs/20260525T093519Z-pr-closeout-4df36134/baseline-result.json",
-      "sha256": "dbca4c2edd391e632780ba9818929246496402219e7c2138890cf9b88ac72163"
+      "sha256": "c4c197c4b8fa437437be96b3a1b6d30f46117356db8f361cdcae10745409bc96"
     },
     {
       "type": "trace-events",
       "path": ".harness/evals/runs/20260525T093519Z-pr-closeout-4df36134/trace-events.jsonl",
-      "sha256": "265b4caded2ccd60fa31660661d881d415e48b9d6636027108cc4b9500907718"
+      "sha256": "2a0d3ddac8ede5ebd454c234a6bf21d17ba185c2f5d0288538e9d475f6add20c"
     }
   ],
   "errors": []
