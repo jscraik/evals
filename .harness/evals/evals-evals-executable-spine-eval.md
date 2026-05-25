@@ -527,3 +527,26 @@ were live at the time of this check. It is not a completion claim.
 - `gh pr checks 17` -> pass for visible checks.
 - `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
 - `gh pr checks 18` -> pass for visible checks.
+
+## 2026-05-25 12:06 BST Settled Hosted-Check Refresh
+
+This refresh records the settled hosted-check state after the parent evidence
+commit `831ac01f00dd8ffb1fc6a5953036952f64d8b903`.
+
+| PR | Issue | Current Result | Closeout Impact |
+| --- | --- | --- | --- |
+| #15 | JSC-370 | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit fails with `Insufficient review credits` at head `0649d5e75c385eeea69b5e1e5d715d06e987c975` | Child remains externally review-blocked. No merge or closeout claim without CodeRabbit recovery or explicit owner-approved deferral/exception. |
+| #16 | JSC-371 | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit fails with `Insufficient review credits` at head `41be55b2ed9128010934176a6d1a4a3e65e04297` | Child remains externally review-blocked. No merge or closeout claim without CodeRabbit recovery or explicit owner-approved deferral/exception. |
+| #17 | JSC-372 | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit pass at head `818232b38d5f4448c11b6040d6d91a99fccd9f78`; CodeRabbit reports review skipped on the stacked non-default base | Child is check-clean but remains open and stacked on blocked PR #16. |
+| #18 | JSC-369 | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit pass at head `831ac01f00dd8ffb1fc6a5953036952f64d8b903`; CodeRabbit reports review skipped on the stacked non-default base | Parent PR is check-clean but remains draft and cannot close before child disposition and tracker reconciliation. |
+
+### Settled Commands Rechecked
+
+- `gh pr checks 15` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
+- `gh pr view 15 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
+- `gh pr checks 16` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
+- `gh pr view 16 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
+- `gh pr checks 17` -> pass for visible checks.
+- `gh pr view 17 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
+- `gh pr checks 18` -> pass for visible checks.
+- `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.

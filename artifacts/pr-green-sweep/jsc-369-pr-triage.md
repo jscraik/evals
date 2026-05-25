@@ -66,6 +66,41 @@ Evidence:
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
 
+## 2026-05-25 12:06 BST Settled Check Refresh
+
+### Head And Scope Confirmation
+
+- Observed head: `831ac01f00dd8ffb1fc6a5953036952f64d8b903`
+- PR state: OPEN
+- Draft: true
+- Mergeable: MERGEABLE
+
+### Current Hosted Check State
+
+- deterministic-gates: pass
+- semgrep-cloud-platform/scan: pass
+- Socket Security: Project Report: pass
+- Socket Security: Pull Request Alerts: pass
+- security/snyk (jscraik): pass
+- license/snyk (jscraik): pass
+- CodeRabbit: pass, review skipped on stacked non-default base
+
+Evidence:
+- `gh pr checks 18`
+- `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup`
+
+### Actionability Verdict
+
+- PR #18 has no current hosted-check defect at head `831ac01f00dd8ffb1fc6a5953036952f64d8b903`.
+- PR #18 remains a draft parent closeout PR and must stay open until child PR
+  disposition, tracker truth, documentation truth, and final closeout evidence
+  are reconciled.
+- Lower-stack blocker remains external: PR #15 and PR #16 CodeRabbit statuses
+  fail with `Insufficient review credits`, while their deterministic-gates,
+  Semgrep, Socket, Snyk security, and Snyk license checks pass.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
 ## 2026-05-25 12:02 BST Refresh
 
 ### Head And Scope Confirmation
