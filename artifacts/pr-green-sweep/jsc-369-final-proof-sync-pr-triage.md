@@ -6,7 +6,7 @@
 - PR: #23
 - URL: https://github.com/jscraik/evals/pull/23
 - Branch: `codex/jsc-369-final-proof-sync`
-- Head: `df8ad299c38c878fd2c8b5306fc80ec92691fa87`
+- Initial evidence-correction head: `df8ad299c38c878fd2c8b5306fc80ec92691fa87`
 - Purpose: distinguish actionable CodeRabbit review threads from historical or external CodeRabbit status failures after final closeout evidence cleanup.
 
 ## Live Review-Thread Evidence
@@ -17,8 +17,9 @@
 
 ## Hosted Check Evidence
 
-- Command: `gh pr checks 23 --repo jscraik/evals` -> pass for deterministic-gates, Socket Security project report, Socket pull request alerts, Snyk licence, and Snyk security.
-- Pending at first recheck: `semgrep-cloud-platform/scan`.
+- Command: `gh pr checks 23 --repo jscraik/evals` -> partial.
+- Initial evidence-correction head: deterministic-gates, Socket Security project report, Socket pull request alerts, Snyk licence, and Snyk security passed; `semgrep-cloud-platform/scan` was pending.
+- After this triage artifact is committed, hosted checks restart and must be rechecked from the new PR head before merge readiness is claimed.
 - CodeRabbit: `fail`, message `Insufficient review credits`.
 
 ## Finding Classification
@@ -31,10 +32,10 @@
 - Ownership: external service/account capacity; not introduced by repository code in this documentation-only cleanup.
 - Coordinator next step: rerun/recheck CodeRabbit after credits are available, then fix any concrete review thread if CodeRabbit emits one.
 
-### P2 - Semgrep requires final recheck before merge readiness
+### P2 - Hosted checks require final recheck before merge readiness
 
-- Evidence: `gh pr checks 23 --repo jscraik/evals` reported `semgrep-cloud-platform/scan` pending on the first hosted-check recheck.
-- Impact: PR #23 cannot be merged until Semgrep is success or the exact external blocker is recorded.
+- Evidence: `gh pr checks 23 --repo jscraik/evals` reported pending checks during triage, and this artifact commit restarts the hosted-check set.
+- Impact: PR #23 cannot be merged until deterministic-gates, Semgrep, Socket, and Snyk are success or the exact external blocker is recorded.
 - Coordinator next step: poll checks again before merge or closeout.
 
 ## Validation Evidence For This Cleanup Branch
@@ -45,6 +46,6 @@
 
 ## Current Verdict
 
-PR #23 has no outstanding CodeRabbit review threads. The remaining CodeRabbit issue is a failed status caused by review-credit exhaustion, plus Semgrep requires final hosted-check recheck before merge readiness.
+PR #23 has no outstanding CodeRabbit review threads. The remaining CodeRabbit issue is a failed status caused by review-credit exhaustion. Hosted checks must be rechecked after the final triage-artifact commit before merge readiness is claimed.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-final-proof-sync-pr-triage.md
