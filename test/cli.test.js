@@ -254,6 +254,67 @@ test("run accepts a repo-local suite and writes artifacts under the evaluated re
   }
 });
 
+test("repo-local suite normalizes artifact root and backslash references", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo, {
+    cases: ["cases\\pr-closeout.case.json"],
+    scorers: ["scorers\\artifact.scorer.json"],
+    artifact_policy: {
+      write_bundle: true,
+      retain_locally: true,
+      allow_network: false,
+      artifact_root: ".\\.harness\\evals\\runs"
+    }
+  });
+  try {
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const output = parseJson(result.stdout);
+    assert.equal(output.artifact_root_prefix, ".harness/evals/runs");
+    const caseOutput = output.case_results[0];
+    assert.equal(caseOutput.artifact_root, ".harness/evals/runs/" + caseOutput.run_id);
+    assert.ok(existsSync(join(consumer, caseOutput.result_path)));
+    assert.ok(existsSync(join(consumer, ".harness", "evals", "runs", "latest.json")));
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("malformed repo-local suite fails suite validation instead of case execution", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  try {
+    writeFileSync(join(consumer, ".evals", "suite.json"), "{\n", "utf8");
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.equal(output.requirement, "suite validation");
+    assert.match(output.errors.join("\n"), /JSON parse failed/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("incomplete repo-local suite fails suite validation instead of case execution", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  try {
+    writeFileSync(join(consumer, ".evals", "suite.json"), JSON.stringify({ schema_version: 1, suite_id: "incomplete-suite" }, null, 2) + "\n");
+    const result = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.equal(output.requirement, "suite validation");
+    assert.match(output.errors.join("\n"), /eval suite .*missing required property/);
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
 test("suite contract rejects traversal before executing cases", () => {
   const repo = makeRepo();
   const consumer = makeConsumerSuite(repo, { cases: ["../outside.case.json"] });
@@ -1665,6 +1726,7 @@ test("latest validation rejects missing latest schema fields before artifact rea
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
+    assert.equal(validation.latest_path, ".harness/evals/runs/latest.json");
     assert.deepEqual(validation.expected_context, {
       case_id: "pr-closeout",
       suite_id: "smoke",
@@ -1693,6 +1755,7 @@ test("check --json keeps proof-context fields when latest JSON is malformed", ()
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
+    assert.equal(validation.latest_path, ".harness/evals/runs/latest.json");
     assert.deepEqual(validation.expected_context, {
       case_id: "pr-closeout",
       suite_id: "smoke",
