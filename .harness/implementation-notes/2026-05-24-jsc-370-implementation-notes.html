@@ -143,9 +143,19 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 00:05 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 00:18 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 is back in active PR-review repair after CodeRabbit found proof-context edge cases; JSC-371 and JSC-372 remain stacked behind it, and JSC-369 remains parent reconciliation only. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
+
+  <h2>Architecture Answer</h2>
+  <p>Yes. This implementation should be built into the project&apos;s current deep modules wherever a current owner already exists. The architecture rule for this program is: use the existing owner module for an existing trust boundary, add a new owner only for a genuinely new contract, and keep callers thin enough that they sequence work rather than owning proof rules.</p>
+  <table>
+    <tr><th>Program Slice</th><th>Deep Module Placement</th><th>Why</th></tr>
+    <tr><td>JSC-370 latest/run trust boundary</td><td><code>src/lib/latest-run.js</code> and <code>src/lib/run-bundle.js</code></td><td>Latest proof context, pointer validation, run ID allocation, and artifact directory creation are existing proof-spine boundaries. A sidecar helper would split the authority and make false-success checks harder to reason about.</td></tr>
+    <tr><td>JSC-371 repo-local suite contract</td><td><code>src/lib/suite-contract.js</code> plus existing schema, case, path, run-bundle, and latest owners</td><td>The only new concept is suite normalization. Execution, case parsing, artifact allocation, schema validation, and latest validation stay with the current owners.</td></tr>
+    <tr><td>JSC-372 claim/evidence packet</td><td><code>src/lib/claim-evidence-contract.js</code> plugged into <code>src/lib/runtime-state.js</code>, <code>src/lib/runtime-evidence-contract.js</code>, and <code>src/lib/schema.js</code></td><td>Claim/evidence sufficiency is a new contract, so it gets one owner. Runtime state and policy-family truth are not reimplemented.</td></tr>
+    <tr><td>JSC-369 parent closeout</td><td>Closure evidence and PR/validation artifacts only</td><td>The parent slice reconciles child proof; it should not introduce runtime authority or a second implementation path.</td></tr>
+  </table>
 
   <h2>Current Slice</h2>
   <table>
@@ -300,8 +310,8 @@
     </tr>
     <tr>
       <td>2026-05-24</td>
-      <td>Use a self-refreshing local HTML file as the running implementation notebook.</td>
-      <td>Jamie asked to see decisions as they happen. Self-refresh keeps the page readable and current without adding a dev server or runtime dependency.</td>
+      <td>Use a localhost-served HTML file as the running implementation notebook.</td>
+      <td>Jamie asked to see decisions as they happen. The committed artifact is static for review stability; the browser copy can be refreshed manually as the notebook changes.</td>
     </tr>
     <tr>
       <td>2026-05-24</td>
