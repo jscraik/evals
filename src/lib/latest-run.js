@@ -8,6 +8,9 @@ import { insideRepo, rel, repoRelativePath } from "./paths.js";
 import { schemaCheck, schemaCheckFromObject } from "./schema.js";
 import { validateTraceEventsFile } from "./trace-events.js";
 
+const DEFAULT_CONTEXT_RECOVERY_COMMAND = "pnpm evals run fixtures/smoke/pr-closeout.case.json --json";
+const CONTEXT_KEYS = ["case_id", "suite_id", "execution_mode"];
+
 /**
  * Validates a case JSON file against the "case" schema.
  * @param {string} casePath - Repository-relative or absolute path to the case JSON file.
@@ -20,6 +23,10 @@ export function validateCaseFile(casePath) {
 /**
  * Validate a "latest" run JSON file and the files it references inside the repository.
  * @param {string} latestPath - Path to the "latest" JSON (repo-relative or user-provided path resolved into the repo).
+ * @param {Object} [options] - Optional validation controls.
+ * @param {Object|null} [options.expectedContext] - Expected latest proof context for callers that need to bind latest to a specific case and suite.
+ * @param {boolean} [options.validateTraceEvents] - Set to false while validating a candidate before final trace validation is written.
+ * @param {string} [options.recoveryCommand] - Command to report when expected latest proof context does not match the observed pointer.
  * @returns {{status: ("passed"|"failed"), latest_path: string, run_id: (string|undefined), checks: Array, errors: string[]}}
  *   An object with:
  *   - `status`: `"passed"` when no validation errors were found, `"failed"` otherwise.
@@ -27,6 +34,7 @@ export function validateCaseFile(casePath) {
  *   - `run_id`: the `run_id` value extracted from the parsed "latest" JSON, or `undefined` if absent.
  *   - `checks`: array of schema check results produced for any referenced files (e.g. result, manifest, scorers, baseline).
  *   - `errors`: list of human-readable validation error messages collected during processing.
+ *   - proof-context fields when options.expectedContext is supplied.
  */
 export function validateLatestRun(latestPath, options = {}) {
   const absoluteLatestPath = insideRepo(latestPath);
@@ -35,11 +43,23 @@ export function validateLatestRun(latestPath, options = {}) {
   try {
     latest = readJson(absoluteLatestPath);
   } catch (error) {
-    return { status: "failed", errors: [error.message], checks: [] };
+    const proofComparison = options.expectedContext
+      ? compareProofContext(options.expectedContext, null, options.recoveryCommand)
+      : null;
+    return {
+      status: "failed",
+      errors: [error.message],
+      checks: [],
+      ...proofContextFields(proofComparison)
+    };
   }
 
   const checks = [schemaCheckFromObject("latest", latest, absoluteLatestPath)];
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
+
+  const proofComparison = options.expectedContext
+    ? compareProofContext(options.expectedContext, observedProofContextFromLatest(latest), options.recoveryCommand)
+    : null;
 
   if (errors.length > 0) {
     return {
@@ -47,8 +67,25 @@ export function validateLatestRun(latestPath, options = {}) {
       latest_path: rel(absoluteLatestPath),
       run_id: latest.run_id,
       checks,
-      errors
+      errors,
+      ...proofContextFields(proofComparison)
     };
+  }
+
+  if (proofComparison) {
+    const check = proofContextCheck(proofComparison, rel(absoluteLatestPath));
+    checks.push(check);
+    errors.push(...check.errors.map((error) => check.label + " " + error));
+    if (!proofComparison.context_match) {
+      return {
+        status: "failed",
+        latest_path: rel(absoluteLatestPath),
+        run_id: latest.run_id,
+        checks,
+        errors,
+        ...proofContextFields(proofComparison)
+      };
+    }
   }
 
   const latestPaths = {};
@@ -105,6 +142,90 @@ export function validateLatestRun(latestPath, options = {}) {
     latest_path: rel(absoluteLatestPath),
     run_id: latest.run_id,
     checks,
+    errors,
+    ...proofContextFields(proofComparison)
+  };
+}
+
+function proofContextFields(comparison) {
+  if (!comparison) {
+    return {};
+  }
+
+  return {
+    expected_context: comparison.expected_context,
+    observed_latest_context: comparison.observed_latest_context,
+    context_match: comparison.context_match,
+    context_mismatch_reason: comparison.context_mismatch_reason,
+    recovery_command: comparison.recovery_command
+  };
+}
+
+export function expectedProofContextFromCase(testCase) {
+  return {
+    case_id: testCase.case_id,
+    suite_id: testCase.suite_id,
+    execution_mode: testCase.execution_mode || "synthetic"
+  };
+}
+
+function observedProofContextFromLatest(latest) {
+  if (!latest) {
+    return null;
+  }
+
+  return {
+    case_id: latest.case_id,
+    suite_id: latest.suite_id,
+    execution_mode: latest.execution_mode
+  };
+}
+
+function compareProofContext(expectedContext, observedContext, recoveryCommand = DEFAULT_CONTEXT_RECOVERY_COMMAND) {
+  const reason = proofContextMismatchReason(expectedContext, observedContext);
+  return {
+    expected_context: expectedContext || null,
+    observed_latest_context: observedContext || null,
+    context_match: reason === null,
+    context_mismatch_reason: reason,
+    recovery_command: reason === null ? null : recoveryCommand
+  };
+}
+
+function proofContextMismatchReason(expectedContext, observedContext) {
+  if (!expectedContext) {
+    return "expected_context_missing";
+  }
+  if (!observedContext) {
+    return "observed_latest_context_missing";
+  }
+
+  for (const key of CONTEXT_KEYS) {
+    if (expectedContext[key] !== observedContext[key]) {
+      return key + "_mismatch";
+    }
+  }
+
+  return null;
+}
+
+function proofContextCheck(comparison, dataPath) {
+  const errors = comparison.context_match
+    ? []
+    : [
+        "latest proof context mismatch: expected " +
+          JSON.stringify(comparison.expected_context) +
+          " but observed " +
+          JSON.stringify(comparison.observed_latest_context) +
+          "; recovery: " +
+          comparison.recovery_command
+      ];
+
+  return {
+    label: "latest proof context",
+    schema_path: "latest proof context",
+    data_path: dataPath,
+    status: comparison.context_match ? "pass" : "fail",
     errors
   };
 }
@@ -131,10 +252,15 @@ function latestConsistencyErrors(latest, manifest, result, baseline) {
 
   if (manifest.run_id !== latest.run_id) errors.push("manifest.run_id: expected " + latest.run_id + ", got " + manifest.run_id);
   if (manifest.case_id !== latest.case_id) errors.push("manifest.case_id: expected " + latest.case_id + ", got " + manifest.case_id);
+  const expectedArtifactRoot = ".harness/evals/runs/" + latest.run_id;
+  if (latest.artifact_root !== expectedArtifactRoot) {
+    errors.push("latest.artifact_root: expected " + expectedArtifactRoot + " for run_id " + latest.run_id + ", got " + latest.artifact_root);
+  }
 
   if (result) {
     if (result.run_id !== latest.run_id) errors.push("result.run_id: expected " + latest.run_id + ", got " + result.run_id);
     if (result.case_id !== latest.case_id) errors.push("result.case_id: expected " + latest.case_id + ", got " + result.case_id);
+    if (result.suite_id !== latest.suite_id) errors.push("result.suite_id: expected " + latest.suite_id + ", got " + result.suite_id);
     if (result.execution_mode !== latest.execution_mode) errors.push("result.execution_mode: expected " + latest.execution_mode + ", got " + result.execution_mode);
     if (result.scorer_results_path !== latest.scorer_results_path) {
       errors.push("result.scorer_results_path: expected " + latest.scorer_results_path + ", got " + result.scorer_results_path);

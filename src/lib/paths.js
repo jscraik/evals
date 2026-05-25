@@ -1,3 +1,4 @@
+import { existsSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,10 +31,23 @@ export function rel(path) {
  */
 export function insideRepo(path) {
   const absolutePath = resolve(repoRoot, path);
-  if (absolutePath !== repoRoot && !absolutePath.startsWith(repoRoot + sep)) {
+  const realRoot = realpathSync.native(repoRoot);
+  const realPath = realpathForContainment(absolutePath);
+  if (realPath !== realRoot && !realPath.startsWith(realRoot + sep)) {
     throw new Error("path must be inside the evals repository: " + path);
   }
   return absolutePath;
+}
+
+function realpathForContainment(path) {
+  if (existsSync(path)) {
+    return realpathSync.native(path);
+  }
+  const parent = dirname(path);
+  if (parent === path) {
+    return path;
+  }
+  return join(realpathForContainment(parent), path.slice(parent.length + 1));
 }
 
 /**

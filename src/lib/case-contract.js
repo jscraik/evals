@@ -71,7 +71,7 @@ export function validateCaseContract(casePath, testCase) {
 /**
  * Validate a case file using the same schema and policy contract enforced by the run command.
  * @param {string} casePath - Absolute or repository-relative path to the case file.
- * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[]}} Validation check.
+ * @returns {{label: string, schema_path: string, data_path: string, status: "pass" | "fail", errors: string[], testCase?: object}} Validation check.
  */
 export function validateCaseFileContract(casePath) {
   const absoluteCasePath = insideRepo(casePath);
@@ -84,11 +84,13 @@ export function validateCaseFileContract(casePath) {
   }
   const policyErrors = validateCase(absoluteCasePath, testCase);
   const errors = check.errors.concat(policyErrors);
-  return {
+  const result = {
     ...check,
     status: errors.length === 0 ? "pass" : "fail",
     errors
   };
+  Object.defineProperty(result, "testCase", { value: testCase, enumerable: false });
+  return result;
 }
 
 /**

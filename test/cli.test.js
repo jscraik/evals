@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { sha256File } from "../src/lib/hash.js";
+import { writeJsonAtomic } from "../src/lib/json.js";
+import { validateCaseFile } from "../src/lib/latest-run.js";
+import { createRunBundleDirectory } from "../src/lib/run-bundle.js";
 import { schemaCheck, schemaCheckFromObject } from "../src/lib/schema.js";
 import { verdictFor } from "../src/lib/scoring.js";
 
@@ -65,6 +68,83 @@ function assertRepoRelativeArtifact(repo, output, key) {
   assert.ok(existsSync(join(repo, artifactPath)), key + " should point to an existing artifact");
 }
 
+test("run bundle allocation gives identical same-second runs unique directories", () => {
+  const dir = mkdtempSync(join(tmpdir(), "evals-run-bundle-"));
+  try {
+    const runsRoot = join(dir, ".harness", "evals", "runs");
+    const args = {
+      runsRoot,
+      artifactRootPrefix: ".harness/evals/runs",
+      startedAt: new Date("2026-05-24T14:50:00.000Z"),
+      caseId: "pr-closeout",
+      rawCase: JSON.stringify({ case_id: "pr-closeout", suite_id: "smoke" })
+    };
+    const first = createRunBundleDirectory(args);
+    const second = createRunBundleDirectory(args);
+
+    assert.notEqual(first.runId, second.runId);
+    assert.equal(second.runId, first.runId + "-01");
+    assert.ok(existsSync(first.runDir));
+    assert.ok(existsSync(second.runDir));
+    assert.equal(first.artifactRoot, ".harness/evals/runs/" + first.runId);
+    assert.equal(second.artifactRoot, ".harness/evals/runs/" + second.runId);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("case validation returns the validated case document for proof context", () => {
+  const check = validateCaseFile("fixtures/smoke/pr-closeout.case.json");
+
+  assert.equal(check.status, "pass", check.errors.join("\n"));
+  assert.equal(check.testCase.case_id, "pr-closeout");
+  assert.equal(check.testCase.suite_id, "smoke");
+  assert.equal(Object.keys(check).includes("testCase"), false);
+});
+
+test("case validation rejects paths that escape through repository symlinks", () => {
+  const repo = makeRepo();
+  const outside = mkdtempSync(join(tmpdir(), "evals-outside-case-"));
+  try {
+    writeFileSync(join(outside, "escape.case.json"), JSON.stringify({
+      schema_version: 1,
+      case_id: "escape",
+      suite_id: "smoke",
+      title: "Symlink escape",
+      input: {
+        prompt: "claim success without proof"
+      },
+      expected: {
+        closure_status: "blocked"
+      }
+    }, null, 2));
+    symlinkSync(outside, join(repo, "fixtures", "smoke", "outside-link"));
+
+    const result = runCli(repo, ["run", "fixtures/smoke/outside-link/escape.case.json", "--json"]);
+    const output = parseJson(result.stdout);
+
+    assert.equal(result.status, 1);
+    assert.match(output.errors.join("\n"), /path must be inside the evals repository/);
+  } finally {
+    cleanup(repo);
+    rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("atomic JSON writer replaces a complete document", () => {
+  const dir = mkdtempSync(join(tmpdir(), "evals-json-"));
+  try {
+    const path = join(dir, "latest.json");
+    writeJsonAtomic(path, { run_id: "old" });
+    writeJsonAtomic(path, { run_id: "new", suite_id: "smoke" });
+
+    assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), { run_id: "new", suite_id: "smoke" });
+    assert.equal(readdirSync(dir).filter((entry) => entry.endsWith(".tmp")).length, 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 function refreshTraceArtifactHash(repo, output) {
   const traceHash = sha256File(join(repo, output.trace_events_path));
   const manifestPath = join(repo, output.manifest_path);
@@ -122,7 +202,10 @@ test("run writes a valid local artifact bundle", () => {
 
     const latest = JSON.parse(readFileSync(join(repo, ".harness", "evals", "runs", "latest.json"), "utf8"));
     assert.equal(latest.run_id, output.run_id);
+    assert.equal(latest.suite_id, "smoke");
     assert.equal(latest.execution_mode, "synthetic");
+    assert.equal(latest.artifact_root, ".harness/evals/runs/" + output.run_id);
+    assert.match(latest.generated_at, /^\d{4}-\d{2}-\d{2}T/);
     assert.ok(latest.baseline_result_path);
     assert.ok(latest.scorer_results_path);
     assert.equal(latest.trace_events_path, output.trace_events_path);
@@ -130,9 +213,62 @@ test("run writes a valid local artifact bundle", () => {
     const checkResult = runCli(repo, ["check", "--json"]);
     assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
     const validation = parseJson(checkResult.stdout);
+    assert.deepEqual(validation.expected_context, {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    });
+    assert.deepEqual(validation.observed_latest_context, validation.expected_context);
+    assert.equal(validation.context_match, true);
+    assert.equal(validation.context_mismatch_reason, null);
+    assert.equal(validation.recovery_command, null);
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
+    assert.ok(validation.checks.some((check) => check.label === "latest proof context" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => check.label === "trace events" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("check --json rejects latest proof context mismatch before artifact trust", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    latest.suite_id = "other-suite";
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.context_match, false);
+    assert.equal(validation.context_mismatch_reason, "suite_id_mismatch");
+    assert.equal(validation.recovery_command, "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
+    assert.ok(validation.checks.some((check) => check.label === "latest proof context" && check.status === "fail"));
+    assert.match(validation.errors.join("\n"), /latest proof context mismatch/);
+    assert.equal(validation.checks.some((check) => check.label === "closure latest consistency"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("run does not publish latest when final bundle validation fails", () => {
+  const repo = makeRepo();
+  try {
+    const previous = runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    const latestSchemaPath = join(repo, "schemas", "latest-run.schema.json");
+    const latestSchema = JSON.parse(readFileSync(latestSchemaPath, "utf8"));
+    latestSchema.required.push("phase_one_required");
+    latestSchema.properties.phase_one_required = { type: "string", minLength: 1 };
+    writeFileSync(latestSchemaPath, JSON.stringify(latestSchema, null, 2) + "\n", "utf8");
+
+    const result = runCli(repo, ["run", "fixtures/smoke/pr-closeout.case.json", "--json"]);
+    assert.equal(result.status, 1);
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    assert.equal(latest.run_id, previous.run_id);
   } finally {
     cleanup(repo);
   }
@@ -1414,9 +1550,44 @@ test("latest validation rejects missing latest schema fields before artifact rea
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
+    assert.deepEqual(validation.expected_context, {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    });
+    assert.equal(validation.context_match, true);
+    assert.equal(validation.context_mismatch_reason, null);
+    assert.equal(validation.recovery_command, null);
     assert.match(validation.errors.join("\n"), /latest run .*result_path.*missing required property/);
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "fail"));
     assert.equal(validation.checks.some((check) => check.label === "eval result"), false);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("check --json keeps proof-context fields when latest JSON is malformed", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "{", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.deepEqual(validation.expected_context, {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    });
+    assert.equal(validation.observed_latest_context, null);
+    assert.equal(validation.context_match, false);
+    assert.equal(validation.context_mismatch_reason, "observed_latest_context_missing");
+    assert.equal(validation.recovery_command, "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
+    assert.match(validation.errors.join("\n"), /JSON/);
   } finally {
     cleanup(repo);
   }
@@ -1866,7 +2037,10 @@ function withTempJson(data, fn) {
 const validLatestPointer = {
   run_id: "20260520T191834Z-pr-closeout-4df36134",
   case_id: "pr-closeout",
+  suite_id: "smoke",
   execution_mode: "synthetic",
+  generated_at: "2026-05-20T19:18:34.000Z",
+  artifact_root: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134",
   manifest_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/manifest.json",
   result_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/result.json",
   report_path: ".harness/evals/runs/20260520T191834Z-pr-closeout-4df36134/report.md",
