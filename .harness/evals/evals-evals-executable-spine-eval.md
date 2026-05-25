@@ -7,7 +7,7 @@ linear_status: override_approved
 run_id: 20260518T212318Z-pr-closeout-f8d3bda9
 git_status: pushed_to_origin_main
 jsc_369_status: complete_live_linear_done
-jsc_369_latest_validation_run_id: 20260525T173446Z-pr-closeout-4df36134-01
+jsc_369_latest_validation_run_id: 20260525T175526Z-pr-closeout-4df36134-01
 ---
 
 # Evals Executable Spine Closure Eval
@@ -97,7 +97,7 @@ and GitHub review threads are resolved.
 | JSC-370 | implemented, validated, committed, pushed, and merged | PR #15 merged to `main` at `5698723aad345f7eb34ecf4bbe36d42a04018519`; deterministic-gates, Semgrep, Socket, and Snyk passed. CodeRabbit status is FAILURE due review-credit exhaustion, but no emitted review thread remains unresolved. | Linear JSC-370 is Done; attachments include PR #15, parent PR #18, and PR #19. | closed; false-success/latest proof context slice is merged and tracker-reconciled |
 | JSC-371 | implemented, validated, committed, pushed, and merged | PR #16 merged to `main` at `a0712cf2940962281bcc75db992e4451a604f6e6`; deterministic-gates, Semgrep, Socket, and Snyk passed. CodeRabbit status is FAILURE due review-credit exhaustion, but no emitted review thread remains unresolved. | Linear JSC-371 is Done; attachments include PR #16 and parent PR #18. | closed; repo-local suite contract is merged and tracker-reconciled |
 | JSC-372 | implemented, validated, committed, pushed, and merged through the JSC-371 stack | PR #17 merged into `codex-jsc-371-repo-local-suite-contract` at `c4d6a088e5a66cd465849998b191f7a5413528d7`; the stack later merged through PR #16. Hosted deterministic-gates, Semgrep, Socket, and Snyk passed; CodeRabbit status is review-credit blocked on the historical PR view, with no unresolved review thread after the final sweep. | Linear JSC-372 is Done; attachments include PR #17 and parent PR #18. | closed; claim/evidence and runtime evidence packet v1 are merged and tracker-reconciled |
-| JSC-369 | parent reconciliation complete on top of merged main | PR #18 merged into the JSC-371 stack at `0965fbbbf0fe899e9c422f48560ab03d545865bc`, then reached `main` through PR #16. PRs #15 through #20 are merged. Final thread audit returned unresolved `[]` for PRs #15, #16, #17, #18, #19, and #20. | Linear JSC-369 is Done; attachment includes PR #18. | closed; parent queue reconciled after child PRs, tracker state, local validation, and review-thread state were rechecked |
+| JSC-369 | parent reconciliation complete on top of merged main | PR #18 merged into the JSC-371 stack at `0965fbbbf0fe899e9c422f48560ab03d545865bc`, then reached `main` through PR #16. PR #21 merged the final closeout evidence to `main` at `dd7ef7014b9acd9577ed69fcbfdb037b679e4ee1`. PRs #15 through #21 are merged. Final thread audit returned unresolved `[]` for PRs #15, #16, #17, #18, #19, #20, and #21. | Linear JSC-369 is Done; attachments include PR #18 and PR #21. | closed; parent queue reconciled after child PRs, tracker state, local validation, and review-thread state were rechecked |
 
 ### Deep Module Architecture Decision
 
@@ -133,8 +133,8 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | JSC-369 merged-main validation | pnpm evals run fixtures/smoke/pr-closeout.case.json --json | pass | wrote proof bundle `.harness/evals/runs/20260525T171640Z-pr-closeout-4df36134` during the direct run |
 | JSC-369 merged-main validation | pnpm evals check --json | pass | latest proof context matched expected `case_id=pr-closeout`, `suite_id=smoke`, and `execution_mode=synthetic`; runtime evidence policy coverage passed |
 | JSC-369 merged-main validation | pnpm evals state --json | pass | emitted runtime evidence packet v1 with `runtime_state.status=ready`, `contract_health.runtime_evidence.status=ready`, no blockers, and recommended commands `pnpm evals check --json` and `pnpm verify` |
-| JSC-369 merged-main validation | pnpm verify | pass | aggregate gate passed and wrote latest proof bundle `.harness/evals/runs/20260525T173446Z-pr-closeout-4df36134-01` |
-| Latest artifact bundle | latest.json plus run-local artifacts | pass | latest pointer names `run_id=20260525T173446Z-pr-closeout-4df36134-01`, result, report, command log, manifest, scorer results, baseline result, and trace timeline |
+| JSC-369 merged-main validation | pnpm verify | pass | aggregate gate passed and wrote latest proof bundle `.harness/evals/runs/20260525T175526Z-pr-closeout-4df36134-01` |
+| Latest artifact bundle | latest.json plus run-local artifacts | pass | latest pointer names `run_id=20260525T175526Z-pr-closeout-4df36134-01`, result, report, command log, manifest, scorer results, baseline result, and trace timeline |
 | Deterministic scorer verdicts | scorer-results.json | pass | exit-code, required-output, artifact-completeness, and baseline-presence scorers all pass |
 | Baseline state | baseline-result.json | pass | `presence_status=missing`, `comparison_status=not_compared`, and `promotion_status=not_requested`; no promotion was attempted |
 | GitHub review-thread recheck | gh GraphQL reviewThreads for PRs #15-#20 | pass | unresolved review-thread list was `[]` for every PR in the parent queue and follow-up review-thread cleanup PRs |
@@ -144,7 +144,7 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 
 ### Remaining Deferrals / Blockers
 
-- CodeRabbit status contexts on PRs #15, #16, #17, #19, and #20 remain historical
+- CodeRabbit status contexts on PRs #15, #16, #17, #19, #20, and #21 remain historical
   review-credit or review-limit failures. They are classified as external
   capacity signals because GitHub review threads are resolved and no emitted
   actionable finding remains unresolved.
@@ -364,199 +364,25 @@ branch, PR creation is not applicable for the current branch. Tracker closure is
 claimed only through the Jamie-approved override, not through a live Linear
 issue.
 
-## 2026-05-25 JSC-369 Parent Reconciliation Addendum
 
-This addendum records the current proof-spine suite-contract parent state. It
-does not replace the earlier phase-one closure evidence above.
+## Superseded Parent-State Snapshots
 
-### Current Scope
+Earlier May 25 parent-state refreshes recorded temporary states where PRs #15
+through #18 were open, some CodeRabbit contexts were blocked by review credits,
+and Linear still showed JSC-369 through JSC-372 as In Progress/In Review. Those
+snapshots are historical only and are superseded by the final JSC-369 addendum
+above.
 
-Parent issue:
+Current authority for parent closeout is:
 
-- JSC-369: Close 2026-05-24 proof-spine and suite-contract gaps.
+- PR #21 merged final closeout evidence to `main` at
+  `dd7ef7014b9acd9577ed69fcbfdb037b679e4ee1`.
+- PRs #15, #16, #17, #18, #19, #20, and #21 are merged.
+- GitHub GraphQL `pullRequest.reviewThreads` returned zero unresolved threads
+  for the parent queue and follow-up cleanup PRs.
+- JSC-369, JSC-370, JSC-371, and JSC-372 are Done in Linear.
+- The latest parent validation evidence remains
+  `.harness/evals/runs/20260525T175526Z-pr-closeout-4df36134-01/`.
 
-Child implementation slices:
-
-- JSC-370: latest proof context, collision-resistant run IDs, latest
-  publication ordering, and `check --json` proof-context fields.
-- JSC-371: neutral repo-local suite schema, suite-root resolver, evaluated-repo
-  artifact root behavior, network fail-closed policy, and data-only scorer
-  references.
-- JSC-372: claim/evidence schemas, missing-evidence scorer, runtime evidence
-  packet v1, and scaffolded-family compatibility.
-
-Parent closeout slice:
-
-- JSC-369: reconcile child states, validation commands, artifact paths, PR
-  states, tracker truth, docs/AGENTS checks, and remaining deferrals.
-
-### Current Validation Evidence
-
-| Command / Check | Status | Evidence |
-| --- | --- | --- |
-| `pnpm evals check --json` | pass | Validated latest run `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01/`. Output reported `status: passed`, `context_match: true`, latest consistency pass, schema pass for result/manifest/scorer/baseline/trace artifacts, and runtime-evidence checks pass. |
-| `pnpm verify` | pass | Coordinator ran the full local gate and generated proof bundles `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134/` and `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01/`. |
-| Latest pointer | pass | `.harness/evals/runs/latest.json` points to `20260525T083915Z-pr-closeout-4df36134-01` with case `pr-closeout`, suite `smoke`, execution mode `synthetic`, and artifact root `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01`. |
-| Manifest artifact hashes | pass | Latest manifest lists hashed result, report, command-log, scorer-results, baseline-result, and trace-events artifacts. |
-| Deterministic scorer verdicts | pass | Latest `scorer-results.json` records pass verdicts for `exit-code`, `required-output`, `artifact-completeness`, and `baseline-presence`. |
-| Baseline state | pass / not promoted | Latest `baseline-result.json` records `presence_status: missing`, `comparison_status: not_compared`, and `promotion_status: not_requested`, matching smoke fixture expectations. |
-| Runtime evidence | pass with scaffolded families visible | `pnpm evals check --json` reports implemented-enforced runtime evidence families and scaffolded-not-enforced families explicitly. Telemetry remains explanatory, not authority. |
-| Delivery-state audit artifact | pass with coverage caveat | `artifacts/reviews/jsc-369-delivery-state-audit.md` records file-backed delivery-state evidence. The original delivery-state subagent returned mailbox text but did not write the required artifact, so this remains a reviewer artifact coverage gap rather than a subagent approval. |
-
-### Current PR State
-
-Live GitHub checks at 2026-05-25 09:37 BST:
-
-| PR | Branch | Base | State | Checks | Closeout Meaning |
-| --- | --- | --- | --- | --- | --- |
-| #15 | `codex-jsc-370-latest-proof-context` | `main` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | JSC-370 is implementation-ready but not merged. |
-| #16 | `codex-jsc-371-repo-local-suite-contract` | `main` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | JSC-371 is implementation-ready but not merged. |
-| #17 | `codex-jsc-372-claim-evidence-runtime-packet` | `codex-jsc-371-repo-local-suite-contract` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | JSC-372 is implementation-ready but not merged. |
-| #18 | `codex-jsc-369-parent-closeout` | `codex-jsc-372-claim-evidence-runtime-packet` | OPEN, draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | Parent reconciliation remains intentionally draft until child PR disposition is decided. |
-
-### Current Tracker State
-
-Live Linear state at 2026-05-25 09:37 BST:
-
-| Issue | Status | Meaning |
-| --- | --- | --- |
-| JSC-369 | In Progress | Parent closeout is not complete. |
-| JSC-370 | In Review | Child implementation is not complete in tracker truth. |
-| JSC-371 | In Review | Child implementation is not complete in tracker truth. |
-| JSC-372 | In Review | Child implementation is not complete in tracker truth. |
-
-### Documentation And Instruction Evidence
-
-The current parent branch contains non-empty documentation/instruction review
-artifacts:
-
-- `artifacts/reviews/evals-proof-spine-docs-expert.md`
-- `artifacts/reviews/evals-proof-spine-agents-md.md`
-
-Documentation and AGENTS accuracy therefore has file-backed review evidence,
-but final closeout still requires PR stack disposition and tracker truth to
-match the chosen disposition.
-
-### Remaining Blockers
-
-| Blocker | Classification | Required Recovery |
-| --- | --- | --- |
-| Child PRs #15, #16, and #17 remain open. | external_state | Merge in an explicit stack order or record owner-approved deferral/supersession with recovery command. |
-| Parent PR #18 remains draft. | external_state | Undraft only after child disposition and parent closeout criteria are reconciled. |
-| Linear issues remain In Progress/In Review. | tracker_state | Mutate tracker state only after GitHub disposition matches reality. |
-| GitHub review-thread closure count is not proven. | verification_gap | Run a dedicated unresolved-thread query for PRs #15-#18, or record the exact access/tool blocker. |
-| Original delivery-state subagent did not write its required artifact. | coverage_gap | Keep `artifacts/reviews/jsc-369-delivery-state-audit.md` as coordinator file-backed audit and do not represent the subagent as approving the slice. |
-
-### Current Closeout Classification
-
-JSC-369 is not complete. The current state is green/open: local validation and
-remote checks are passing, but live delivery state still requires PR stack
-disposition, tracker reconciliation, and review-thread closure proof before the
-parent can be claimed complete.
-
-## 2026-05-25 11:00 BST Parent State Refresh
-
-This refresh supersedes the earlier green/open PR snapshot for the current
-remote branch heads. It is not a completion claim.
-
-### Current PR Truth
-
-| PR | Issue | Head | State | Check Truth | Closeout Impact |
-| --- | --- | --- | --- | --- | --- |
-| #15 | JSC-370 | `e9cbf6e062c745d027bdda1a61d5d6de69defe46` | OPEN, not draft, mergeable, `UNSTABLE` | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` | Child is not merge-ready; parent cannot close. |
-| #16 | JSC-371 | `cbd403395483f304470186a450a28c89c0954a87` | OPEN, not draft, mergeable, `UNSTABLE` | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` | Child is not merge-ready; parent cannot close. |
-| #17 | JSC-372 | `9ccab91879ce0701a1149ca3d6a9e722c9d42340` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Semgrep, Socket, Snyk security, and Snyk license pass | Child is green but still open. |
-| #18 | JSC-369 | parent evidence branch | OPEN, draft; live checks re-run after each evidence commit | latest committed evidence records prior green checks, but the final PR state must be rechecked after the last parent evidence push | Parent remains draft and not complete until the child stack and final live checks are reconciled. |
-
-### Current Tracker Truth
-
-| Issue | Linear Status | Closeout Impact |
-| --- | --- | --- |
-| JSC-369 | In Progress | Parent tracker does not support completion. |
-| JSC-370 | In Review | Child tracker does not support completion. |
-| JSC-371 | In Review | Child tracker does not support completion. |
-| JSC-372 | In Review | Child tracker does not support completion. |
-
-### Current Blocker Classification
-
-| Blocker | Classification | Recovery |
-| --- | --- | --- |
-| PR #15 CodeRabbit status is failing. | external_tooling or unresolved_review_check | Inspect CodeRabbit output or rerun after service/credit recovery; do not merge or close JSC-370 while the required context is red. |
-| PR #16 CodeRabbit status is failing. | external_tooling or unresolved_review_check | Inspect CodeRabbit output or rerun after service/credit recovery; do not merge or close JSC-371 while the required context is red. |
-| PR #18 remains draft and its checks can be invalidated by parent evidence commits. | lifecycle_blocker | Recheck live PR #18 after the final evidence push; undraft only after child PR disposition, tracker truth, and review coverage are reconciled. |
-| PR #15, #16, #17, and #18 remain open. | lifecycle_blocker | Merge in stack order or record explicit owner-approved deferrals with recovery commands. |
-| Linear issues are In Progress/In Review. | tracker_state | Mutate Linear only after GitHub disposition matches reality. |
-
-### Commands Rechecked
-
-- `gh pr view 15 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
-- `gh pr view 16 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
-- `gh pr view 17 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
-- `gh pr view 18 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
-- `gh pr checks 18` -> pass before the later parent evidence commit; after each parent evidence push, recheck because GitHub starts a new check set.
-- `mcp__linear__get_issue` for JSC-369, JSC-370, JSC-371, and JSC-372 -> pass.
-
-### Current Classification
-
-JSC-369 remains active and incomplete. Parent checks must be live-rechecked
-after the final evidence push, and the goal cannot be marked complete until
-child PRs, PR #15/#16 CodeRabbit failures, tracker state, and review/coverage
-gaps are reconciled or explicitly deferred by the owner with a recovery path.
-
-## 2026-05-25 12:02 BST Parent State Refresh
-
-This refresh supersedes earlier current-state tables for the remote heads that
-were live at the time of this check. It is not a completion claim.
-
-### Current PR Truth
-
-| PR | Issue | Head | State | Check Truth | Closeout Impact |
-| --- | --- | --- | --- | --- | --- |
-| #15 | JSC-370 | `0649d5e75c385eeea69b5e1e5d715d06e987c975` | OPEN, not draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` with `Insufficient review credits` after the implementation-notes visual update | Child remains externally review-blocked; do not merge or close JSC-370 without CodeRabbit recovery or explicit owner-approved deferral/exception. |
-| #16 | JSC-371 | `41be55b2ed9128010934176a6d1a4a3e65e04297` | OPEN, not draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` with `Insufficient review credits` | Child remains externally review-blocked; do not merge or close JSC-371 without CodeRabbit recovery or explicit owner-approved deferral/exception. |
-| #17 | JSC-372 | `818232b38d5f4448c11b6040d6d91a99fccd9f78` | OPEN, not draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit status pass; CodeRabbit reports review skipped on the stacked non-default base | Child is check-clean but still open and stacked on JSC-371. |
-| #18 | JSC-369 | `63184be89770969762b970e7965e5746d23303bf` | OPEN, draft, mergeable | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit status pass; CodeRabbit reports review skipped on the stacked non-default base | Parent PR is check-clean at this head but intentionally draft; parent cannot close until child PR disposition, tracker truth, docs/AGENTS evidence, and final live checks are reconciled. |
-
-### Current Blocker Classification
-
-| Blocker | Classification | Recovery |
-| --- | --- | --- |
-| PR #15 CodeRabbit status is failing because external review credits are exhausted. | external_tooling | Restore/replenish CodeRabbit credits and rerun/recheck the check, or obtain explicit owner approval to defer/except the automated review gate with recovery command. |
-| PR #16 CodeRabbit status is failing because external review credits are exhausted. | external_tooling | Restore/replenish CodeRabbit credits and rerun/recheck the check, or obtain explicit owner approval to defer/except the automated review gate with recovery command. |
-| PR #17 is green but stacked on the still-blocked JSC-371 branch. | lifecycle_dependency | Advance JSC-371 first or rebase/restack only after the lower child disposition is decided. |
-| PR #18 remains draft. | lifecycle_blocker | Keep draft until child PR disposition and parent closeout criteria are reconciled; recheck live PR #18 after the final evidence push. |
-| Linear issues remain In Progress/In Review. | tracker_state | Mutate Linear only after GitHub disposition matches reality. |
-
-### Commands Rechecked
-
-- `gh pr view 15 --json headRefOid,statusCheckRollup,mergeable,state,isDraft,url` -> pass.
-- `gh pr checks 15` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
-- `gh pr view 16 --json headRefOid,state,isDraft,mergeable,url,statusCheckRollup` -> pass.
-- `gh pr checks 16` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
-- `gh pr view 17 --json headRefOid,state,isDraft,mergeable,url,statusCheckRollup` -> pass.
-- `gh pr checks 17` -> pass for visible checks.
-- `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
-- `gh pr checks 18` -> pass for visible checks.
-
-## 2026-05-25 12:06 BST Settled Hosted-Check Refresh
-
-This refresh records the settled hosted-check state after the parent evidence
-commit `831ac01f00dd8ffb1fc6a5953036952f64d8b903`.
-
-| PR | Issue | Current Result | Closeout Impact |
-| --- | --- | --- | --- |
-| #15 | JSC-370 | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit fails with `Insufficient review credits` at head `0649d5e75c385eeea69b5e1e5d715d06e987c975` | Child remains externally review-blocked. No merge or closeout claim without CodeRabbit recovery or explicit owner-approved deferral/exception. |
-| #16 | JSC-371 | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit fails with `Insufficient review credits` at head `41be55b2ed9128010934176a6d1a4a3e65e04297` | Child remains externally review-blocked. No merge or closeout claim without CodeRabbit recovery or explicit owner-approved deferral/exception. |
-| #17 | JSC-372 | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit pass at head `818232b38d5f4448c11b6040d6d91a99fccd9f78`; CodeRabbit reports review skipped on the stacked non-default base | Child is check-clean but remains open and stacked on blocked PR #16. |
-| #18 | JSC-369 | deterministic-gates, Semgrep, Socket, Snyk security, Snyk license, and CodeRabbit pass at head `831ac01f00dd8ffb1fc6a5953036952f64d8b903`; CodeRabbit reports review skipped on the stacked non-default base | Parent PR is check-clean but remains draft and cannot close before child disposition and tracker reconciliation. |
-
-### Settled Commands Rechecked
-
-- `gh pr checks 15` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
-- `gh pr view 15 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
-- `gh pr checks 16` -> fail due CodeRabbit external credit exhaustion; all other visible checks pass.
-- `gh pr view 16 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
-- `gh pr checks 17` -> pass for visible checks.
-- `gh pr view 17 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
-- `gh pr checks 18` -> pass for visible checks.
-- `gh pr view 18 --json number,state,isDraft,mergeable,reviewDecision,headRefOid,url,statusCheckRollup` -> pass.
+The superseded states are intentionally not repeated as current blocker tables
+because doing so would create false closeout evidence after the final merge.

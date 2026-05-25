@@ -1,7 +1,7 @@
 # JSC-369 Final Closeout PR Triage
 
 PR: https://github.com/jscraik/evals/pull/21  
-Repo/worktree: /private/tmp/evals-jsc369-final  
+Repo/worktree: `Author local worktree: <local-worktree-jsc369>`
 Branch: `codex-jsc-369-final-closeout`  
 Head commit: `1df53e1a4f70e24a1f5283f530be1986b0beedd1`
 
