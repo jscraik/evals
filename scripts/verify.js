@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 
 const credentialPatternSource = [
   "sk-[A-Za-z0-9_-]{20,}",
-  "(api[_-]?key|token|secret|password)\\s*[:=]\\s*[\\\"']?[A-Za-z0-9_./+=-]{16,}",
+  "(api[_-]?key|token|secret|password)\\s*[:=]\\s*[\"']?[A-Za-z0-9_./+=-]{16,}",
   "-{5}BEGIN (RSA|OPENSSH|PRIVATE) KEY-{5}"
 ].join("|");
 

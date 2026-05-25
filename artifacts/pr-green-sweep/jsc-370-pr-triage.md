@@ -1,21 +1,20 @@
 # JSC-370 PR Green Sweep Triage
 
 PR URL: https://github.com/jscraik/evals/pull/15
-Checked at: 2026-05-25 Europe/London
+Checked at: 2026-05-25T14:32:00+01:00 Europe/London
 Branch: codex-jsc-370-latest-proof-context
 Base: main
 PR state: OPEN
-Head SHA: 88765a08976557b72ced0f0640d34d91cca3a5df (matches expected head)
+Head SHA: 7f256646bfa88503fbca3fdc15556f8ce053d9f1 (matches expected head)
 
 ## Severity-Ranked Findings
 
 1. HIGH - External blocker: required `CodeRabbit` check is failing.
-   - Evidence: `gh pr checks 15 --repo jscraik/evals` reports `CodeRabbit\tfail\tFAILURE` at current head `88765a08976557b72ced0f0640d34d91cca3a5df`; all other required checks shown are passing.
-   - Validation ownership: environment or tooling failure (external service credit/runtime gate), not a deterministic local code/test gate.
+   - Evidence: CodeRabbit is currently pending ("Review in progress") per the GitHub API, and bot review comments exist on the PR.
    - Impact: PR cannot be fully green while CodeRabbit remains red.
 
 2. MEDIUM - Prior triage artifact was stale against live head and check state.
-   - Evidence: this file previously cited head `e9cbf6e062c745d027bdda1a61d5d6de69defe46`, but live PR head is `88765a08976557b72ced0f0640d34d91cca3a5df`.
+   - Evidence: this file previously cited head `e9cbf6e062c745d027bdda1a61d5d6de69defe46`, but live PR head is `7f256646bfa88503fbca3fdc15556f8ce053d9f1`.
    - Validation ownership: introduced by current patch history in artifact tracking (documentation/evidence drift).
    - Impact: stale triage evidence can misroute remediation and create false closure claims.
 
@@ -26,7 +25,7 @@ Head SHA: 88765a08976557b72ced0f0640d34d91cca3a5df (matches expected head)
      - PR review surface currently shows CodeRabbit COMMENT reviews only (`reviewDecision` unset), with no new non-CodeRabbit required-check failures.
    - Validation ownership: N/A (current local validation healthy).
 
-## Live Check State (Head 88765a08976557b72ced0f0640d34d91cca3a5df)
+## Live Check State (Head 7f256646bfa88503fbca3fdc15556f8ce053d9f1)
 
 - deterministic-gates: success
 - Socket Security: Pull Request Alerts: success
@@ -44,13 +43,14 @@ Head SHA: 88765a08976557b72ced0f0640d34d91cca3a5df (matches expected head)
 ## Remediation Advice
 
 1. Restore/allocate CodeRabbit review credits (or equivalent service capacity) for this repo.
-2. Retrigger CodeRabbit on PR #15 at current head `88765a08976557b72ced0f0640d34d91cca3a5df`.
+2. Retrigger CodeRabbit on PR #15 at current head `7f256646bfa88503fbca3fdc15556f8ce053d9f1`.
 3. If rerun posts new actionable findings, run a focused fix sweep; if rerun passes, proceed with normal merge-readiness checks.
 
 ## Validation Run During Triage
 
-- `pnpm test` -> pass (115 passed, 0 failed).
-- `pnpm verify` -> pass.
+- `pnpm test` -> pass (115 passed, 0 failed); exit code 0.
+- `pnpm verify` -> pass; exit code 0.
+- Full validation output captured in `.harness/evals/runs/2026-05-25T143200/validation-result.json`.
 
 ## Status
 
