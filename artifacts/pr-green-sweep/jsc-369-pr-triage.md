@@ -296,3 +296,27 @@ No issue was moved to `Done`. This aligns tracker state with the live PR stack
 without claiming parent completion.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
+## Final Coordinator Live Refresh - 2026-05-25 11:00 BST
+
+This final refresh in this artifact is authoritative for the current remote
+stack heads. Earlier snapshots remain as history.
+
+| PR | State | Check Truth | Parent Meaning |
+| --- | --- | --- | --- |
+| #15 / JSC-370 | OPEN, not draft, mergeable, `UNSTABLE`, head `e9cbf6e062c745d027bdda1a61d5d6de69defe46` | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` | Child is not merge-ready; parent cannot claim completion. |
+| #16 / JSC-371 | OPEN, not draft, mergeable, `UNSTABLE`, head `cbd403395483f304470186a450a28c89c0954a87` | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` | Child is not merge-ready; parent cannot claim completion. |
+| #17 / JSC-372 | OPEN, not draft, mergeable, `CLEAN`, head `9ccab91879ce0701a1149ca3d6a9e722c9d42340` | deterministic-gates, CodeRabbit, Semgrep, Socket, Snyk security, and Snyk license pass | Child is green but still open. |
+| #18 / JSC-369 | OPEN, draft, mergeable, `UNSTABLE`, head `d3ca642be616fa30bdc1e00c04285b7e6f86b12b` | deterministic-gates, CodeRabbit skipped/success, Socket, Snyk security, and Snyk license pass; Semgrep remains `IN_PROGRESS` | Parent remains draft and cannot close. |
+
+Linear state: JSC-369 is `In Progress`; JSC-370, JSC-371, and JSC-372 are
+`In Review`. No issue is Done.
+
+Commands rechecked: `gh pr view` for PRs #15-#18 -> pass;
+`gh pr checks 18 --watch --interval 10` -> blocked by timeout with Semgrep
+still pending; `mcp__linear__get_issue` for JSC-369 through JSC-372 -> pass.
+
+Current blockers: PR #15/#16 CodeRabbit failures, PR #18 pending Semgrep,
+open PR lifecycle, tracker state, and recorded coverage gaps.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
