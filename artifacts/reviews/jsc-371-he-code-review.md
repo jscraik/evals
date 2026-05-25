@@ -11,7 +11,7 @@ No blocking findings remain after local review and adversarial remediation.
 ## Required Reviewer Classification
 
 - @agent-native-reviewer finding: no first-class agent tool/capability surface exists for run, suite run, validate, check, or state. Classification: valid parent-program parity gap, deferred from JSC-371 because phase one explicitly blocks plugin systems, external adapter roots, and widened runtime authority. JSC-371 keeps the repo-native CLI contract and deep-module seams; a future agent-native surface should bind to these same owners rather than adding a parallel runner.
-- @adversarial-reviewer artifact status: first reviewer missed the required artifact after one retry. Classification: reviewer artifact gap; a replacement adversarial reviewer was launched to produce the required artifact against the remediated diff.
+- @adversarial-reviewer artifact status: first reviewer missed the required artifact after one retry; replacement adversarial reviewer produced the required artifact (artifacts/reviews/jsc-370-adversarial-reviewer.md). Classification: resolved.
 
 ## Reviewed Risk Surfaces
 
@@ -48,4 +48,4 @@ No blocking findings remain after local review and adversarial remediation.
 
 ## Verdict
 
-approve_local_review_pending_adversarial_artifact_retry
+approved

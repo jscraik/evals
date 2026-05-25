@@ -49,6 +49,12 @@
       "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134/trace-events.jsonl",
       "sha256": "724fee8077b3bc6f7613fc13e97a6ba8f5b0b08d82765e0ceb5d41fbc1caf756",
       "required": true
+    },
+    {
+      "type": "generated",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134/latest-candidate.json",
+      "sha256": "a5534f47ea53b28e6142cb7d3a202976036107a93fc2e83783358c0955016c5e",
+      "required": true
     }
   ]
 }

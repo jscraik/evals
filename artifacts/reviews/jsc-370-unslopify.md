@@ -29,6 +29,6 @@ runtime dependencies on consumer repos were introduced.
 
 ## Validation Evidence
 
-- pnpm test -> pass, 111 tests passed.
+- pnpm test -> pass, 111 tests passed. [pre-adversarial-remediation run; post-remediation runs report 113 tests as recorded in jsc-370-testing.md and jsc-370-he-code-review.md]
 - pnpm evals check --json -> pass, proof context matched smoke latest.
 - pnpm verify -> pass, aggregate repository gate passed.
