@@ -1,0 +1,15 @@
+{
+  "run_id": "20260525T085720Z-pr-closeout-4df36134",
+  "case_id": "pr-closeout",
+  "suite_id": "smoke",
+  "execution_mode": "synthetic",
+  "generated_at": "2026-05-25T08:57:20.850Z",
+  "artifact_root": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134",
+  "manifest_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/manifest.json",
+  "result_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/result.json",
+  "report_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/report.md",
+  "command_log_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/command-log.json",
+  "baseline_result_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/baseline-result.json",
+  "scorer_results_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/scorer-results.json",
+  "trace_events_path": ".harness/evals/runs/20260525T085720Z-pr-closeout-4df36134/trace-events.jsonl"
+}

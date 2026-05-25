@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, resolve, sep } from "node:path";
+import { basename, dirname, resolve, sep } from "node:path";
 
 import { readJson } from "./json.js";
-import { rootRelativePath } from "./paths.js";
+import { relFrom, rootRelativePath } from "./paths.js";
 import { schemaCheck } from "./schema.js";
 
 const DEFAULT_ARTIFACT_ROOT = ".harness/evals/runs";
@@ -16,6 +16,10 @@ function hasTraversal(path) {
   return splitPath(path).includes("..");
 }
 
+function normalizeSuiteRef(path) {
+  return typeof path === "string" ? path.replaceAll("\\", "/") : path;
+}
+
 function nearestEvalRoot(startDir) {
   let current = resolve(startDir);
   while (true) {
@@ -27,21 +31,23 @@ function nearestEvalRoot(startDir) {
 }
 
 function resolveSuitePath(suiteRoot, path, label, errors) {
-  const resolved = rootRelativePath(suiteRoot, path, label, errors);
-  if (resolved && !existsSync(resolved)) errors.push(label + ": path does not exist: " + path);
+  const normalizedPath = normalizeSuiteRef(path);
+  const resolved = rootRelativePath(suiteRoot, normalizedPath, label, errors);
+  if (resolved && !existsSync(resolved)) errors.push(label + ": path does not exist: " + normalizedPath);
   return resolved;
 }
 
 function validateArtifactRoot(evaluatedRepoRoot, artifactRoot, errors) {
-  const prefix = artifactRoot || DEFAULT_ARTIFACT_ROOT;
-  rootRelativePath(evaluatedRepoRoot, prefix, "artifact_policy.artifact_root", errors);
-  return prefix;
+  const prefix = normalizeSuiteRef(artifactRoot || DEFAULT_ARTIFACT_ROOT);
+  const resolved = rootRelativePath(evaluatedRepoRoot, prefix, "artifact_policy.artifact_root", errors);
+  return resolved ? relFrom(evaluatedRepoRoot, resolved) : prefix;
 }
 
 function validateScorerRef(ref, index, errors) {
   const label = "scorers[" + index + "]";
-  if (EXECUTABLE_SCORER_PATTERN.test(ref)) {
-    errors.push(label + ": executable scorer hooks are not supported in phase one: " + ref);
+  const normalizedRef = normalizeSuiteRef(ref);
+  if (EXECUTABLE_SCORER_PATTERN.test(normalizedRef)) {
+    errors.push(label + ": executable scorer hooks are not supported in phase one: " + normalizedRef);
   }
 }
 
@@ -90,7 +96,7 @@ export function loadSuite(suitePath) {
   const cases = Array.isArray(suite.cases)
     ? suite.cases.map((casePath, index) => resolveSuitePath(suiteRoot, casePath, "cases[" + index + "]", errors)).filter(Boolean)
     : [];
-  const scorerRefs = Array.isArray(suite.scorers) ? suite.scorers : [];
+  const scorerRefs = Array.isArray(suite.scorers) ? suite.scorers.map(normalizeSuiteRef) : [];
   scorerRefs.forEach((ref, index) => {
     if (typeof ref === "string") {
       if (hasTraversal(ref)) errors.push("scorers[" + index + "]: path must not contain traversal segments: " + ref);
@@ -125,8 +131,10 @@ export function isSuitePath(path) {
   try {
     const stats = statSync(path);
     if (!stats.isFile()) return false;
+    const absolutePath = resolve(path);
+    if (basename(absolutePath) === "suite.json" && nearestEvalRoot(dirname(absolutePath))) return true;
     const content = JSON.parse(readFileSync(path, "utf8"));
-    return content && typeof content === "object" && Array.isArray(content.cases) && "artifact_policy" in content;
+    return content && typeof content === "object" && Array.isArray(content.cases) && typeof content.owner_repo === "string" && "artifact_policy" in content;
   } catch {
     return false;
   }

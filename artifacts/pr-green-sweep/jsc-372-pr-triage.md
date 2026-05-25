@@ -114,3 +114,50 @@ Checked at: 2026-05-25 00:15 Europe/London
 - Next coordinator action: re-poll hosted checks on head `b53f2e4`; repair only if a check returns a concrete failure.
 
 WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
+
+## 2026-05-25 Local Validation Completion
+
+After the manifest-path repair and JSC-371 propagation, the broader local gates passed:
+
+- `pnpm test` -> pass (127 tests)
+- `pnpm verify` -> pass; latest proof bundle `.harness/evals/runs/20260525T090946Z-pr-closeout-4df36134-01/`
+- `git diff --check` -> pass
+
+Current blocker:
+
+- STATUS: blocked_validation
+- blocker_class: remote_checks_pending_after_push
+- exact_failure_text: local gates pass, but PR #17 has not yet been pushed/re-polled after this repair.
+
+Next coordinator action: commit and push the repair, fetch remote-tracking refs if sandboxed push cannot update them, then recheck PR #17 checks and review threads.
+
+WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
+
+## 2026-05-25 Review Thread Repair Addendum
+
+Source of truth: PR #17 live review-thread finding against `src/lib/claim-evidence-contract.js`.
+
+- Finding repaired: `manifestEvidenceByPath` trusted `latest.manifest_path` before reading the manifest, so a malformed latest pointer could cause the runtime evidence packet to inspect a path outside the repository even though runtime state later classified the artifact path as invalid.
+- Owner-module fix: `src/lib/claim-evidence-contract.js` now validates `latest.manifest_path` with `repoRelativePath` before opening the manifest. Invalid, absolute, or traversal paths return an empty manifest evidence map and cannot upgrade artifact evidence to `verified`.
+- Seam test: `test/cli.test.js` now includes `state does not read manifest evidence from traversal latest path`, which writes an outside manifest matching the poisoned latest pointer and proves the state remains invalid, the missing-evidence scorer fails, and no evidence item records the traversal manifest path.
+- Propagated base repair: this branch also carries JSC-371's suite-dispatch and artifact-root normalization repair from `cfb62cd40bba5f25ca6e6dabae95a9b9aca8bc6f`.
+
+Validation after local repair:
+
+- `node --test --test-name-pattern "traversal latest path|state reports ready runtime packet"` -> pass
+
+Remaining required validation before push:
+
+- `pnpm test`
+- `pnpm verify`
+- `git diff --check`
+
+Current blocker:
+
+- STATUS: blocked_validation
+- blocker_class: local_validation_pending
+- exact_failure_text: broader slice gates have not been rerun after the manifest-path repair.
+
+Next coordinator action: run the full JSC-372 local gates, commit/push the repair, then re-poll PR #17 checks and review threads.
+
+WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
