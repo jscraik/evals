@@ -19,7 +19,7 @@ pass
 
 ## Commands Run
 
-- pnpm test -> pass, 113 tests passed after reviewer-remediation changes.
+- pnpm test -> pass, 113 tests passed after reviewer-remediation changes. [post-adversarial-remediation; earlier pre-remediation runs (jsc-370-simplify.md, jsc-370-unslopify.md) report 111 tests; the 2 additional tests cover the adversarial-remediation regressions]
 - pnpm evals run fixtures/smoke/pr-closeout.case.json --json -> pass, produced
   a passing smoke run with suite_id and artifact_root in the JSON output.
 - pnpm evals check --json -> pass, emitted expected_context,
