@@ -259,12 +259,12 @@
     <tr><td>Active issue</td><td>JSC-369</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active. JSC-371 repair is pushed, JSC-372 manifest-path containment is committed and pushed, PR #17 is clean on the latest recheck, and PR #18 is still draft while parent closeout waits for live child PR and tracker reconciliation.</span></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active. Deep-module placement is now shown in the visual below, including where each slice lands by worktree, branch, PR, owner module, proof surface, review artifact, and parent closeout evidence. JSC-370 and JSC-371 are locally repaired and pushed with CodeRabbit-credit blockers recorded where applicable; JSC-372 has clean PR triage evidence and has ingested the latest upstream notes; JSC-369 remains open while parent closeout reconciles PR, tracker, documentation, and closure truth.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
   <h2>Where the Work Lands</h2>
-  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The table below the visual shows the exact branch, worktree, PR, and durable artifact placement for each slice.</p>
+  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The lane cards and table below show where every slice is being placed: worktree, branch, PR, owner files, proof files, review files, and parent closeout evidence.</p>
   <div class="placement-legend" aria-label="Deep-module placement legend">
     <div style="--module-color: #38a8ff;"><strong>Owner modules</strong><span>Runtime rules and trust-boundary decisions land under <code>src/lib/**</code>.</span></div>
     <div style="--module-color: #fb6a12;"><strong>Caller modules</strong><span>CLI commands under <code>src/commands/**</code> sequence owners but do not own proof rules.</span></div>
@@ -397,7 +397,7 @@
       <td>JSC-369 parent reconciliation</td>
       <td><code>/private/tmp/evals-jsc369</code><br><code>codex-jsc-369-parent-closeout</code><br>PR #18, draft, base <code>codex-jsc-372-claim-evidence-runtime-packet</code></td>
       <td>No new runtime owner. Parent closeout consumes child proof, live PR/Linear state, docs checks, and generated eval run evidence.</td>
-      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T091459Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
+      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T094429Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
       <td><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code><br><code>.harness/evals/evals-evals-executable-spine-eval.md</code><br><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code><br><code>artifacts/reviews/evals-proof-spine-*.md</code></td>
     </tr>
   </table>
