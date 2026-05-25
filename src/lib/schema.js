@@ -36,6 +36,18 @@ export const schemaTargets = {
     schema: join(schemaDir, "runtime-state.schema.json"),
     label: "runtime state"
   },
+  claim: {
+    schema: join(schemaDir, "claim.schema.json"),
+    label: "claim"
+  },
+  evidence: {
+    schema: join(schemaDir, "evidence.schema.json"),
+    label: "evidence"
+  },
+  runtimeEvidencePacket: {
+    schema: join(schemaDir, "runtime-evidence-packet.schema.json"),
+    label: "runtime evidence packet"
+  },
   traceEvent: {
     schema: join(schemaDir, "trace-event.schema.json"),
     label: "trace events"
