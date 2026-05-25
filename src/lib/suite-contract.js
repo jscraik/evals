@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { basename, dirname, resolve, sep } from "node:path";
 
 import { readJson } from "./json.js";
@@ -132,9 +132,7 @@ export function isSuitePath(path) {
     const stats = statSync(path);
     if (!stats.isFile()) return false;
     const absolutePath = resolve(path);
-    if (basename(absolutePath) === "suite.json" && nearestEvalRoot(dirname(absolutePath))) return true;
-    const content = JSON.parse(readFileSync(path, "utf8"));
-    return content && typeof content === "object" && Array.isArray(content.cases) && typeof content.owner_repo === "string" && "artifact_policy" in content;
+    return basename(absolutePath) === "suite.json" && Boolean(nearestEvalRoot(dirname(absolutePath)));
   } catch {
     return false;
   }

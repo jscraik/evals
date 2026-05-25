@@ -1,73 +1,79 @@
-# JSC-371 PR #16 Green Sweep Triage
+# JSC-371 PR #16 Postfix Triage
 
 ## Scope
 
 - Repo: `jscraik/evals`
-- PR: [#16](https://github.com/jscraik/evals/pull/16)
-- Branch: `codex-jsc-371-repo-local-suite-contract`
-- Latest triage head SHA: `ca9e45f`
-
-## Live PR/Check State
-
-- PR state: open.
-- Review decision: commented.
-- Combined status at triage time: failure due CodeRabbit review-credit
-  exhaustion.
-- Passing contexts observed during triage: deterministic-gates, Snyk security,
-  Snyk license; Semgrep was settling during one inspection and later deterministic
-  local validation remained green.
+- PR: #16
+- URL: https://github.com/jscraik/evals/pull/16
+- Slice branch: `codex-jsc-371-repo-local-suite-contract`
+- Local worktree used for triage: `/private/tmp/evals-jsc371`
+- Code head reviewed by triage subagent: `7d6d6671e9908a9b5deef1ac310906c8c6440da1`
+- Artifact-only follow-up commit pushed by coordinator: `41be55b2ed9128010934176a6d1a4a3e65e04297`
+- Parent-stack propagation commit source: `origin/codex-jsc-372-claim-evidence-runtime-packet`
 
 ## Severity-Ranked Findings
 
-### High
+### P1 - External blocker: CodeRabbit required status is not a repository-code failure
 
-1. CodeRabbit status failure blocks a fully green hosted checks surface.
-   - Evidence: status context `CodeRabbit` reported `Insufficient review credits`.
-   - Ownership classification: `environment or tooling failure`.
-   - Remediation advice: replenish CodeRabbit credits or rerun CodeRabbit after
-     quota reset; no repository patch can resolve the credit failure.
+- Evidence: the PR triage subagent observed `CodeRabbit  fail  Insufficient review credits` on PR #16 before the artifact-only follow-up commit.
+- Evidence source in PR comments: CodeRabbit status text described review capacity or usage credits as exhausted, not a code-level defect.
+- Impact: a fully green hosted-check surface cannot be claimed while the required CodeRabbit status is failed, pending, or unavailable.
+- Ownership classification: environment or tooling failure; not introduced by the JSC-371 implementation patch.
+- Remediation advice: restore CodeRabbit credits or record an owner-approved required-check exception if governance allows it.
 
-### Medium
+### P2 - Prior `isSuitePath` and artifact-root findings are remediated in the child implementation
 
-1. None currently.
+- Prior actionable findings from review comments:
+  - artifact root normalization mismatch risk
+  - suite dispatch fallback risk in `isSuitePath`
+- Current implementation evidence in `src/lib/suite-contract.js`:
+  - `validateArtifactRoot` normalizes and canonicalizes via `normalizeSuiteRef(...)`, `rootRelativePath(...)`, and `relFrom(...)`.
+  - `isSuitePath` dispatches by `suite.json` basename plus `.evals` ancestry, not by loose suite-shaped JSON content.
+- Regression evidence in `test/cli.test.js`:
+  - misplaced suites are rejected through `loadSuite(...)`;
+  - suite-shaped `.evals/not-suite.json` files are not routed as suites and do not publish run artifacts.
+- Conclusion: no additional runtime/schema patch is required for the suite-detection lane.
 
-### Low
+### P3 - Hosted check state requires a final live recheck after artifact-only commits
 
-1. A cwd-dependent fixture path in `test/cli.test.js` made one proof-context
-   case validation test environment-sensitive.
-   - Evidence: the previous assertion called
-     `validateCaseFile("fixtures/smoke/pr-closeout.case.json")`.
-   - Ownership classification: `introduced by current patch`.
-   - Remediation performed: switched to `validateCaseFile(smokeFixture(sourceRoot))`
-     so the test uses deterministic absolute fixture resolution.
+- Evidence: the coordinator pushed artifact-only commit `41be55b` after the triage subagent captured the code-head snapshot.
+- Impact: GitHub checks restart on the new PR head, so the parent cannot claim final PR readiness from the older snapshot alone.
+- Remediation advice: re-run `gh pr view 16 --json statusCheckRollup,headRefOid,mergeStateStatus,isDraft,state,reviewDecision,url` before merge or parent closeout.
 
-## Fault Classification Summary
+## PR / Review State Snapshot
 
-- Introduced by current patch: 1, fixed.
-- Pre-existing: 0 confirmed.
-- Unrelated dirty worktree: 0.
-- Environment/tooling failure: 1, CodeRabbit credit exhaustion.
+- PR state at the subagent snapshot: OPEN, not draft.
+- Merge state at the subagent snapshot: UNSTABLE.
+- Passing checks at the subagent snapshot: deterministic-gates, Socket Security checks, Snyk license/security.
+- Failing checks at the subagent snapshot: CodeRabbit credit exhaustion.
+- Pending checks at the subagent snapshot: semgrep-cloud-platform/scan.
+- Current parent classification: evidence is useful but not final; the artifact-only follow-up commit requires a fresh hosted-check rollup before any merge/readiness claim.
 
-## Validation Evidence
+## Local Changes and Validation in This Slice
 
-- `pnpm test` -> pass. 124 tests passed on the JSC-371 branch after the
-  deterministic fixture-path repair.
-- JSC-372 propagation re-ran
-  `node --test --test-name-pattern "case validation" test/cli.test.js` -> pass.
-- JSC-372 propagation re-ran `pnpm test` -> pass. 128 tests passed.
+- Code edits by triage subagent: none.
+- Coordinator follow-up: committed and pushed this triage artifact so it is no longer a mailbox-only completion claim.
+- Validation commands recorded by the triage subagent:
+  - `git rev-parse HEAD`
+  - `git status --short --branch`
+  - `gh pr view 16 --json ...`
+  - `gh pr checks 16`
+  - GitHub review-comment inspection for actionable findings
+- Coordinator validation before artifact commit:
+  - `node --test --test-name-pattern "suite detection requires suite.json inside .evals" test/cli.test.js` -> pass
+  - `node --test --test-name-pattern "repo-local suite|suite contract|suite detection" test/cli.test.js` -> pass
+  - `git diff --check` -> pass
+  - `pnpm test` -> pass
+  - `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass
+  - `pnpm evals check --json` -> pass
+  - `pnpm evals state --json` -> pass
+  - `pnpm verify` -> pass
 
-## Git Actions Performed
+## Coordinator Next Step
 
-- The PR triage subagent committed and pushed the deterministic test-path repair
-  to the JSC-371 branch.
-- The coordinator propagated that repair into JSC-372 and then into this parent
-  branch.
-
-## Current Blockers
-
-- `external_tooling`: CodeRabbit review-credit exhaustion prevents an all-green
-  hosted check surface.
-- `lifecycle_blocker`: PR #16 remains open until the configured merge or
-  owner-approved deferral decision is recorded.
+1. Recheck PR #16 live after the artifact-only head settles.
+2. If deterministic-gates, Semgrep, Socket, and Snyk pass while CodeRabbit remains credit-blocked, route a governance decision for credits or required-check exception.
+3. Do not claim JSC-371 merged/complete until PR state and child tracker state are reconciled.
 
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
+
