@@ -56,3 +56,60 @@ Local fixes are applied and validated. The PR is not green-claimed until the fix
 
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
+
+## 2026-05-25 Symlink Containment Repair
+
+Live PR recheck found one additional CodeRabbit finding on PR #15:
+\`src/lib/paths.js\` used \`path.resolve()\` plus a string-prefix comparison for
+root containment. That normalizes traversal but does not dereference symlinks,
+so a path that is syntactically inside the repository could still resolve
+outside the repository through an intermediate symlink.
+
+### Fixes Made
+
+- \`src/lib/paths.js\`: changed \`insideRepo()\` to compare the repository root and
+  candidate path after filesystem realpath resolution. Missing candidate paths
+  resolve through the nearest existing ancestor, so an in-repo symlink ancestor
+  still cannot redirect a future proof path outside the repository.
+- \`test/cli.test.js\`: added a negative CLI regression that creates an in-repo
+  symlink under \`fixtures/smoke/\` pointing at an outside temporary directory and
+  proves \`pnpm evals run ... --json\` rejects the escaped case path before
+  reading it.
+- \`.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md\`: updated the
+  deep-module packet to make \`src/lib/paths.js\` the containment owner for this
+  trust-boundary repair.
+
+### Local Validation
+
+- \`node --test --test-name-pattern "symlink" test/cli.test.js\` -> pass.
+- \`git diff --check\` -> pass.
+- \`pnpm test\` -> pass. 115 tests passed, including the symlink escape
+  regression.
+- \`pnpm evals run fixtures/smoke/pr-closeout.case.json --json\` -> pass.
+  Wrote run bundle
+  \`.harness/evals/runs/20260525T092732Z-pr-closeout-4df36134/\`.
+- \`pnpm evals check --json\` -> pass. Latest proof context matched the smoke
+  case and suite.
+- \`pnpm verify\` -> pass. Fresh proof bundles were written under
+  \`.harness/evals/runs/20260525T092748Z-pr-closeout-4df36134/\` and
+  \`.harness/evals/runs/20260525T092748Z-pr-closeout-4df36134-01/\`.
+
+### Live PR Recheck After Push
+
+- PR: #15
+- Head SHA: `f84cf7cfbf59c49770493c0a7f4876bc33383a58`
+- Focused review-comment check: no active comments targeting `src/lib/paths.js`
+  remained after the symlink-containment repair.
+- GitHub combined status: fail because the CodeRabbit check reported
+  insufficient review credits.
+- Passing checks observed during triage: `security/snyk`, `license/snyk`.
+
+### Remaining Blockers
+
+1. CodeRabbit cannot complete the live PR review because the external service
+   reports insufficient review credits.
+   - Class: environment/tooling failure.
+   - Recovery condition: restore/replenish CodeRabbit credits, rerun the
+     CodeRabbit check, and recheck PR #15 review comments and checks.
+
+WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md

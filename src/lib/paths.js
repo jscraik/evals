@@ -1,3 +1,4 @@
+import { existsSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,10 +53,23 @@ export function insideRepo(path) {
 export function insideRoot(root, path, label = "root") {
   const absoluteRoot = resolve(root);
   const absolutePath = resolve(absoluteRoot, path);
-  if (absolutePath !== absoluteRoot && !absolutePath.startsWith(absoluteRoot + sep)) {
+  const realRoot = realpathSync.native(absoluteRoot);
+  const realPath = realpathForContainment(absolutePath);
+  if (realPath !== realRoot && !realPath.startsWith(realRoot + sep)) {
     throw new Error("path must be inside the " + label + ": " + path);
   }
   return absolutePath;
+}
+
+function realpathForContainment(path) {
+  if (existsSync(path)) {
+    return realpathSync.native(path);
+  }
+  const parent = dirname(path);
+  if (parent === path) {
+    return path;
+  }
+  return join(realpathForContainment(parent), path.slice(parent.length + 1));
 }
 
 /**

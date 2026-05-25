@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -130,6 +130,35 @@ test("case validation returns the validated case document for proof context", ()
   assert.equal(check.testCase.case_id, "pr-closeout");
   assert.equal(check.testCase.suite_id, "smoke");
   assert.equal(Object.keys(check).includes("testCase"), false);
+});
+
+test("case validation rejects paths that escape through repository symlinks", () => {
+  const repo = makeRepo();
+  const outside = mkdtempSync(join(tmpdir(), "evals-outside-case-"));
+  try {
+    writeFileSync(join(outside, "escape.case.json"), JSON.stringify({
+      schema_version: 1,
+      case_id: "escape",
+      suite_id: "smoke",
+      title: "Symlink escape",
+      input: {
+        prompt: "claim success without proof"
+      },
+      expected: {
+        closure_status: "blocked"
+      }
+    }, null, 2));
+    symlinkSync(outside, join(repo, "fixtures", "smoke", "outside-link"));
+
+    const result = runCli(repo, ["run", "fixtures/smoke/outside-link/escape.case.json", "--json"]);
+    const output = parseJson(result.stdout);
+
+    assert.equal(result.status, 1);
+    assert.match(output.errors.join("\n"), /path must be inside the evals repository/);
+  } finally {
+    cleanup(repo);
+    rmSync(outside, { recursive: true, force: true });
+  }
 });
 
 test("atomic JSON writer replaces a complete document", () => {
