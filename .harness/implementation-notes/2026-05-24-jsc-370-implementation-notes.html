@@ -349,33 +349,6 @@
       }
     }
   </style>
-  <script>
-    (() => {
-      let currentSnapshot = "";
-      async function reloadWhenSnapshotChanges() {
-        try {
-          const response = await fetch(location.pathname + "?snapshot=" + Date.now(), { cache: "no-store" });
-          if (!response.ok) return;
-          const html = await response.text();
-          const match = html.match(/<p class="refresh">Generated snapshot: <code>([^<]+)<\/code>/);
-          if (match && match[1] && match[1] !== currentSnapshot) {
-            location.reload();
-          }
-        } catch (_) {
-          // The report remains readable when the local preview server is stopped.
-        }
-      }
-      function startLiveRefresh() {
-        currentSnapshot = document.querySelector(".refresh code")?.textContent || "";
-        window.setInterval(reloadWhenSnapshotChanges, 5000);
-      }
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", startLiveRefresh, { once: true });
-      } else {
-        startLiveRefresh();
-      }
-    })();
-  </script>
 </head>
 <body>
 <main>
