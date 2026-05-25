@@ -12,6 +12,18 @@ Canonical command:
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 ```
 
+Repo-local suite command:
+
+```bash
+pnpm evals run path/to/.evals/suite.json --json
+```
+
+Suite files are data contracts, not plugins. A suite owns local case, scorer,
+and baseline references under its own `.evals/` directory, while this runner
+owns schema validation, path containment, artifact bundle writing, and
+deterministic verdict shape. Phase one rejects network-enabled suites and
+executable scorer hooks.
+
 Canonical validation command:
 
 ```bash
@@ -116,6 +128,11 @@ result.json for first-order evidence.
 runtime state packet. It classifies the local proof surface as `ready`, `stale`,
 `missing`, or `invalid`, lists artifact presence, and names the next validation
 command without running hidden work.
+
+The state packet also includes a runtime evidence packet with local git state,
+recommended commands, blocker state, validation evidence, runtime-evidence
+contract health, and claim/evidence sufficiency. Telemetry and model confidence
+remain advisory; local artifacts and deterministic validators decide readiness.
 
 Phase-one run artifacts are retained locally. Automatic retention duration is
 not defined yet; keep committed artifact bundles only when they are part of
