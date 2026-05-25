@@ -455,7 +455,7 @@ remote branch heads. It is not a completion claim.
 | #15 | JSC-370 | `e9cbf6e062c745d027bdda1a61d5d6de69defe46` | OPEN, not draft, mergeable, `UNSTABLE` | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` | Child is not merge-ready; parent cannot close. |
 | #16 | JSC-371 | `cbd403395483f304470186a450a28c89c0954a87` | OPEN, not draft, mergeable, `UNSTABLE` | deterministic-gates, Semgrep, Socket, Snyk security, and Snyk license pass; CodeRabbit status is `FAILURE` | Child is not merge-ready; parent cannot close. |
 | #17 | JSC-372 | `9ccab91879ce0701a1149ca3d6a9e722c9d42340` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Semgrep, Socket, Snyk security, and Snyk license pass | Child is green but still open. |
-| #18 | JSC-369 | `d3ca642be616fa30bdc1e00c04285b7e6f86b12b` | OPEN, draft, mergeable, `UNSTABLE` | deterministic-gates, CodeRabbit skipped/success, Socket, Snyk security, and Snyk license pass; Semgrep remains `IN_PROGRESS` after a watch cycle | Parent is still draft and not complete. |
+| #18 | JSC-369 | `6ad98d9040977213a4ea49317c408503aa866c18` | OPEN, draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit skipped/success, Semgrep, Socket, Snyk security, and Snyk license pass | Parent checks are green, but the parent is still draft and not complete. |
 
 ### Current Tracker Truth
 
@@ -472,7 +472,7 @@ remote branch heads. It is not a completion claim.
 | --- | --- | --- |
 | PR #15 CodeRabbit status is failing. | external_tooling or unresolved_review_check | Inspect CodeRabbit output or rerun after service/credit recovery; do not merge or close JSC-370 while the required context is red. |
 | PR #16 CodeRabbit status is failing. | external_tooling or unresolved_review_check | Inspect CodeRabbit output or rerun after service/credit recovery; do not merge or close JSC-371 while the required context is red. |
-| PR #18 Semgrep is still in progress. | external_pending | Recheck PR #18 checks before any parent PR state change. |
+| PR #18 remains draft. | lifecycle_blocker | Undraft only after child PR disposition, tracker truth, and review coverage are reconciled. |
 | PR #15, #16, #17, and #18 remain open. | lifecycle_blocker | Merge in stack order or record explicit owner-approved deferrals with recovery commands. |
 | Linear issues are In Progress/In Review. | tracker_state | Mutate Linear only after GitHub disposition matches reality. |
 
@@ -482,12 +482,12 @@ remote branch heads. It is not a completion claim.
 - `gh pr view 16 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
 - `gh pr view 17 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
 - `gh pr view 18 --json number,title,state,isDraft,mergeable,mergeStateStatus,headRefName,baseRefName,headRefOid,reviewDecision,statusCheckRollup,url` -> pass.
-- `gh pr checks 18 --watch --interval 10` -> blocked by timeout with Semgrep still pending; other visible checks passed.
+- `gh pr checks 18` -> pass for deterministic-gates, CodeRabbit skipped/success, Semgrep, Socket, Snyk security, and Snyk license.
 - `mcp__linear__get_issue` for JSC-369, JSC-370, JSC-371, and JSC-372 -> pass.
 
 ### Current Classification
 
-JSC-369 remains active and incomplete. The parent can continue to gather and
-refresh evidence, but the goal cannot be marked complete until child PRs,
-required checks, tracker state, and review/coverage gaps are reconciled or
-explicitly deferred by the owner with a recovery path.
+JSC-369 remains active and incomplete. The parent checks are now green, but the
+goal cannot be marked complete until child PRs, PR #15/#16 CodeRabbit failures,
+tracker state, and review/coverage gaps are reconciled or explicitly deferred
+by the owner with a recovery path.
