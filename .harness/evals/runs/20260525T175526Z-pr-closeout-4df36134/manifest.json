@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "run_id": "20260525T175526Z-pr-closeout-4df36134",
+  "case_id": "pr-closeout",
+  "created_at": "2026-05-25T17:55:26.233Z",
+  "retention": {
+    "status": "retained_local",
+    "policy": "Retain committed phase-one run artifacts indefinitely in repository history until an explicit retention ADR supersedes this policy."
+  },
+  "privacy": {
+    "class": "synthetic_public",
+    "redaction_status": "synthetic_no_redaction_needed",
+    "contains_private_content": false,
+    "contains_credentials": false
+  },
+  "artifacts": [
+    {
+      "type": "result",
+      "path": ".harness/evals/runs/20260525T175526Z-pr-closeout-4df36134/result.json",
+      "sha256": "3b9166ce66ddbe3322ec53b6bae035f77036a825e8779fdf0000014d472cbc84",
+      "required": true
+    },
+    {
+      "type": "report",
+      "path": ".harness/evals/runs/20260525T175526Z-pr-closeout-4df36134/report.md",
+      "sha256": "c7932e9ecf7330baeeafe950ea0eeae80a5e2573bd6c528a1e18b0dc1e339f67",
+      "required": true
+    },
+    {
+      "type": "command-log",
+      "path": ".harness/evals/runs/20260525T175526Z-pr-closeout-4df36134/command-log.json",
+      "sha256": "ce928efcbc1d1e0f3b7f035cb93c3c782d8d3261339d0779993203ead8c8f7ee",
+      "required": true
+    },
+    {
+      "type": "scorer-results",
+      "path": ".harness/evals/runs/20260525T175526Z-pr-closeout-4df36134/scorer-results.json",
+      "sha256": "687369a805d3101b30090415a53a7d94f94818aab3a965e557b7d255d0bf1723",
+      "required": true
+    },
+    {
+      "type": "baseline-result",
+      "path": ".harness/evals/runs/20260525T175526Z-pr-closeout-4df36134/baseline-result.json",
+      "sha256": "69d0648f6a449cd0a9d66f2eb9acad2bef8555d4e9e84e825e2930a8aaab9856",
+      "required": true
+    },
+    {
+      "type": "trace-events",
+      "path": ".harness/evals/runs/20260525T175526Z-pr-closeout-4df36134/trace-events.jsonl",
+      "sha256": "70e27897d67f82ff8eb446e2da53775d26d294d11ece36c81fd8aa0c24f07478",
+      "required": true
+    }
+  ]
+}
