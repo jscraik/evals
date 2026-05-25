@@ -253,28 +253,18 @@
     <tr><td>JSC-369 parent closeout</td><td>Closure evidence and PR/validation artifacts only</td><td>The parent slice reconciles child proof; it should not introduce runtime authority or a second implementation path.</td></tr>
   </table>
 
-  <h2>Architecture Answer</h2>
-  <p>Yes. This implementation should be built into the project&apos;s current deep modules wherever a current owner already exists. The architecture rule for this program is: use the existing owner module for an existing trust boundary, add a new owner only for a genuinely new contract, and keep callers thin enough that they sequence work rather than owning proof rules.</p>
-  <table>
-    <tr><th>Program Slice</th><th>Deep Module Placement</th><th>Why</th></tr>
-    <tr><td>JSC-370 latest/run trust boundary</td><td><code>src/lib/latest-run.js</code> and <code>src/lib/run-bundle.js</code></td><td>Latest proof context, pointer validation, run ID allocation, and artifact directory creation are existing proof-spine boundaries. A sidecar helper would split the authority and make false-success checks harder to reason about.</td></tr>
-    <tr><td>JSC-371 repo-local suite contract</td><td><code>src/lib/suite-contract.js</code> plus existing schema, case, path, run-bundle, and latest owners</td><td>The only new concept is suite normalization. Execution, case parsing, artifact allocation, schema validation, and latest validation stay with the current owners.</td></tr>
-    <tr><td>JSC-372 claim/evidence packet</td><td><code>src/lib/claim-evidence-contract.js</code> plugged into <code>src/lib/runtime-state.js</code>, <code>src/lib/runtime-evidence-contract.js</code>, and <code>src/lib/schema.js</code></td><td>Claim/evidence sufficiency is a new contract, so it gets one owner. Runtime state and policy-family truth are not reimplemented.</td></tr>
-    <tr><td>JSC-369 parent closeout</td><td>Closure evidence and PR/validation artifacts only</td><td>The parent slice reconciles child proof; it should not introduce runtime authority or a second implementation path.</td></tr>
-  </table>
-
   <h2>Current Slice</h2>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
     <tr><td>Active issue</td><td>JSC-372</td></tr>
     <tr><td>Goal</td><td>Add claim/evidence schemas, the missing-evidence scorer, and runtime evidence packet v1 without reclassifying scaffolded runtime-evidence families as enforced.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-372-claim-evidence-runtime-packet</code></td></tr>
-    <tr><td>Status</td><td><span class="status">JSC-370/JSC-371 propagation applied; JSC-372 PR recheck still required after push</span></td></tr>
+    <tr><td>Status</td><td><span class="status">JSC-370 triage proof and JSC-371 deterministic fixture-path repair are both committed and propagated; JSC-372 remains the active runtime-evidence packet slice, with PR #17 triage showing clean checks and no open actionable review faults. The deep-module visual below shows exactly where each slice lands in owner modules, caller seams, executable proof, and delivery artifacts.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
   <h2>Where the Work Lands</h2>
-  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The table below the visual shows the exact branch, worktree, PR, and durable artifact placement for each slice.</p>
+  <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The lane cards and table below show where every slice is being placed: worktree, branch, PR, owner files, proof files, review files, and parent closeout evidence.</p>
   <div class="placement-legend" aria-label="Deep-module placement legend">
     <div style="--module-color: #38a8ff;"><strong>Owner modules</strong><span>Runtime rules and trust-boundary decisions land under <code>src/lib/**</code>.</span></div>
     <div style="--module-color: #fb6a12;"><strong>Caller modules</strong><span>CLI commands under <code>src/commands/**</code> sequence owners but do not own proof rules.</span></div>
@@ -407,7 +397,7 @@
       <td>JSC-369 parent reconciliation</td>
       <td><code>/private/tmp/evals-jsc369</code><br><code>codex-jsc-369-parent-closeout</code><br>PR #18, draft, base <code>codex-jsc-372-claim-evidence-runtime-packet</code></td>
       <td>No new runtime owner. Parent closeout consumes child proof, live PR/Linear state, docs checks, and generated eval run evidence.</td>
-      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T091459Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
+      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T094429Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
       <td><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code><br><code>.harness/evals/evals-evals-executable-spine-eval.md</code><br><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code><br><code>artifacts/reviews/evals-proof-spine-*.md</code></td>
     </tr>
   </table>
