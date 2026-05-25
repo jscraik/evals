@@ -96,7 +96,7 @@ export function checkCommand(jsonMode) {
     run_id: latestValidation.run_id,
     expected_context: latestValidation.expected_context || expectedContext,
     observed_latest_context: latestValidation.observed_latest_context || null,
-    context_match: latestValidation.context_match === true,
+    context_match: latestValidation.context_match ?? null,
     context_mismatch_reason: latestValidation.context_mismatch_reason || (expectedContext ? null : "expected_context_unavailable"),
     recovery_command: latestValidation.recovery_command || null,
     runtime_evidence: {

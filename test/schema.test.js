@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { supportedSchemaKeywords, validateWithSchema } from "../src/lib/schema.js";
+
+const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
 test("schema validator exposes the supported local keyword contract", () => {
   for (const keyword of ["$schema", "$id", "type", "properties", "required", "additionalProperties", "format", "minimum"]) {
@@ -104,4 +109,11 @@ test("object constraints apply when object is one member of a type union", () =>
 test("date-time validation requires an explicit timestamp", () => {
   assert.match(validateWithSchema("2026-05-20", { type: "string", format: "date-time" }).join("\n"), /must be a date-time string/);
   assert.deepEqual(validateWithSchema("2026-05-20T19:24:00Z", { type: "string", format: "date-time" }), []);
+});
+
+test("runtime-state embedded evidence packet schema mirrors the standalone packet schema", () => {
+  const stateSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "runtime-state.schema.json"), "utf8"));
+  const packetSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "runtime-evidence-packet.schema.json"), "utf8"));
+  assert.deepEqual(stateSchema.properties.evidence_packet.required, packetSchema.required);
+  assert.deepEqual(stateSchema.properties.evidence_packet.properties, packetSchema.properties);
 });

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/claim.schema.json",
+  "title": "Claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "claim_id", "claim_type", "claim_text", "required_evidence"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "claim_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+    "claim_type": {
+      "type": "string",
+      "enum": ["validation-passed", "artifact-exists", "state-observed", "blocker-detected"]
+    },
+    "claim_text": { "type": "string", "minLength": 1 },
+    "required_evidence": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+      "uniqueItems": true
+    },
+    "confidence": {
+      "type": ["string", "null"],
+      "enum": ["low", "medium", "high", "advisory", null]
+    }
+  }
+}

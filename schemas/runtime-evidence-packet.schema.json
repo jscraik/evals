@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/runtime-evidence-packet.schema.json",
+  "title": "Runtime Evidence Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at",
+    "repo",
+    "git_state",
+    "runtime_state",
+    "recommended_commands",
+    "blockers",
+    "validation_evidence",
+    "runtime_evidence_contract_health",
+    "claims",
+    "evidence",
+    "missing_evidence_scorer",
+    "readiness_verdict"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "name"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "git_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "branch", "commit", "dirty", "reason"],
+      "properties": {
+        "status": { "type": "string", "enum": ["available", "unavailable"] },
+        "branch": { "type": ["string", "null"], "minLength": 1 },
+        "commit": { "type": ["string", "null"], "minLength": 1 },
+        "dirty": { "type": ["boolean", "null"] },
+        "reason": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "runtime_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "latest_path", "latest_run_id", "non_ready_reason_code"],
+      "properties": {
+        "status": { "type": "string", "enum": ["ready", "stale", "missing", "invalid"] },
+        "latest_path": { "type": "string", "minLength": 1 },
+        "latest_run_id": { "type": ["string", "null"], "minLength": 1 },
+        "non_ready_reason_code": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "recommended_commands": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "reason"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validation_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "errors"],
+      "properties": {
+        "status": { "type": "string", "enum": ["passed", "failed", "not_run"] },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "runtime_evidence_contract_health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "policy_coverage_status", "policy_coverage", "check_count", "errors"],
+      "properties": {
+        "status": { "type": "string", "enum": ["ready", "failing", "unavailable", "not_configured"] },
+        "policy_coverage_status": { "type": "string", "enum": ["pass", "fail", "unavailable", "not_configured"] },
+        "policy_coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "families", "errors"],
+          "properties": {
+            "status": { "type": "string", "enum": ["pass", "fail", "unavailable", "not_configured"] },
+            "families": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["case_id", "family", "declaration_path", "enforcement_status"],
+                "properties": {
+                  "case_id": { "type": "string", "minLength": 1 },
+                  "family": { "type": "string", "minLength": 1 },
+                  "declaration_path": { "type": "string", "minLength": 1 },
+                  "enforcement_status": { "type": "string", "enum": ["implemented_enforced", "scaffolded_not_enforced", "missing_enforcement"] },
+                  "scorer_id": { "type": "string", "minLength": 1 },
+                  "scaffold_reason": { "type": "string", "minLength": 1 },
+                  "error_code": { "type": "string", "minLength": 1 },
+                  "failure_reason": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "errors": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "check_count": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["schema_version", "claim_id", "claim_type", "claim_text", "required_evidence"],
+        "properties": {
+          "schema_version": { "type": "integer", "const": 1 },
+          "claim_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+          "claim_type": { "type": "string", "enum": ["validation-passed", "artifact-exists", "state-observed", "blocker-detected"] },
+          "claim_text": { "type": "string", "minLength": 1 },
+          "required_evidence": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+            "uniqueItems": true
+          },
+          "confidence": { "type": ["string", "null"], "enum": ["low", "medium", "high", "advisory", null] }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["schema_version", "evidence_id", "evidence_type", "status", "observed_at"],
+        "properties": {
+          "schema_version": { "type": "integer", "const": 1 },
+          "evidence_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+          "evidence_type": { "type": "string", "enum": ["artifact", "command", "validation_artifact", "scorer_result", "baseline_result", "trace_event", "linear_issue_ref", "runtime_state", "manifest"] },
+          "status": { "type": "string", "enum": ["pass", "fail", "present", "missing", "verified", "blocked", "not_applicable"] },
+          "observed_at": { "type": "string", "format": "date-time" },
+          "path": { "type": ["string", "null"], "minLength": 1 },
+          "command": { "type": ["string", "null"], "minLength": 1 },
+          "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "manifest_path": { "type": ["string", "null"], "minLength": 1 },
+          "detail": { "type": ["string", "null"], "minLength": 1 }
+        }
+      }
+    },
+    "missing_evidence_scorer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scorer_id", "scorer_version", "status", "inputs_inspected", "evidence", "failure_reason"],
+      "properties": {
+        "scorer_id": { "type": "string", "const": "missing-evidence" },
+        "scorer_version": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["pass", "fail"] },
+        "inputs_inspected": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "evidence": { "type": "string", "minLength": 1 },
+        "failure_reason": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "readiness_verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "blocking_fields"],
+      "properties": {
+        "status": { "type": "string", "enum": ["pass", "fail"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "blocking_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

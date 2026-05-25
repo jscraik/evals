@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "run_id": "20260524T235853Z-pr-closeout-4df36134-01",
+  "case_id": "pr-closeout",
+  "created_at": "2026-05-24T23:58:53.768Z",
+  "retention": {
+    "status": "retained_local",
+    "policy": "Retain committed phase-one run artifacts indefinitely in repository history until an explicit retention ADR supersedes this policy."
+  },
+  "privacy": {
+    "class": "synthetic_public",
+    "redaction_status": "synthetic_no_redaction_needed",
+    "contains_private_content": false,
+    "contains_credentials": false
+  },
+  "artifacts": [
+    {
+      "type": "result",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134-01/result.json",
+      "sha256": "c49a8207d41131518b401a4743cf3d0c782077261248274231609f8130fe06b7",
+      "required": true
+    },
+    {
+      "type": "report",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134-01/report.md",
+      "sha256": "f6b3fa6e2b6fc08297f4106ac17b1f6bcba35fb13331f8501c2c2d6ddebe06cc",
+      "required": true
+    },
+    {
+      "type": "command-log",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134-01/command-log.json",
+      "sha256": "3f9d527e8d996cff77707b5154a4d2613433a8faa524944c7a78ba126d3f6312",
+      "required": true
+    },
+    {
+      "type": "scorer-results",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134-01/scorer-results.json",
+      "sha256": "687369a805d3101b30090415a53a7d94f94818aab3a965e557b7d255d0bf1723",
+      "required": true
+    },
+    {
+      "type": "baseline-result",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134-01/baseline-result.json",
+      "sha256": "fb7336cd5ff137625de9f70e3cc798ce5f98264cb25447c6224541f91a35f5e9",
+      "required": true
+    },
+    {
+      "type": "trace-events",
+      "path": ".harness/evals/runs/20260524T235853Z-pr-closeout-4df36134-01/trace-events.jsonl",
+      "sha256": "f379a401f3889c90cb478f26eb86fb9f117c81358ca964213685c03dd9bedd79",
+      "required": true
+    }
+  ]
+}

@@ -20,12 +20,51 @@ pass
 ## Commands Run
 
 - pnpm test -> pass, 113 tests passed after reviewer-remediation changes.
+  - validation_provenance:
+    - command: `pnpm test`
+    - outcome: `pass`
+    - tests_passed: `113`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-testing.md`
+    - remediation_commit_sha: `0206e406abfa6326e97d59e2ad50445ec9c698af`
+    - remediation_commit_timestamp_utc: `2026-05-25T00:03:38Z`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
+    - related_ledgers: `artifacts/reviews/jsc-370-simplify.md`, `artifacts/reviews/jsc-370-unslopify.md`
 - pnpm evals run fixtures/smoke/pr-closeout.case.json --json -> pass, produced
   a passing smoke run with suite_id and artifact_root in the JSON output.
+  - validation_provenance:
+    - command: `pnpm evals run fixtures/smoke/pr-closeout.case.json --json`
+    - outcome: `pass`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-testing.md`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
 - pnpm evals check --json -> pass, emitted expected_context,
   observed_latest_context, context_match true, and latest proof context pass.
+  - validation_provenance:
+    - command: `pnpm evals check --json`
+    - outcome: `pass`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-testing.md`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
 - pnpm evals state --json -> pass, runtime state ready.
+  - validation_provenance:
+    - command: `pnpm evals state --json`
+    - outcome: `pass`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-testing.md`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
 - pnpm verify -> pass, repository aggregate verification passed.
+  - validation_provenance:
+    - command: `pnpm verify`
+    - outcome: `pass`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-testing.md`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
 
 ## Residual Testing Risk
 

@@ -31,7 +31,7 @@ Head SHA: 7f256646bfa88503fbca3fdc15556f8ce053d9f1 (matches expected head)
 - Socket Security: Pull Request Alerts: success
 - Socket Security: Project Report: success
 - semgrep-cloud-platform/scan: success
-- license/snyk (jscraik): success
+- licence/snyk (jscraik): success
 - security/snyk (jscraik): success
 - CodeRabbit: failure
 

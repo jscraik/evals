@@ -40,11 +40,12 @@ export function createRunBundleDirectory({ runsRoot, startedAt, caseId, rawCase,
   throw new Error("could not allocate unique run artifact directory for " + baseRunId);
 }
 
-export function createRunBundle({ startedAt, caseId, rawCase }) {
+export function createRunBundle({ startedAt, caseId, rawCase, artifactRepoRoot = repoRoot, artifactRootPrefix = ".harness/evals/runs" }) {
   return createRunBundleDirectory({
-    runsRoot: join(repoRoot, ".harness", "evals", "runs"),
+    runsRoot: join(artifactRepoRoot, artifactRootPrefix),
     startedAt,
     caseId,
-    rawCase
+    rawCase,
+    artifactRootPrefix
   });
 }
