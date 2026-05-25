@@ -178,6 +178,38 @@
     .module-card .placement-badge code {
       color: #7c2d12;
     }
+    .slice-lanes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 10px 0 18px;
+    }
+    .slice-lane {
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--module-color);
+      background: var(--panel);
+      border-radius: 7px;
+      padding: 10px;
+      min-height: 150px;
+    }
+    .slice-lane strong,
+    .slice-lane span {
+      display: block;
+    }
+    .slice-lane strong {
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 5px;
+    }
+    .slice-lane span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+    .slice-lane code {
+      font-size: 0.84em;
+    }
     .flow-note {
       margin: 10px 14px 12px;
       padding: 8px 10px;
@@ -196,6 +228,9 @@
       .placement-legend {
         grid-template-columns: 1fr;
       }
+      .slice-lanes {
+        grid-template-columns: 1fr;
+      }
       .span-two {
         grid-column: span 1;
       }
@@ -204,7 +239,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 09:31 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 09:56 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are now represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -224,7 +259,7 @@
     <tr><td>Active issue</td><td>JSC-369</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active. JSC-371 local repair is pushed, and JSC-372 merge propagation is active; the manifest-path owner-module repair has a passing narrow regression and still needs broader slice validation, commit, push, and PR recheck before parent closeout can advance.</span></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active. JSC-371 repair is pushed, JSC-372 manifest-path containment is committed and pushed, PR #17 is clean on the latest recheck, and PR #18 is still draft while parent closeout waits for live child PR and tracker reconciliation.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
@@ -237,6 +272,32 @@
     <div style="--module-color: #ef3340;"><strong>Design packets</strong><span>Deep-module packets record owner, seam, rollback, tracer proof, and validation gate before edits.</span></div>
     <div style="--module-color: #a855f7;"><strong>Review lanes</strong><span>Reviewer and PR-green-sweep artifacts live under <code>artifacts/**</code>.</span></div>
     <div style="--module-color: #fbbf24;"><strong>Parent closeout</strong><span>JSC-369 reconciles child proof in closure evidence; it does not create runtime authority.</span></div>
+  </div>
+  <div class="slice-lanes" aria-label="Slice landing lanes">
+    <div class="slice-lane" style="--module-color: #38a8ff;">
+      <strong>JSC-370 lands in latest/run proof</strong>
+      <span><code>/private/tmp/evals-jsc370</code></span>
+      <span><code>src/lib/run-bundle.js</code> and <code>src/lib/latest-run.js</code></span>
+      <span>PR #15 owns false-success latest publication and run ID collision proof.</span>
+    </div>
+    <div class="slice-lane" style="--module-color: #34c759;">
+      <strong>JSC-371 lands in suite contract</strong>
+      <span><code>/private/tmp/evals-jsc371</code></span>
+      <span><code>src/lib/suite-contract.js</code>, suite schema, and repo-local fixtures</span>
+      <span>PR #16 owns domain-neutral suite roots, artifact placement, and fail-closed scorer/network policy.</span>
+    </div>
+    <div class="slice-lane" style="--module-color: #a855f7;">
+      <strong>JSC-372 lands in evidence packet</strong>
+      <span><code>/private/tmp/evals-jsc372</code></span>
+      <span><code>src/lib/claim-evidence-contract.js</code>, runtime state, packet schemas, and traversal regression</span>
+      <span>PR #17 owns claim/evidence sufficiency and manifest-path containment.</span>
+    </div>
+    <div class="slice-lane" style="--module-color: #fbbf24;">
+      <strong>JSC-369 lands in reconciliation</strong>
+      <span><code>/private/tmp/evals-jsc369</code></span>
+      <span><code>.harness/evals/evals-evals-executable-spine-eval.md</code> and PR triage artifacts</span>
+      <span>PR #18 records parent truth only; it does not add a second runtime owner.</span>
+    </div>
   </div>
   <div class="module-map" aria-label="Proof-spine work placement map">
     <section class="module-card" style="--module-color: #38a8ff; --module-height: 360px;">
@@ -336,7 +397,7 @@
       <td>JSC-369 parent reconciliation</td>
       <td><code>/private/tmp/evals-jsc369</code><br><code>codex-jsc-369-parent-closeout</code><br>PR #18, draft, base <code>codex-jsc-372-claim-evidence-runtime-packet</code></td>
       <td>No new runtime owner. Parent closeout consumes child proof, live PR/Linear state, docs checks, and generated eval run evidence.</td>
-      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01/</code>; <code>pnpm verify</code> passed in the coordinator validation lane.</td>
+      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T091459Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
       <td><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code><br><code>.harness/evals/evals-evals-executable-spine-eval.md</code><br><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code><br><code>artifacts/reviews/evals-proof-spine-*.md</code></td>
     </tr>
   </table>
