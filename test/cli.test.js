@@ -1692,6 +1692,83 @@ test("validate path traversal returns a structured failure", () => {
   }
 });
 
+test("validate-schema exposes proof contract schema and semantic checks", () => {
+  const repo = makeRepo();
+  try {
+    mkdirSync(join(repo, "fixtures", "proof-contracts"), { recursive: true });
+    const scoreVectorPath = join(repo, "fixtures", "proof-contracts", "score-vector.json");
+    writeFileSync(
+      scoreVectorPath,
+      JSON.stringify(
+        {
+          schema_version: 1,
+          score_vector_id: "score:agent-skills-readiness",
+          suite_id: "agent-skills:skill-output",
+          coverage: {
+            tested_claims: 6,
+            total_claims: 5,
+            coverage_status: "complete"
+          },
+          dimensions: [
+            {
+              dimension_id: "instruction-adherence",
+              score: 0.8,
+              weight: 0.4,
+              gate: true,
+              evidence_refs: ["artifacts/scorer-results.json"]
+            }
+          ],
+          gates: [
+            {
+              gate_id: "missing-critical-evidence",
+              status: "fail",
+              severity: "critical",
+              evidence_refs: ["artifacts/claim-registry.json"]
+            }
+          ],
+          readiness: {
+            status: "excellent",
+            raw_score: 0.99,
+            capped_by_gate: false,
+            cap_reason: null,
+            blocking_gates: []
+          }
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    const result = runCli(repo, ["validate-schema", "score-vector", "fixtures/proof-contracts/score-vector.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.equal(validation.target_schema, "score-vector");
+    assert.match(validation.errors.join("\n"), /tested_claims: must be <=/);
+    assert.match(validation.errors.join("\n"), /capped_by_gate: must be true/);
+    assert.match(validation.errors.join("\n"), /status: must not be excellent/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("validate-schema rejects unknown proof contract schemas", () => {
+  const repo = makeRepo();
+  try {
+    const result = runCli(repo, ["validate-schema", "unknown-contract", "fixtures/smoke/pr-closeout.case.json", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.deepEqual(validation.supported_schemas, ["claim-registry", "score-vector"]);
+    assert.match(validation.errors.join("\n"), /unknown proof contract schema/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
 test("invalid fixture fields fail schema and policy validation", () => {
   const repo = makeRepo();
   try {

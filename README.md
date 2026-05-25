@@ -36,6 +36,18 @@ Current-state command:
 pnpm evals state --json
 ```
 
+Proof contract schema command:
+
+```bash
+pnpm evals validate-schema claim-registry path/to/claim-registry.json --json
+pnpm evals validate-schema score-vector path/to/score-vector.json --json
+```
+
+This command validates the shared claim registry and score-vector data contracts
+and their local semantic invariants. It is intentionally data-only: it does not
+load consumer plugins, execute scorers, call external services, or promote a
+baseline.
+
 Regression test command:
 
 ```bash
@@ -153,6 +165,13 @@ baseline result, and manifest artifact hashes.
 Runtime readiness is queried with `pnpm evals state --json`; the state packet is
 advisory evidence for humans and agents, while `pnpm evals check --json` remains
 the deterministic validation gate.
+
+Optional claim registries and score vectors can be checked directly with
+`pnpm evals validate-schema <claim-registry|score-vector> <json-file> --json`.
+The validator rejects contradictory proof contracts such as duplicate claim IDs,
+inverted claim source spans, tested claim counts greater than total claim counts,
+or score vectors that report strong readiness while a critical gate is failed or
+blocked.
 
 Passing the command alone is not completion.
 

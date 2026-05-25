@@ -352,7 +352,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 11:08 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 20:10 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -369,12 +369,45 @@
   <h2>Current Slice</h2>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Active issue</td><td>JSC-369 parent reconciliation, with the browser mirror served from the JSC-370 worktree for continuity</td></tr>
-    <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
-    <tr><td>Branch</td><td><code>codex-jsc-369-final-closeout</code> for final parent evidence; this browser mirror was served from <code>Author local worktree: &lt;local-worktree-jsc370&gt;</code> during implementation.</td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation and final evidence cleanup are merged. Deep-module placement is shown in the visual below, including where each slice lands by worktree, branch, PR, owner module, proof surface, review artifact, and parent closeout evidence. PR #15 through PR #22 are merged; live thread audit reports zero unresolved review threads, and CodeRabbit returned success on the final cleanup PR.</span></td></tr>
+    <tr><td>Active issue</td><td>JSC-373 claim registry and score-vector contracts</td></tr>
+    <tr><td>Goal</td><td>Add domain-neutral proof contracts for claim registries, scenario buckets, gated score vectors, and optional proof artifacts without widening phase-one authority.</td></tr>
+    <tr><td>Branch</td><td><code>codex/jsc-373-claim-score-contracts</code></td></tr>
+    <tr><td>Status</td><td><span class="status">Implementation is local and under review. The first reviewer pass found that schema-only contracts were not enough, so the slice now adds a public <code>validate-schema</code> command and semantic proof-contract validation for impossible readiness and coverage states.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
+
+  <h2>JSC-373 Claim Registry and Score Vector Addendum</h2>
+  <p>JSC-373 is a narrow follow-up from the downloaded research report. The useful part for evals is not adopting a full external eval platform; it is adding neutral proof contracts for claim registries, scenario buckets, gated score vectors, and optional proof artifacts. This keeps evals as the proof-contract owner while consumer repos still own domain truth and thresholds.</p>
+  <table>
+    <tr><th>Decision</th><th>Implementation Placement</th><th>Tradeoff</th></tr>
+    <tr><td>Add a claim registry contract.</td><td><code>schemas/claim-registry.schema.json</code>, <code>src/lib/schema.js</code>, and <code>src/lib/proof-contract-validation.js</code>.</td><td>The schema represents unevaluable claims and required evidence; the semantic validator rejects duplicate claim IDs and inverted source spans without making evals extract claims from source packages.</td></tr>
+    <tr><td>Add a gated score-vector contract.</td><td><code>schemas/score-vector.schema.json</code>, <code>src/lib/proof-contract-validation.js</code>, and focused schema/CLI tests.</td><td>The contract supports readiness caps from failed gates; the semantic validator now rejects coverage inflation and critical-gate failures that still claim strong or excellent readiness.</td></tr>
+    <tr><td>Add scenario buckets to cases.</td><td>Optional <code>metadata.scenario_bucket</code> in <code>schemas/eval-case.schema.json</code>.</td><td>Existing cases remain valid; new suites can classify <code>nominal</code>, <code>boundary</code>, <code>adversarial</code>, <code>out_of_scope</code>, and <code>comparative</code> coverage.</td></tr>
+    <tr><td>Allow optional proof artifacts without widening latest authority.</td><td>Use existing arbitrary <code>artifact_refs</code> and manifest artifact <code>type</code> strings for <code>claim-registry</code>, <code>score-vector</code>, and <code>benchmark-summary</code>.</td><td><code>latest.json</code> remains the fixed closure pointer surface, so optional artifacts cannot silently become required latest trust anchors.</td></tr>
+    <tr><td>Expose contract validation without runner execution.</td><td><code>pnpm evals validate-schema &lt;claim-registry|score-vector&gt; &lt;json-file&gt; --json</code> through <code>src/commands/validation.js</code> and <code>src/cli.js</code>.</td><td>Consumer repos can validate proof-contract files deterministically without plugins, network calls, scorer execution, or baseline promotion.</td></tr>
+  </table>
+  <div class="module-map" aria-label="JSC-373 deep module ownership map">
+    <section class="module-card" style="--module-color: #38a8ff; --module-height: 230px;">
+      <h3>Contract Owner: Schema Registry</h3>
+      <ul>
+        <li><code>src/lib/schema.js</code> registers <code>claimRegistry</code> and <code>scoreVector</code>.</li>
+        <li><code>src/lib/proof-contract-validation.js</code> owns cross-field proof invariants that the local JSON Schema subset cannot express.</li>
+        <li>The owner is a bounded proof-contract validator, not a new runner layer.</li>
+      </ul>
+    </section>
+    <section class="module-card" style="--module-color: #34c759; --module-height: 230px;">
+      <h3>Executable Contracts</h3>
+      <ul>
+        <li><code>schemas/claim-registry.schema.json</code> represents source package claims and evidence requirements.</li>
+        <li><code>schemas/score-vector.schema.json</code> represents dimensions, gates, coverage, and capped readiness.</li>
+        <li><code>schemas/eval-case.schema.json</code> adds optional scenario metadata.</li>
+      </ul>
+    </section>
+    <section class="module-card span-two" style="--module-color: #a855f7; --module-height: 160px;">
+      <h3>Proof and Non-Goals</h3>
+      <p><code>test/schema.test.js</code> proves old cases still pass, invalid buckets fail, unevaluable claims are explicit, semantic contradictions fail, gated readiness is representable, and optional proof artifacts fit existing result/manifest contracts. <code>test/cli.test.js</code> proves the public <code>validate-schema</code> command reports semantic failures. No dashboard, external adapter, source mining, required LLM judge, or domain-specific scoring was added.</p>
+    </section>
+  </div>
 
   <h2>Where the Work Lands</h2>
   <p>This visual is the placement map for the governed implementation. The large blue box is the runtime proof boundary; the right-side boxes are the surrounding contracts that feed or verify it; the lower boxes are the evidence and delivery surfaces. New behavior lands in the owning deep module first, then callers, tests, artifacts, and PR/Linear state reference that owner instead of reimplementing it. The deep-module boxes now show the concrete landing zones inside each module: which slice writes there, which files carry the behavior, and which artifacts prove it.</p>
@@ -870,7 +903,7 @@
     <tr><td>JSC-371 deep module fix packet</td><td class="ok">pass</td><td>Updated <code>.harness/refactors/2026-05-24-jsc-371-repo-local-suite-contract.md</code> to require current deep-module ownership, <code>.evals</code> containment, and fail-closed local artifact policy.</td></tr>
     <tr><td><code>pnpm test</code> for JSC-371</td><td class="ok">pass</td><td>119 tests passed, including external temp consumer suite execution, traversal rejection, misplaced suite rejection, local-retention policy rejection, network rejection, and executable scorer rejection.</td></tr>
     <tr><td><code>pnpm verify</code> for JSC-371</td><td class="ok">pass</td><td>Aggregate gate passed with 119 tests plus smoke run, <code>state --json</code>, <code>check --json</code>, and credential-pattern scan.</td></tr>
-    <tr><td><code>@adversarial-reviewer</code> for JSC-371</td><td class="warn">artifact retry needed</td><td>Mailbox found two real issues and no artifact yet. Both issues are patched: mandatory <code>.evals</code> boundary and fail-closed <code>write_bundle</code>/<code>retain_locally</code>.</td></tr>
+    <tr><td><code>@adversarial-reviewer</code> for JSC-371</td><td class="ok">patched</td><td>Mailbox found two real issues. Both issues were patched: mandatory <code>.evals</code> boundary and fail-closed <code>write_bundle</code>/<code>retain_locally</code>. The later parent reconciliation recorded the remaining reviewer-artifact coverage state.</td></tr>
     <tr><td><code>@agent-native-reviewer</code> for JSC-371</td><td class="warn">deferred finding</td><td>Artifact exists. It asks for first-class agent tools; that is a valid parent-program parity gap but is not safe to add inside JSC-371 phase-one scope.</td></tr>
     <tr><td>JSC-372 deep module fix packet</td><td class="ok">pass</td><td>Added <code>.harness/refactors/2026-05-24-jsc-372-claim-evidence-runtime-packet.md</code> before runtime/schema edits.</td></tr>
     <tr><td><code>pnpm test</code> for JSC-372 initial implementation</td><td class="ok">pass</td><td>121 tests passed, including missing-evidence scorer regressions, schema-valid evidence packet output, and <code>scaffolded_not_enforced</code> policy coverage preservation.</td></tr>
@@ -898,6 +931,16 @@
     <tr><td>JSC-369 final PR</td><td class="ok">merged</td><td>PR <code>#21</code> merged final parent closeout evidence to <code>main</code> after PR #15 through PR #20 merged. Deterministic gates, Semgrep, Socket, and Snyk passed; CodeRabbit had no actionable review threads.</td></tr>
     <tr><td>JSC-369 final PR green sweep</td><td class="ok">superseded by PR #22</td><td>Subagent wrote <code>artifacts/pr-green-sweep/jsc-369-final-closeout-pr-triage.md</code>. Its external CodeRabbit-capacity blocker was resolved by the later PR #22 cleanup, which merged after CodeRabbit returned success and all review threads were resolved.</td></tr>
     <tr><td>JSC-369 CodeRabbit evidence cleanup</td><td class="ok">merged</td><td>PR <code>#22</code> fixed the remaining review-thread evidence mismatch, resolved the inline thread, passed deterministic gates, Semgrep, Socket, Snyk, and CodeRabbit, then merged at <code>687dd7d7c11d56f70e2c6afc9e720a95f3c4b66a</code>.</td></tr>
+    <tr><td>JSC-373 Linear issue</td><td class="ok">pass</td><td>Created <code>JSC-373</code> and moved it to In Progress for claim registry and score-vector contracts.</td></tr>
+    <tr><td><code>pnpm test test/schema.test.js</code> for JSC-373</td><td class="ok">pass</td><td>15 tests passed, including old-case compatibility, scenario buckets, claim registry semantics, score-vector gate semantics, and optional proof artifact refs.</td></tr>
+    <tr><td><code>pnpm test test/cli.test.js</code> for JSC-373</td><td class="ok">pass</td><td>104 tests passed, including <code>validate-schema</code> rejection of contradictory score-vector readiness and unknown proof-contract schema keys.</td></tr>
+    <tr><td><code>pnpm test</code> for JSC-373</td><td class="ok">pass</td><td>137 tests passed after adding public proof-contract validation and semantic contradiction checks.</td></tr>
+    <tr><td><code>pnpm evals run fixtures/smoke/pr-closeout.case.json --json</code> for JSC-373</td><td class="ok">pass</td><td>Smoke run produced <code>20260525T200810Z-pr-closeout-4df36134</code> during slice validation.</td></tr>
+    <tr><td><code>pnpm evals check --json</code> for JSC-373</td><td class="ok">pass</td><td>Latest proof context matched the canonical smoke fixture and runtime evidence policy coverage passed.</td></tr>
+    <tr><td><code>pnpm evals state --json</code> for JSC-373</td><td class="ok">pass</td><td>Runtime state reported <code>ready</code> on branch <code>codex/jsc-373-claim-score-contracts</code>.</td></tr>
+    <tr><td><code>pnpm verify</code> for JSC-373</td><td class="ok">pass</td><td>Aggregate gate passed with 136 tests, smoke run in text and JSON mode, state/check validation, and credential-pattern scan.</td></tr>
+    <tr><td><code>@adversarial-reviewer</code> for JSC-373</td><td class="ok">patched</td><td>Artifact exists at <code>artifacts/reviews/jsc-373-adversarial-reviewer.md</code>. Findings drove semantic validation for critical-gate caps, coverage consistency, duplicate claim IDs, and span ordering.</td></tr>
+    <tr><td><code>@agent-native-reviewer</code> for JSC-373</td><td class="ok">pass</td><td>Artifact exists at <code>artifacts/reviews/jsc-373-agent-native-reviewer.md</code> after focused retry. It confirms <code>validate-schema</code> restores agent-native action parity for the new contracts.</td></tr>
   </table>
 
   <h2>Open Questions</h2>

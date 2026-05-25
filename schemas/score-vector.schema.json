@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/score-vector.schema.json",
+  "title": "Score Vector",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "score_vector_id", "suite_id", "coverage", "dimensions", "gates", "readiness"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "score_vector_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+    "suite_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tested_claims", "total_claims", "coverage_status"],
+      "properties": {
+        "tested_claims": { "type": "integer", "minimum": 0 },
+        "total_claims": { "type": "integer", "minimum": 0 },
+        "coverage_status": { "type": "string", "enum": ["complete", "partial", "none"] }
+      }
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dimension_id", "score", "weight", "gate", "evidence_refs"],
+        "properties": {
+          "dimension_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+          "score": { "type": "number", "minimum": 0 },
+          "weight": { "type": "number", "minimum": 0 },
+          "gate": { "type": "boolean" },
+          "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "status", "severity", "evidence_refs"],
+        "properties": {
+          "gate_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+          "status": { "type": "string", "enum": ["pass", "fail", "blocked", "not_applicable"] },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "raw_score", "capped_by_gate", "cap_reason", "blocking_gates"],
+      "properties": {
+        "status": { "type": "string", "enum": ["excellent", "strong", "conditional", "not_ready", "blocked"] },
+        "raw_score": { "type": "number", "minimum": 0 },
+        "capped_by_gate": { "type": "boolean" },
+        "cap_reason": { "type": ["string", "null"], "minLength": 1 },
+        "blocking_gates": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" } }
+      }
+    }
+  }
+}

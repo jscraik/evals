@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { emitFailure } from "../lib/failures.js";
 import { expectedProofContextFromCase, validateCaseFile, validateLatestRun } from "../lib/latest-run.js";
 import { insideRepo, rel, repoRoot } from "../lib/paths.js";
+import { proofContractSchemaKeys, validateProofContractFile } from "../lib/proof-contract-validation.js";
 import { validateRuntimeEvidenceSuite } from "../lib/runtime-evidence-contract.js";
 
 /**
@@ -67,6 +68,27 @@ export function validateCommand(targetPath, jsonMode) {
       checks: [check],
       errors: check.errors
     };
+  }
+  printValidation(validation, jsonMode);
+  process.exit(validation.status === "passed" ? 0 : 1);
+}
+
+export function validateSchemaCommand(schemaKey, targetPath, jsonMode) {
+  let absoluteTargetPath;
+  try {
+    absoluteTargetPath = insideRepo(targetPath);
+  } catch (error) {
+    emitFailure(jsonMode, {
+      status: "failed",
+      requirement: "schema validation target path",
+      errors: [error.message],
+      recovery: "Pass a proof contract JSON file under the repository, then rerun validation."
+    });
+  }
+
+  const validation = validateProofContractFile(schemaKey, absoluteTargetPath);
+  if (validation.status === "failed" && validation.supported_schemas) {
+    validation.recovery = "Use one of: " + proofContractSchemaKeys().join(", ");
   }
   printValidation(validation, jsonMode);
   process.exit(validation.status === "passed" ? 0 : 1);
