@@ -8,6 +8,6 @@
   "current_artifact_ref": {
     "type": "command-log",
     "path": ".harness/evals/runs/20260525T085721Z-pr-closeout-4df36134/command-log.json",
-    "sha256": "0cd3d80c577355a16b48c2b2629b69aceda9e2fac86f90f36f738611cc88acfe"
+    "sha256": "9e1b4a547c55c8fcfbbce951fd0c860b33fe3a8f9b837306ce78ad0cbabb0094"
   }
 }

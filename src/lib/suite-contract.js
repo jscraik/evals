@@ -39,8 +39,13 @@ function resolveSuitePath(suiteRoot, path, label, errors) {
 
 function validateArtifactRoot(evaluatedRepoRoot, artifactRoot, errors) {
   const prefix = normalizeSuiteRef(artifactRoot || DEFAULT_ARTIFACT_ROOT);
+  const errorsBefore = errors.length;
   const resolved = rootRelativePath(evaluatedRepoRoot, prefix, "artifact_policy.artifact_root", errors);
-  return resolved ? relFrom(evaluatedRepoRoot, resolved) : prefix;
+  const validationFailed = !resolved || errors.length > errorsBefore;
+  if (validationFailed) {
+    return normalizeSuiteRef(DEFAULT_ARTIFACT_ROOT);
+  }
+  return relFrom(evaluatedRepoRoot, resolved);
 }
 
 function validateScorerRef(ref, index, errors) {
