@@ -60,10 +60,14 @@ From `gh pr checks 17 --repo jscraik/evals`:
 - Queried GitHub review APIs for reviews and inline comments.
 - Re-polled checks after initial pending state; deterministic-gates moved from pending -> pass.
 - No local file/code changes performed because no actionable failures were surfaced.
+- Follow-up propagation: JSC-370 CodeRabbit repair and JSC-371 propagated evidence commits were applied to this stacked branch after the initial sweep.
+- Local validation after propagation:
+  - pnpm test -> pass (123 tests)
+  - pnpm verify -> pass
 
 ## Next Coordinator Action
 
-1. Re-poll PR checks until `semgrep-cloud-platform/scan` resolves.
+1. Push the propagated repair/evidence commits and re-poll PR checks until `semgrep-cloud-platform/scan` resolves.
 2. If Semgrep passes, proceed with normal draft->ready and merge-readiness flow.
 3. If Semgrep fails, capture failing rule IDs/log excerpt and open a focused repair slice against this branch.
 4. Optional hygiene: if CodeRabbit coverage is required on this non-default base branch, trigger a manual review via the CodeRabbit comment control.
