@@ -1,146 +1,63 @@
 # JSC-370 PR Green Sweep Triage
 
-PR URL: https://github.com/jscraik/evals/pull/15
-Checked at: 2026-05-24 Europe/London
-Branch: codex-jsc-370-latest-proof-context
-Base: main
-PR state: OPEN (draft)
-Merge state: fixed locally, pending push/recheck
-Review decision: CodeRabbit posted actionable inline findings after the earlier sweep snapshot.
+## Scope
 
-## Live Check Status
+- Repo: `jscraik/evals`
+- PR: [#15](https://github.com/jscraik/evals/pull/15)
+- Branch: `codex-jsc-370-latest-proof-context`
+- Latest repaired head SHA: `f84cf7cfbf59c49770493c0a7f4876bc33383a58`
 
-- deterministic-gates: pass
-- semgrep-cloud-platform/scan: pass
-- Socket Security: Project Report: pass
-- Socket Security: Pull Request Alerts: pass
-- license/snyk (jscraik): pass
-- security/snyk (jscraik): pass
-- CodeRabbit: actionable comments found and fixed locally; requires push and live recheck.
+## Severity-Ranked Findings
 
-Source evidence:
-- `gh pr view ... --json statusCheckRollup`
-- `gh pr checks 15` and watch snapshot
+### High
 
-## Review Thread Status
+1. CodeRabbit cannot currently complete the live PR review because the external
+   service reports insufficient review credits.
+   - Evidence: PR #15 status recheck reported CodeRabbit failure with
+     `Insufficient review credits`.
+   - Ownership classification: `environment or tooling failure`.
+   - Remediation advice: restore/replenish CodeRabbit credits, rerun the
+     CodeRabbit check, then recheck PR #15 review comments and checks.
 
-- GitHub inline review comments were rechecked with `gh api repos/jscraik/evals/pulls/15/reviews/comments`.
-- CodeRabbit findings were actionable in `src/lib/latest-run.js`, the committed HTML report, and review artifacts.
+### Medium
+
+1. None currently.
+
+### Low
+
+1. The earlier `src/lib/paths.js` symlink-containment review finding has been
+   repaired locally and pushed.
+   - Evidence: focused review-comment check after push found no active comments
+     targeting `src/lib/paths.js`.
+   - Ownership classification: `introduced by current patch`; fixed.
 
 ## Fixes Made
 
-- `src/lib/latest-run.js`: preserved `expected_context`, `actual_context`, `context_match`, `context_mismatch_reason`, and `recovery_command` on malformed latest JSON and latest schema-failure paths.
-- `test/cli.test.js`: added regression coverage for schema-failed latest records and malformed latest JSON.
-- `.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html`: removed committed auto-refresh behavior and changed the page to a historical snapshot.
-- `artifacts/reviews/jsc-370-adversarial-reviewer.md`: added a resolution section for the review concern.
-- `artifacts/reviews/jsc-370-he-code-review.md`: clarified the residual artifact risk so committed review artifacts are not misclassified as generated proof bundles.
+- `src/lib/paths.js`: changed repository containment to compare real filesystem
+  paths so an in-repo symlink ancestor cannot redirect a case or artifact path
+  outside the trusted root.
+- `test/cli.test.js`: added a negative symlink-escape regression for case
+  validation.
+- `.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md`: updated the
+  deep-module packet to make `src/lib/paths.js` the containment owner.
+- `.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html`:
+  updated the deep-module visual to show where JSC-370 through JSC-369 work is
+  placed.
 
-## Remaining Blockers
+## Validation Evidence
 
-1. Live PR recheck is still required after the local fix commit is pushed.
-   - Class: post-fix external validation.
-   - Recovery condition: push the fix commit, recheck checks and review comments, and update this artifact if new faults appear.
+- `node --test --test-name-pattern "symlink" test/cli.test.js` -> pass.
+- `git diff --check` -> pass.
+- `pnpm test` -> pass. 115 tests passed on the JSC-370 branch after the repair.
+- `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass.
+- `pnpm evals check --json` -> pass.
+- `pnpm verify` -> pass.
 
-## Final Status
+## Current Blockers
 
-STATUS: fixed_pending_live_recheck
-
-Local fixes are applied and validated. The PR is not green-claimed until the fix commit is pushed and live GitHub checks/review comments are rechecked.
-
-## Local Validation
-
-- `pnpm test -- --runInBand` -> fail. Node test runner does not support the Jest-style `--runInBand` flag in this repo; command selection error, not a product failure.
-- `pnpm test` -> fail before assertion repair. The new malformed-JSON assertion was too specific for Node's parser wording.
-- `pnpm test` -> pass after assertion repair. 114 tests passed.
-- `pnpm verify` -> pass. Fresh proof bundle written under `.harness/evals/runs/20260524T235025Z-pr-closeout-4df36134-01/`.
-
-
-WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
-
-## Coordinator Green Recheck - 2026-05-25
-
-The coordinator rechecked PR #15 after CodeRabbit settled.
-
-- PR URL: https://github.com/jscraik/evals/pull/15
-- Head SHA: `255b3a11753c069a74cfa3547481e0fd2da10f57`
-- PR state: OPEN, not draft.
-- Mergeability: `MERGEABLE`; merge state `CLEAN`.
-- Passing visible checks:
-  - deterministic-gates
-  - CodeRabbit
-  - semgrep-cloud-platform/scan
-  - Socket Security: Project Report
-  - Socket Security: Pull Request Alerts
-  - license/snyk (jscraik)
-  - security/snyk (jscraik)
-- Pending visible checks: none visible in `gh pr view` output.
-- Current blocker classes:
-  - `lifecycle_blocker`: PR #15 remains open and unmerged.
-  - `coverage_gap`: the requested PR #15 subagent refresh failed to write
-    after one retry and is not counted as approval evidence.
-- Exact coordinator command:
-  - `gh pr view 15 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
-- Next coordinator step: PR #15 is green from hosted-check evidence and ready
-  for the configured merge/review decision; do not mark JSC-370 Done until
-  merge or owner-approved deferral is recorded.
-
-WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
-
-## Coordinator Live Refresh - 2026-05-25
-
-The coordinator marked PR #15 ready for review and rechecked live GitHub state
-after the subagent retry failed to write an artifact section.
-
-- PR URL: https://github.com/jscraik/evals/pull/15
-- Head SHA: `255b3a11753c069a74cfa3547481e0fd2da10f57`
-- PR state: OPEN, not draft.
-- Mergeability: `MERGEABLE`; merge state `UNSTABLE`.
-- Passing visible checks:
-  - deterministic-gates
-  - semgrep-cloud-platform/scan
-  - Socket Security: Project Report
-  - Socket Security: Pull Request Alerts
-  - license/snyk (jscraik)
-  - security/snyk (jscraik)
-- Pending visible checks:
-  - CodeRabbit
-- Current blocker classes:
-  - `external_pending`: CodeRabbit is pending after the PR was marked ready.
-  - `lifecycle_blocker`: PR #15 remains open and unmerged.
-  - `coverage_gap`: the requested PR #15 subagent refresh failed to write
-    after one retry and is not counted as approval evidence.
-- Exact coordinator commands:
-  - `gh pr view 15 --json number,isDraft,mergeStateStatus,headRefOid,statusCheckRollup,url` -> pass.
-- Next coordinator step: let the PR triage lane continue only if agent runtime
-  produces artifacts; otherwise recheck CodeRabbit directly before merge or
-  closeout and preserve this coverage gap.
-
-WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
-
-## Subagent Refresh Coverage Gap - 2026-05-25
-
-The coordinator launched a focused PR #15 triage retry subagent for this artifact
-after the parent loop corrected the intended handoff model. The retry agent did
-not write the requested \`## Subagent Refresh - 2026-05-25\` section after an
-interrupting follow-up and was closed by the coordinator.
-
-Latest coordinator live recheck before recording this gap:
-
-- PR #15 remains OPEN and DRAFT.
-- Mergeability is \`MERGEABLE\`; merge state is \`UNSTABLE\`.
-- deterministic-gates, semgrep-cloud-platform/scan, Socket Security project
-  report, Socket pull-request alerts, Snyk license, and Snyk security pass.
-- CodeRabbit status is FAILURE due external review-credit exhaustion.
-- Current blocker classes:
-  - \`external_tooling\`: CodeRabbit insufficient review credits.
-  - \`lifecycle_blocker\`: PR remains draft/open.
-
-STATUS: blocked_missing_artifact
-blocker_class: subagent_artifact_missing_after_retry
-exact_failure_text: PR #15 focused triage retry did not append the requested
-artifact section before coordinator shutdown.
-coordinator_next_step: preserve this coverage gap, avoid completion claims, and
-retry PR #15 triage only when agent runtime is stable or CodeRabbit credits are
-available.
+- `external_tooling`: CodeRabbit review-credit exhaustion prevents an all-green
+  hosted check surface.
+- `lifecycle_blocker`: PR #15 remains open until the configured merge or
+  owner-approved deferral decision is recorded.
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
