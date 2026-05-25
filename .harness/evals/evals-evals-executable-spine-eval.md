@@ -97,7 +97,7 @@ and GitHub review threads are resolved.
 | JSC-370 | implemented, validated, committed, pushed, and merged | PR #15 merged to `main` at `5698723aad345f7eb34ecf4bbe36d42a04018519`; deterministic-gates, Semgrep, Socket, and Snyk passed. CodeRabbit status is FAILURE due review-credit exhaustion, but no emitted review thread remains unresolved. | Linear JSC-370 is Done; attachments include PR #15, parent PR #18, and PR #19. | closed; false-success/latest proof context slice is merged and tracker-reconciled |
 | JSC-371 | implemented, validated, committed, pushed, and merged | PR #16 merged to `main` at `a0712cf2940962281bcc75db992e4451a604f6e6`; deterministic-gates, Semgrep, Socket, and Snyk passed. CodeRabbit status is FAILURE due review-credit exhaustion, but no emitted review thread remains unresolved. | Linear JSC-371 is Done; attachments include PR #16 and parent PR #18. | closed; repo-local suite contract is merged and tracker-reconciled |
 | JSC-372 | implemented, validated, committed, pushed, and merged through the JSC-371 stack | PR #17 merged into `codex-jsc-371-repo-local-suite-contract` at `c4d6a088e5a66cd465849998b191f7a5413528d7`; the stack later merged through PR #16. Hosted deterministic-gates, Semgrep, Socket, and Snyk passed; CodeRabbit status is review-credit blocked on the historical PR view, with no unresolved review thread after the final sweep. | Linear JSC-372 is Done; attachments include PR #17 and parent PR #18. | closed; claim/evidence and runtime evidence packet v1 are merged and tracker-reconciled |
-| JSC-369 | parent reconciliation complete on top of merged main | PR #18 merged into the JSC-371 stack at `0965fbbbf0fe899e9c422f48560ab03d545865bc`, then reached `main` through PR #16. PR #21 merged the final closeout evidence to `main` at `dd7ef7014b9acd9577ed69fcbfdb037b679e4ee1`. PRs #15 through #21 are merged. Final thread audit returned unresolved `[]` for PRs #15, #16, #17, #18, #19, #20, and #21. | Linear JSC-369 is Done; attachments include PR #18 and PR #21. | closed; parent queue reconciled after child PRs, tracker state, local validation, and review-thread state were rechecked |
+| JSC-369 | parent reconciliation complete on top of merged main | PR #18 merged into the JSC-371 stack at `0965fbbbf0fe899e9c422f48560ab03d545865bc`, then reached `main` through PR #16. PR #21 merged the final closeout evidence to `main` at `dd7ef7014b9acd9577ed69fcbfdb037b679e4ee1`. PR #22 merged the final CodeRabbit/review-thread evidence cleanup to `main` at `687dd7d7c11d56f70e2c6afc9e720a95f3c4b66a`. PRs #15 through #22 are merged. Final thread audit returned unresolved `[]` for PRs #15, #16, #17, #18, #19, #20, #21, and #22. | Linear JSC-369 is Done; attachments include PR #18 and PR #21. | closed; parent queue reconciled after child PRs, tracker state, local validation, and review-thread state were rechecked |
 
 ### Deep Module Architecture Decision
 
@@ -125,8 +125,8 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | JSC-372 | git diff --check; pnpm test; pnpm evals run fixtures/smoke/pr-closeout.case.json --json; pnpm evals check --json; pnpm evals state --json; pnpm verify | pass | recorded in commit 519bde6 and JSC-372 review artifacts |
 | JSC-372 reviewer gate | agent-native-reviewer artifact | pass | artifacts/reviews/jsc-372-agent-native-reviewer.md |
 | JSC-372 adversarial reviewer gate | required artifact | coverage gap | reviewer returned mailbox findings twice but did not write the requested artifact after one retry; coordinator artifact records remediation and gap at artifacts/reviews/jsc-372-review-coordination.md |
-| JSC-372 PR triage | pr-green-sweep artifact plus live recheck | pass | artifacts/pr-green-sweep/jsc-372-pr-triage.md records earlier pending checks; live PR #17 recheck on 2026-05-25 shows deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit passing with merge state CLEAN |
-| Documentation accuracy | docs-expert fallback artifact | partial | artifacts/reviews/evals-proof-spine-docs-expert.md records README accurate for phase-one doctrine but incomplete for unmerged suite/claim/evidence exposition |
+| JSC-372 PR triage | pr-green-sweep artifact plus live recheck | pass with external CodeRabbit status caveat | artifacts/pr-green-sweep/jsc-372-pr-triage.md records earlier pending checks; live PR #17 recheck on 2026-05-25 shows deterministic-gates, Semgrep, Socket, and Snyk passing, GitHub review threads unresolved `[]`, and CodeRabbit status failing due the same external review-credit condition tracked on the historical child PRs. PR #17 is merged at `c4d6a088e5a66cd465849998b191f7a5413528d7`; no repository-code CodeRabbit thread remains outstanding. |
+| Documentation accuracy | docs-expert fallback artifact | superseded by follow-up | artifacts/reviews/evals-proof-spine-docs-expert.md records the earlier README exposition gap; later documentation tests and closeout evidence record the merged suite/claim/evidence surfaces as current authority |
 | AGENTS accuracy | agents-md fallback artifact | pass with follow-up | artifacts/reviews/evals-proof-spine-agents-md.md records no blocking AGENTS.md contradiction |
 | JSC-369 merged-main validation | git diff --check | pass | no whitespace or conflict-marker output before closeout edits |
 | JSC-369 merged-main validation | pnpm test | pass | 131 tests passed on branch `codex-jsc-369-final-closeout` at `602dda16a6c4daad6be0b1c22b474ad8750eef33` |
@@ -137,17 +137,17 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | Latest artifact bundle | latest.json plus run-local artifacts | pass | latest pointer names `run_id=20260525T175526Z-pr-closeout-4df36134-01`, result, report, command log, manifest, scorer results, baseline result, and trace timeline |
 | Deterministic scorer verdicts | scorer-results.json | pass | exit-code, required-output, artifact-completeness, and baseline-presence scorers all pass |
 | Baseline state | baseline-result.json | pass | `presence_status=missing`, `comparison_status=not_compared`, and `promotion_status=not_requested`; no promotion was attempted |
-| GitHub review-thread recheck | gh GraphQL reviewThreads for PRs #15-#21 | pass | unresolved review-thread list was `[]` for every PR in the parent queue and follow-up review-thread cleanup PRs |
+| GitHub review-thread recheck | gh GraphQL reviewThreads for PRs #15-#22 | pass | unresolved review-thread list was `[]` for every PR in the parent queue and follow-up review-thread cleanup PRs |
 | Linear lifecycle reconciliation | mcp__linear__get_issue for JSC-369 through JSC-372 | pass | JSC-369, JSC-370, JSC-371, and JSC-372 are all Done with PR attachments present |
 | Documentation accuracy | README, AGENTS.md, docs review artifacts, and tests | pass | README now documents repo-local suite command and runtime evidence packet behavior; `pnpm test` includes docs/discovery guardrails |
 | AGENTS accuracy | AGENTS.md and agents review artifact | pass | AGENTS.md still preserves phase-one hard blocks, validation commands, and closure-evidence contract |
 
 ### Remaining Deferrals / Blockers
 
-- CodeRabbit status contexts on PRs #15, #16, #17, #19, #20, and #21 remain historical
-  review-credit or review-limit failures. They are classified as external
-  capacity signals because GitHub review threads are resolved and no emitted
-  actionable finding remains unresolved.
+- Historical CodeRabbit status contexts on PRs #15, #16, #17, #19, #20, and
+  #21 were review-credit or review-limit failures. PR #22 rechecked the
+  remaining review-thread evidence, resolved the only inline thread, and merged
+  after CodeRabbit returned success.
 - The earlier JSC-372 adversarial reviewer artifact coverage gap remains
   recorded at `artifacts/reviews/jsc-372-review-coordination.md`. The mailbox
   findings were remediated, PRs are merged, and the final parent closeout does
@@ -158,7 +158,7 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 JSC-369 is complete after final reconciliation. The governed parent loop has
 closed the JSC-370 false-success trust boundary, merged the JSC-371 repo-local
 suite contract, merged the JSC-372 claim/evidence runtime packet, resolved the
-historical outstanding review threads through PR #20, rechecked live Linear
+historical outstanding review threads through PR #22, rechecked live Linear
 state, and rerun the merged-main validation gate. No phase-one hard-blocked
 capability was introduced.
 
@@ -377,7 +377,9 @@ Current authority for parent closeout is:
 
 - PR #21 merged final closeout evidence to `main` at
   `dd7ef7014b9acd9577ed69fcbfdb037b679e4ee1`.
-- PRs #15, #16, #17, #18, #19, #20, and #21 are merged.
+- PR #22 merged final CodeRabbit/review-thread evidence cleanup to `main` at
+  `687dd7d7c11d56f70e2c6afc9e720a95f3c4b66a`.
+- PRs #15, #16, #17, #18, #19, #20, #21, and #22 are merged.
 - GitHub GraphQL `pullRequest.reviewThreads` returned zero unresolved threads
   for the parent queue and follow-up cleanup PRs.
 - JSC-369, JSC-370, JSC-371, and JSC-372 are Done in Linear.
