@@ -1,67 +1,57 @@
-# JSC-371 PR #16 Green Sweep Triage
+# JSC-371 PR #16 Postfix Triage
 
 ## Scope
-- Repository: `jscraik/evals`
-- PR: [#16](https://github.com/jscraik/evals/pull/16)
-- Original triage head: `cbd403395483f304470186a450a28c89c0954a87`
-- Coordinator repair: pending push from local worktree after this artifact update.
-
-## Current PR and Check State
-- PR state: OPEN, non-draft, merge state `UNSTABLE`.
-- Check summary:
-  - `CodeRabbit`: **fail** — `Insufficient review credits`
-  - `deterministic-gates`: pass
-  - `semgrep-cloud-platform/scan`: pass
-  - `Socket Security` checks: pass
-  - `Snyk` checks: pass
+- Repo: `jscraik/evals`
+- PR: #16
+- URL: https://github.com/jscraik/evals/pull/16
+- Local worktree: `/private/tmp/evals-jsc371`
+- Expected head: `7d6d6671e9908a9b5deef1ac310906c8c6440da1`
+- Observed head: `7d6d6671e9908a9b5deef1ac310906c8c6440da1` (match)
 
 ## Severity-Ranked Findings
 
-### 1. Minor: Overly permissive suite detection in `isSuitePath` — remediated locally
-- Severity: Minor
-- Evidence:
-  - File: `src/lib/suite-contract.js:129-137`
-  - Current logic returns true for any JSON file matching shape keys (`cases`, `owner_repo`, `artifact_policy`) even when not named `suite.json` and not guaranteed repo-local.
-  - CodeRabbit inline discussion reference: `https://github.com/jscraik/evals/pull/16#discussion_r3297366282`
-- Risk:
-  - Can misclassify non-`suite.json` file paths as suites and route run behavior away from the intended `<case-file|suite.json>` contract.
-- Remediation:
-  - Coordinator restricted `isSuitePath` to:
-    - require `basename(resolve(path)) === "suite.json"`
-    - require `nearestEvalRoot(dirname(absolutePath))`
-    - avoid content-shape parsing for suite detection.
-  - Added regression coverage proving a suite-shaped `.evals/not-suite.json` is not routed as a suite and does not publish artifacts.
-  - Updated the misplaced-suite regression to assert the direct `loadSuite` guard and the new CLI case-path rejection route.
+### P1 - External blocker: CodeRabbit required status is failing due to credit exhaustion
+- Evidence: `gh pr checks 16` reports `CodeRabbit  fail  Insufficient review credits`.
+- Evidence source in PR comments: CodeRabbit status comment says review capacity/usage credits exhausted, not code-level defects.
+- Impact: Prevents fully green required-check surface despite deterministic gates passing.
+- Ownership classification: environment or tooling failure (external service quota), not introduced by current patch.
+- Remediation advice: restore CodeRabbit credits or temporarily adjust required-check policy if governance allows.
 
-### 2. External blocker: CodeRabbit check failure is credit exhaustion, not code/runtime gate failure
-- Severity: Informational/External
-- Evidence:
-  - `gh pr checks 16` shows CodeRabbit failed with `Insufficient review credits`.
-  - PR comments include CodeRabbit “Review limit reached” and org usage exhaustion notice.
-- Risk:
-  - Prevents CodeRabbit green status despite local code quality and deterministic checks passing.
-- Recommended remediation:
-  - Re-trigger CodeRabbit after credits refill or purchase additional credits.
-  - Keep this classified as an external service quota blocker unless new actionable findings appear.
+### P2 - Prior `isSuitePath` and artifact-root findings appear resolved at current head
+- Prior actionable findings from review comments:
+  - artifact root normalization mismatch risk
+  - suite dispatch fallback risk in `isSuitePath`
+- Current head evidence in `src/lib/suite-contract.js`:
+  - `validateArtifactRoot` now normalizes and canonicalizes via `normalizeSuiteRef(...)`, `rootRelativePath(...)`, and `relFrom(...)`.
+  - `isSuitePath` now dispatches by `suite.json` basename plus `.evals` ancestry, not by requiring `artifact_policy`/schema keys in-file.
+- Conclusion: coordinator repair for the `isSuitePath` lane is present on current head; no additional local patch required from this triage slice.
 
-## Coordinator Repair Evidence
+### P3 - Non-blocking pending status still present
+- Evidence: `semgrep-cloud-platform/scan` remains `pending` at recheck time.
+- Impact: final readiness still depends on completion outcome.
+- Remediation advice: wait for Semgrep to finish and recheck status rollup.
 
-STATUS: repaired_local_pending_push
+## PR / Review State Snapshot
+- PR state: OPEN, not draft.
+- Merge state status: UNSTABLE.
+- Passing checks: deterministic-gates, Socket Security checks, Snyk license/security.
+- Failing checks: CodeRabbit (credit exhaustion).
+- Pending checks: semgrep-cloud-platform/scan.
+- Review comments: no newly surfaced actionable code defects after coordinator repair; triage-only/doc-lint noise remains non-blocking for runtime behavior.
 
-- Files changed:
-  - `src/lib/suite-contract.js`
-  - `test/cli.test.js`
-  - `artifacts/pr-green-sweep/jsc-371-pr-triage.md`
-- Validation:
-  - `node --test --test-name-pattern "suite detection requires suite.json inside .evals" test/cli.test.js` -> pass
-  - `node --test --test-name-pattern "repo-local suite|suite contract|suite detection" test/cli.test.js` -> pass
-  - `git diff --check` -> pass
-  - `pnpm test` -> pass, 125 tests
-  - `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass
-  - `pnpm evals check --json` -> pass
-  - `pnpm evals state --json` -> pass
-  - `pnpm verify` -> pass
-- Remaining blocker:
-  - CodeRabbit hosted check remains an external service quota blocker until PR #16 receives a new live check after push and/or review credits are available.
+## Local Changes and Validation in This Slice
+- Code edits: none.
+- Validation commands run:
+  - `git rev-parse HEAD`
+  - `git status --short --branch`
+  - `gh pr view 16 --json ...`
+  - `gh pr checks 16` (rechecked)
+  - `gh`/GitHub API review-comment inspection for actionable findings
+
+## Coordinator Next Step
+1. Treat current blocker as external CodeRabbit credit exhaustion.
+2. Wait for Semgrep completion, then re-run `gh pr checks 16`.
+3. If Semgrep passes and CodeRabbit remains quota-failed, route policy decision (credits replenish vs. required-check exception).
 
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
+
