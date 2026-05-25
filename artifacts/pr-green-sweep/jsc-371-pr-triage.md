@@ -1,48 +1,67 @@
 # JSC-371 PR #16 Green Sweep Triage
 
 ## Scope
-- Repo: `jscraik/evals`
+- Repository: `jscraik/evals`
 - PR: [#16](https://github.com/jscraik/evals/pull/16)
-- Branch: `codex-jsc-371-repo-local-suite-contract`
-- Evaluated SHA: `388db321e04ebe4ba7673442e5c01b91e9f0cfa0`
+- Original triage head: `cbd403395483f304470186a450a28c89c0954a87`
+- Coordinator repair: pending push from local worktree after this artifact update.
 
-## Live PR/Check State
-- PR state: `open`
-- Review decision: `COMMENTED`
-- Combined status: `failure`
-- Failing status context: `CodeRabbit` with description `Insufficient review credits`
-- Other checks/status contexts: `deterministic-gates` success, `security/snyk` success, `license/snyk` success, `semgrep-cloud-platform/scan` in progress at inspection time
+## Current PR and Check State
+- PR state: OPEN, non-draft, merge state `UNSTABLE`.
+- Check summary:
+  - `CodeRabbit`: **fail** — `Insufficient review credits`
+  - `deterministic-gates`: pass
+  - `semgrep-cloud-platform/scan`: pass
+  - `Socket Security` checks: pass
+  - `Snyk` checks: pass
 
 ## Severity-Ranked Findings
 
-### High
-1. CodeRabbit status failure blocks a fully-green checks surface.
-- Evidence: status context `CodeRabbit` = failure with message `Insufficient review credits`.
-- Ownership classification: `environment or tooling failure` (external review-credit exhaustion, not repository logic).
-- Remediation advice: replenish CodeRabbit credits or rerun CodeRabbit after quota reset; no code patch in this repo can resolve the status.
+### 1. Minor: Overly permissive suite detection in `isSuitePath` — remediated locally
+- Severity: Minor
+- Evidence:
+  - File: `src/lib/suite-contract.js:129-137`
+  - Current logic returns true for any JSON file matching shape keys (`cases`, `owner_repo`, `artifact_policy`) even when not named `suite.json` and not guaranteed repo-local.
+  - CodeRabbit inline discussion reference: `https://github.com/jscraik/evals/pull/16#discussion_r3297366282`
+- Risk:
+  - Can misclassify non-`suite.json` file paths as suites and route run behavior away from the intended `<case-file|suite.json>` contract.
+- Remediation:
+  - Coordinator restricted `isSuitePath` to:
+    - require `basename(resolve(path)) === "suite.json"`
+    - require `nearestEvalRoot(dirname(absolutePath))`
+    - avoid content-shape parsing for suite detection.
+  - Added regression coverage proving a suite-shaped `.evals/not-suite.json` is not routed as a suite and does not publish artifacts.
+  - Updated the misplaced-suite regression to assert the direct `loadSuite` guard and the new CLI case-path rejection route.
 
-### Medium
-1. None currently.
+### 2. External blocker: CodeRabbit check failure is credit exhaustion, not code/runtime gate failure
+- Severity: Informational/External
+- Evidence:
+  - `gh pr checks 16` shows CodeRabbit failed with `Insufficient review credits`.
+  - PR comments include CodeRabbit “Review limit reached” and org usage exhaustion notice.
+- Risk:
+  - Prevents CodeRabbit green status despite local code quality and deterministic checks passing.
+- Recommended remediation:
+  - Re-trigger CodeRabbit after credits refill or purchase additional credits.
+  - Keep this classified as an external service quota blocker unless new actionable findings appear.
 
-### Low
-1. CWD-dependent case-path in `test/cli.test.js` made one unit test environment-sensitive.
-- Evidence: previous line `validateCaseFile("fixtures/smoke/pr-closeout.case.json")` in `test("case validation returns the validated case document for proof context")`.
-- Ownership classification: `introduced by current patch`.
-- Remediation performed: switched to `validateCaseFile(smokeFixture(sourceRoot))` to use deterministic absolute fixture resolution.
+## Coordinator Repair Evidence
 
-## Review Thread/Fault Classification Summary
-- Introduced by current patch: 1 (test path determinism; fixed in this sweep).
-- Pre-existing: 0 identified.
-- Unrelated dirty worktree: 0 identified (clean branch before patch).
-- Environment/tooling failure: 1 (CodeRabbit credit exhaustion status).
+STATUS: repaired_local_pending_push
 
-## Validation Run
-- Command: `pnpm test`
-- Result: pass (`124` tests, `0` failures).
-
-## Git Actions Performed
-- Applied minimal fix to `test/cli.test.js` for deterministic path resolution.
-- Ready to commit and push this repair on the PR branch.
+- Files changed:
+  - `src/lib/suite-contract.js`
+  - `test/cli.test.js`
+  - `artifacts/pr-green-sweep/jsc-371-pr-triage.md`
+- Validation:
+  - `node --test --test-name-pattern "suite detection requires suite.json inside .evals" test/cli.test.js` -> pass
+  - `node --test --test-name-pattern "repo-local suite|suite contract|suite detection" test/cli.test.js` -> pass
+  - `git diff --check` -> pass
+  - `pnpm test` -> pass, 125 tests
+  - `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass
+  - `pnpm evals check --json` -> pass
+  - `pnpm evals state --json` -> pass
+  - `pnpm verify` -> pass
+- Remaining blocker:
+  - CodeRabbit hosted check remains an external service quota blocker until PR #16 receives a new live check after push and/or review credits are available.
 
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
-
