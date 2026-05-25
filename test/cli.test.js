@@ -429,6 +429,30 @@ test("suite detection requires suite.json inside .evals", () => {
   }
 });
 
+test("suite detection rejects symlinked suite.json files", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  const suitePath = join(consumer, ".evals", "suite.json");
+  const targetPath = join(consumer, ".evals", "linked-suite.json");
+  try {
+    const suite = JSON.parse(readFileSync(suitePath, "utf8"));
+    writeFileSync(targetPath, JSON.stringify(suite, null, 2) + "\n");
+    rmSync(suitePath);
+    symlinkSync(targetPath, suitePath);
+
+    assert.equal(isSuitePath(suitePath), false);
+
+    const result = runCli(repo, ["run", suitePath, "--json"]);
+    assert.equal(result.status, 1);
+    const output = parseJson(result.stdout);
+    assert.equal(output.requirement, "case path");
+    assert.equal(existsSync(join(consumer, ".harness", "evals", "runs")), false);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
 test("suite contract requires local bundle retention in phase one", () => {
   const repo = makeRepo();
   const consumer = makeConsumerSuite(repo, {

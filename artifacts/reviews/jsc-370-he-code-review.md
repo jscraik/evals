@@ -23,7 +23,24 @@ truth findings remain after local review.
 ## Validation Evidence
 
 - pnpm test -> pass, 113 tests passed after reviewer-remediation changes.
+  - validation_provenance:
+    - command: `pnpm test`
+    - outcome: `pass`
+    - tests_passed: `113`
+    - remediation_commit_sha: `0206e406abfa6326e97d59e2ad50445ec9c698af`
+    - remediation_commit_timestamp_utc: `2026-05-25T00:03:38Z`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-he-code-review.md`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
 - pnpm verify -> pass, aggregate repository gate passed.
+  - validation_provenance:
+    - command: `pnpm verify`
+    - outcome: `pass`
+    - evidence_artifact_path: `artifacts/reviews/jsc-370-he-code-review.md`
+    - artifact_commit_sha: `5698723aad345f7eb34ecf4bbe36d42a04018519`
+    - artifact_commit_timestamp_utc: `2026-05-25T15:33:22Z`
+    - validation_timestamp_utc: `not_recorded_in_original_ledger`
 
 ## Residual Risk
 

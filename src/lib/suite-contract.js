@@ -1,4 +1,4 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, lstatSync, statSync } from "node:fs";
 import { basename, dirname, resolve, sep } from "node:path";
 
 import { readJson } from "./json.js";
@@ -129,6 +129,7 @@ export function loadSuite(suitePath) {
 export function isSuitePath(path) {
   if (!path || !existsSync(path)) return false;
   try {
+    if (lstatSync(path).isSymbolicLink()) return false;
     const stats = statSync(path);
     if (!stats.isFile()) return false;
     const absolutePath = resolve(path);
