@@ -137,7 +137,7 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | Latest artifact bundle | latest.json plus run-local artifacts | pass | latest pointer names `run_id=20260525T175526Z-pr-closeout-4df36134-01`, result, report, command log, manifest, scorer results, baseline result, and trace timeline |
 | Deterministic scorer verdicts | scorer-results.json | pass | exit-code, required-output, artifact-completeness, and baseline-presence scorers all pass |
 | Baseline state | baseline-result.json | pass | `presence_status=missing`, `comparison_status=not_compared`, and `promotion_status=not_requested`; no promotion was attempted |
-| GitHub review-thread recheck | gh GraphQL reviewThreads for PRs #15-#20 | pass | unresolved review-thread list was `[]` for every PR in the parent queue and follow-up review-thread cleanup PRs |
+| GitHub review-thread recheck | gh GraphQL reviewThreads for PRs #15-#21 | pass | unresolved review-thread list was `[]` for every PR in the parent queue and follow-up review-thread cleanup PRs |
 | Linear lifecycle reconciliation | mcp__linear__get_issue for JSC-369 through JSC-372 | pass | JSC-369, JSC-370, JSC-371, and JSC-372 are all Done with PR attachments present |
 | Documentation accuracy | README, AGENTS.md, docs review artifacts, and tests | pass | README now documents repo-local suite command and runtime evidence packet behavior; `pnpm test` includes docs/discovery guardrails |
 | AGENTS accuracy | AGENTS.md and agents review artifact | pass | AGENTS.md still preserves phase-one hard blocks, validation commands, and closure-evidence contract |
