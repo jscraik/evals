@@ -7,7 +7,7 @@ linear_status: override_approved
 run_id: 20260518T212318Z-pr-closeout-f8d3bda9
 git_status: pushed_to_origin_main
 jsc_369_status: complete_live_linear_done
-jsc_369_latest_validation_run_id: 20260525T172142Z-pr-closeout-4df36134-01
+jsc_369_latest_validation_run_id: 20260525T173446Z-pr-closeout-4df36134-01
 ---
 
 # Evals Executable Spine Closure Eval
@@ -133,8 +133,8 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | JSC-369 merged-main validation | pnpm evals run fixtures/smoke/pr-closeout.case.json --json | pass | wrote proof bundle `.harness/evals/runs/20260525T171640Z-pr-closeout-4df36134` during the direct run |
 | JSC-369 merged-main validation | pnpm evals check --json | pass | latest proof context matched expected `case_id=pr-closeout`, `suite_id=smoke`, and `execution_mode=synthetic`; runtime evidence policy coverage passed |
 | JSC-369 merged-main validation | pnpm evals state --json | pass | emitted runtime evidence packet v1 with `runtime_state.status=ready`, `contract_health.runtime_evidence.status=ready`, no blockers, and recommended commands `pnpm evals check --json` and `pnpm verify` |
-| JSC-369 merged-main validation | pnpm verify | pass | aggregate gate passed and wrote latest proof bundle `.harness/evals/runs/20260525T172142Z-pr-closeout-4df36134-01` |
-| Latest artifact bundle | latest.json plus run-local artifacts | pass | latest pointer names `run_id=20260525T172142Z-pr-closeout-4df36134-01`, result, report, command log, manifest, scorer results, baseline result, and trace timeline |
+| JSC-369 merged-main validation | pnpm verify | pass | aggregate gate passed and wrote latest proof bundle `.harness/evals/runs/20260525T173446Z-pr-closeout-4df36134-01` |
+| Latest artifact bundle | latest.json plus run-local artifacts | pass | latest pointer names `run_id=20260525T173446Z-pr-closeout-4df36134-01`, result, report, command log, manifest, scorer results, baseline result, and trace timeline |
 | Deterministic scorer verdicts | scorer-results.json | pass | exit-code, required-output, artifact-completeness, and baseline-presence scorers all pass |
 | Baseline state | baseline-result.json | pass | `presence_status=missing`, `comparison_status=not_compared`, and `promotion_status=not_requested`; no promotion was attempted |
 | GitHub review-thread recheck | gh GraphQL reviewThreads for PRs #15-#20 | pass | unresolved review-thread list was `[]` for every PR in the parent queue and follow-up review-thread cleanup PRs |

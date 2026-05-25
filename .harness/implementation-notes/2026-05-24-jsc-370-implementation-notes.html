@@ -371,8 +371,8 @@
     <tr><th>Field</th><th>Value</th></tr>
     <tr><td>Active issue</td><td>JSC-369 parent reconciliation, with the browser mirror served from the JSC-370 worktree for continuity</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
-    <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code> for parent evidence; this browser mirror was served from <code>Author local worktree: &lt;local-worktree-jsc370&gt;</code> during implementation.</td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active. Deep-module placement is now shown in the visual below, including where each slice lands by worktree, branch, PR, owner module, proof surface, review artifact, and parent closeout evidence. JSC-370 and JSC-371 are locally repaired and pushed with CodeRabbit-credit blockers recorded where applicable; JSC-372 has clean PR triage evidence and has ingested the latest upstream notes; JSC-369 remains open while parent closeout reconciles PR, tracker, documentation, and closure truth.</span></td></tr>
+    <tr><td>Branch</td><td><code>codex-jsc-369-final-closeout</code> for final parent evidence; this browser mirror was served from <code>Author local worktree: &lt;local-worktree-jsc370&gt;</code> during implementation.</td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation is in final PR review. Deep-module placement is shown in the visual below, including where each slice lands by worktree, branch, PR, owner module, proof surface, review artifact, and parent closeout evidence. PR #15 through PR #20 are merged. Final closeout PR #21 is open from <code>codex-jsc-369-final-closeout</code>; live thread audit reports zero unresolved CodeRabbit review threads, while the CodeRabbit status itself is blocked by review capacity rather than an actionable code thread.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
@@ -414,10 +414,10 @@
     </div>
     <div class="placement-row">
       <div class="placement-cell" style="--module-color: #fbbf24;"><strong>JSC-369 parent closeout</strong><span>Reconciles child proof and live tracker/PR truth; it must not create runtime authority.</span></div>
-      <div class="placement-cell" style="--module-color: #fbbf24;"><strong><code>Author local worktree: &lt;local-worktree-jsc369&gt;</code></strong><span><code>codex-jsc-369-parent-closeout</code><br>PR #18 stacked on PR #17</span></div>
+      <div class="placement-cell" style="--module-color: #fbbf24;"><strong><code>Author local worktree: /private/tmp/evals-jsc369-final</code></strong><span><code>codex-jsc-369-final-closeout</code><br>PR #21 against <code>main</code></span></div>
       <div class="placement-cell" style="--module-color: #fbbf24;"><strong>No new runtime owner</strong><span>Consumes child artifacts, validation commands, PR status, Linear status, docs checks, and review outputs.</span></div>
       <div class="placement-cell" style="--module-color: #34c759;"><strong>Closure evidence</strong><span><code>.harness/evals/evals-evals-executable-spine-eval.md</code>, docs/AGENTS review artifacts, parent validation bundles.</span></div>
-      <div class="placement-cell" style="--module-color: #a855f7;"><strong>Parent PR triage</strong><span><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code>; final closeout waits on child PR and live hosted-check truth.</span></div>
+      <div class="placement-cell" style="--module-color: #a855f7;"><strong>Parent PR triage</strong><span><code>artifacts/pr-green-sweep/jsc-369-final-closeout-pr-triage.md</code>; final closeout waits on PR #21 hosted-check and review-thread truth.</span></div>
     </div>
   </div>
   <div class="placement-legend" aria-label="Deep-module placement legend">
@@ -451,7 +451,7 @@
       <strong>JSC-369 lands in reconciliation</strong>
       <span><code>Author local worktree: &lt;local-worktree-jsc369&gt;</code></span>
       <span><code>.harness/evals/evals-evals-executable-spine-eval.md</code> and PR triage artifacts</span>
-      <span>PR #18 records parent truth only; it does not add a second runtime owner.</span>
+      <span>PR #21 records final parent truth only; it does not add a second runtime owner.</span>
     </div>
   </div>
   <div class="module-map" aria-label="Proof-spine work placement map">
@@ -575,10 +575,10 @@
     </tr>
     <tr>
       <td>JSC-369 parent reconciliation</td>
-      <td><code>Author local worktree: &lt;local-worktree-jsc369&gt;</code><br><code>codex-jsc-369-parent-closeout</code><br>PR #18, draft, base <code>codex-jsc-372-claim-evidence-runtime-packet</code></td>
+      <td><code>Author local worktree: /private/tmp/evals-jsc369-final</code><br><code>codex-jsc-369-final-closeout</code><br>PR #21, base <code>main</code></td>
       <td>No new runtime owner. Parent closeout consumes child proof, live PR/Linear state, docs checks, and generated eval run evidence.</td>
-      <td>Latest parent validation currently points at run bundle <code>.harness/evals/runs/20260525T094429Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm verify</code>, and <code>git diff --check</code> passed in the coordinator validation lane.</td>
-      <td><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code><br><code>.harness/evals/evals-evals-executable-spine-eval.md</code><br><code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code><br><code>artifacts/reviews/evals-proof-spine-*.md</code></td>
+      <td>Latest parent validation points at run bundle <code>.harness/evals/runs/20260525T173446Z-pr-closeout-4df36134-01/</code>; <code>pnpm test</code>, <code>pnpm evals check --json</code>, <code>pnpm evals state --json</code>, and <code>pnpm verify</code> passed in the final coordinator validation lane.</td>
+      <td><code>.harness/refactors/2026-05-24-jsc-369-parent-closeout.md</code><br><code>.harness/evals/evals-evals-executable-spine-eval.md</code><br><code>artifacts/pr-green-sweep/jsc-369-final-closeout-pr-triage.md</code><br><code>artifacts/reviews/evals-proof-spine-*.md</code></td>
     </tr>
   </table>
 
@@ -850,10 +850,10 @@
     <tr><td><code>pnpm test</code> after architecture correction</td><td class="ok">pass</td><td>111 tests passed after folding proof-context behavior into <code>src/lib/latest-run.js</code>.</td></tr>
     <tr><td><code>pnpm verify</code> after architecture correction</td><td class="ok">pass</td><td>Aggregate gate passed again after removing the separate proof-context module.</td></tr>
     <tr><td>CodeRabbit review repair</td><td class="ok">patched</td><td>Kept malformed/latest-schema failure proof-context fields inside <code>src/lib/latest-run.js</code>; removed committed auto-refresh from the HTML snapshot; added review-artifact resolution notes.</td></tr>
-    <tr><td>JSC-369 final parent reconciliation</td><td class="ok">complete</td><td>Final live recheck on 2026-05-25 found PR #15, #16, #17, #18, #19, and #20 merged with unresolved GitHub review threads <code>[]</code>. Linear JSC-369, JSC-370, JSC-371, and JSC-372 are Done. Fresh merged-main validation on <code>codex-jsc-369-final-closeout</code> passed: <code>pnpm test</code> (131 passing tests), <code>pnpm evals check --json</code>, <code>pnpm evals state --json</code>, and <code>pnpm verify</code>. Latest proof bundle: <code>20260525T172142Z-pr-closeout-4df36134-01</code>.</td></tr>
+    <tr><td>JSC-369 final parent reconciliation</td><td class="ok">PR review</td><td>Final live recheck on 2026-05-25 found PR #15, #16, #17, #18, #19, and #20 merged with unresolved GitHub review threads <code>[]</code>. Linear JSC-369, JSC-370, JSC-371, and JSC-372 are Done. Fresh merged-main validation on <code>codex-jsc-369-final-closeout</code> passed: <code>pnpm test</code> (131 passing tests), <code>pnpm evals check --json</code>, <code>pnpm evals state --json</code>, and <code>pnpm verify</code>. Latest proof bundle: <code>20260525T173446Z-pr-closeout-4df36134-01</code>. PR #21 is open for final closeout review; CodeRabbit has posted no review threads and is blocked by review-capacity status.</td></tr>
     <tr><td>PR #15 CodeRabbit thread recheck</td><td class="ok">patched</td><td>Rechecked threads <code>PRRT_kwDOShQiR86EhhNb</code> (stale test count) and <code>PRRT_kwDOShQiR86EiPzE</code> (auto-refresh) on 2026-05-25 against branch <code>codex-fix-pr15-coderabbit-threads</code>. The retained triage artifact records <code>pnpm test</code> as <code>tests 131</code>, <code>pass 131</code>, <code>fail 0</code>; it also cites line-6 manual-refresh wording and an <code>rg</code> no-match check for script/timer implementation. See <code>artifacts/pr-green-sweep/jsc-370-pr-triage.md</code> for the detailed recheck evidence.</td></tr>
     <tr><td><code>pnpm test -- --runInBand</code></td><td class="warn">fail</td><td>Invalid command for this repo&apos;s Node test runner; command selection error, not a product regression.</td></tr>
-    <tr><td><code>pnpm test</code> after CodeRabbit repair</td><td class="ok">pass</td><td>114 tests passed after adding malformed/latest-schema proof-context regression coverage.</td></tr>
+    <tr><td><code>pnpm test</code> after CodeRabbit repair</td><td class="ok">pass</td><td>131 tests passed after adding malformed/latest-schema proof-context regression coverage and later proof-spine contract tests.</td></tr>
     <tr><td><code>pnpm verify</code> after CodeRabbit repair</td><td class="ok">pass</td><td>Aggregate gate passed and wrote fresh proof bundle <code>20260524T235025Z-pr-closeout-4df36134-01</code>.</td></tr>
     <tr><td><code>$simplify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-simplify.md</code>; main cleanup was folding proof-context behavior into <code>latest-run.js</code>.</td></tr>
     <tr><td><code>$unslopify</code> ledger</td><td class="ok">pass</td><td>Wrote <code>artifacts/reviews/jsc-370-unslopify.md</code>; no phase-one hard blocks introduced.</td></tr>
@@ -896,7 +896,7 @@
     <tr><td>JSC-372 PR recheck</td><td class="ok">pass</td><td>PR #17 is now open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit are passing.</td></tr>
     <tr><td>JSC-369 parent reconciliation</td><td class="ok">committed</td><td>Committed <code>73ac620 docs(jsc-369): reconcile parent proof state</code> with May 24 plan/spec/audit artifacts, docs/AGENTS review artifacts, updated closure evidence, and fresh <code>pnpm verify</code> proof bundles.</td></tr>
     <tr><td>JSC-369 parent PR</td><td class="warn">lifecycle blocked</td><td>Opened draft PR <code>#18</code> stacked on JSC-372. Hosted checks are clean on the latest recheck, but the parent stays open/draft because child PRs #15, #16, and #17 are still draft/open and Linear still shows the queue as Todo.</td></tr>
-    <tr><td>JSC-369 PR green sweep</td><td class="warn">patched stale claim</td><td>Subagent wrote <code>artifacts/pr-green-sweep/jsc-369-pr-triage.md</code> and found stale PR #17 Semgrep wording. Parent closure evidence was patched to show PR #17 CLEAN and PR #18 as the remaining Semgrep-pending PR.</td></tr>
+    <tr><td>JSC-369 final PR green sweep</td><td class="warn">blocked external</td><td>Subagent wrote <code>artifacts/pr-green-sweep/jsc-369-final-closeout-pr-triage.md</code>. PR #21 has zero review threads; CodeRabbit is blocked by review capacity and Semgrep is pending in the triage artifact.</td></tr>
   </table>
 
   <h2>Open Questions</h2>
