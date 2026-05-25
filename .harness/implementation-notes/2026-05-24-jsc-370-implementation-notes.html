@@ -241,25 +241,15 @@
 <main>
   <p class="refresh">Generated snapshot: <code>2026-05-25 09:56 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
-  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370 CodeRabbit repair and JSC-371 suite-contract evidence are propagated into this stacked branch; JSC-372 remains the active runtime evidence packet slice. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
-
-  <h2>Architecture Answer</h2>
-  <p>Yes. This implementation should be built into the project&apos;s current deep modules wherever a current owner already exists. The architecture rule for this program is: use the existing owner module for an existing trust boundary, add a new owner only for a genuinely new contract, and keep callers thin enough that they sequence work rather than owning proof rules.</p>
-  <table>
-    <tr><th>Program Slice</th><th>Deep Module Placement</th><th>Why</th></tr>
-    <tr><td>JSC-370 latest/run trust boundary</td><td><code>src/lib/latest-run.js</code> and <code>src/lib/run-bundle.js</code></td><td>Latest proof context, pointer validation, run ID allocation, and artifact directory creation are existing proof-spine boundaries. A sidecar helper would split the authority and make false-success checks harder to reason about.</td></tr>
-    <tr><td>JSC-371 repo-local suite contract</td><td><code>src/lib/suite-contract.js</code> plus existing schema, case, path, run-bundle, and latest owners</td><td>The only new concept is suite normalization. Execution, case parsing, artifact allocation, schema validation, and latest validation stay with the current owners.</td></tr>
-    <tr><td>JSC-372 claim/evidence packet</td><td><code>src/lib/claim-evidence-contract.js</code> plugged into <code>src/lib/runtime-state.js</code>, <code>src/lib/runtime-evidence-contract.js</code>, and <code>src/lib/schema.js</code></td><td>Claim/evidence sufficiency is a new contract, so it gets one owner. Runtime state and policy-family truth are not reimplemented.</td></tr>
-    <tr><td>JSC-369 parent closeout</td><td>Closure evidence and PR/validation artifacts only</td><td>The parent slice reconciles child proof; it should not introduce runtime authority or a second implementation path.</td></tr>
-  </table>
+  <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are now represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
   <h2>Current Slice</h2>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Active issue</td><td>JSC-372</td></tr>
-    <tr><td>Goal</td><td>Add claim/evidence schemas, the missing-evidence scorer, and runtime evidence packet v1 without reclassifying scaffolded runtime-evidence families as enforced.</td></tr>
-    <tr><td>Branch</td><td><code>codex-jsc-372-claim-evidence-runtime-packet</code></td></tr>
-    <tr><td>Status</td><td><span class="status">JSC-370 triage proof and JSC-371 deterministic fixture-path repair are both committed and propagated; JSC-372 remains the active runtime-evidence packet slice, with PR #17 triage showing clean checks and no open actionable review faults. The deep-module visual below shows where every slice lands by worktree, branch, PR, owner module, proof surface, review artifact, and parent closeout evidence.</span></td></tr>
+    <tr><td>Active issue</td><td>JSC-369</td></tr>
+    <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
+    <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active. Deep-module placement is now shown in the visual below, including where each slice lands by worktree, branch, PR, owner module, proof surface, review artifact, and parent closeout evidence. JSC-370 and JSC-371 are locally repaired and pushed with CodeRabbit-credit blockers recorded where applicable; JSC-372 has clean PR triage evidence and has ingested the latest upstream notes; JSC-369 remains open while parent closeout reconciles PR, tracker, documentation, and closure truth.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 
@@ -475,6 +465,7 @@
         <li><code>src/lib/claim-evidence-contract.js</code> owns claim/evidence packet assembly and the deterministic <code>missing-evidence</code> scorer.</li>
         <li><code>validation-passed</code> claims require matching validation evidence.</li>
         <li><code>artifact-exists</code> claims require manifest/hash evidence, not just path presence.</li>
+        <li><code>latest.manifest_path</code> is validated as repository-relative before this module reads manifest evidence.</li>
         <li>Advisory confidence is recorded as data only and cannot change the scorer verdict.</li>
       </ul>
     </section>
@@ -506,7 +497,7 @@
 
     <section class="module-card span-two" style="--module-color: #a855f7; --module-height: 150px;">
       <h3>Tracer Proof</h3>
-      <p><code>pnpm test</code> now covers success-claim-without-evidence failure, artifact-claim-without-manifest-hash failure, schema-valid packet output, and preservation of <code>scaffolded_not_enforced</code> policy coverage in <code>state --json</code>.</p>
+      <p><code>pnpm test</code> now covers success-claim-without-evidence failure, artifact-claim-without-manifest-hash failure, schema-valid packet output, preservation of <code>scaffolded_not_enforced</code> policy coverage in <code>state --json</code>, and the narrow traversal-manifest regression now passes with <code>node --test --test-name-pattern "traversal latest path|state reports ready runtime packet"</code>.</p>
     </section>
 
     <section class="module-card span-two" style="--module-color: #fbbf24; --module-height: 135px;">
@@ -710,6 +701,12 @@
     <tr><td>JSC-372 commit</td><td class="ok">pass</td><td>Committed <code>519bde6 feat(jsc-372): add runtime evidence packet</code>.</td></tr>
     <tr><td>JSC-372 PR</td><td class="ok">pass</td><td>Opened draft PR <code>#17</code> stacked on <code>codex-jsc-371-repo-local-suite-contract</code>.</td></tr>
     <tr><td>JSC-372 PR green sweep</td><td class="warn">blocked external</td><td>Artifact written at <code>artifacts/pr-green-sweep/jsc-372-pr-triage.md</code>. PR #17 is open and draft; deterministic gates passed, with <code>semgrep-cloud-platform/scan</code> pending at triage time.</td></tr>
+    <tr><td>JSC-369 local stack repair</td><td class="ok">pass</td><td>Committed and pushed <code>b39c4f4 docs(jsc-369): reconcile current proof-spine stack</code> after merging the current JSC-372 base and rerunning <code>git diff --check</code>, <code>pnpm test</code>, and <code>pnpm verify</code>.</td></tr>
+    <tr><td>PR #18 post-push recheck</td><td class="ok">pass</td><td>Remote head <code>b39c4f4a04e41abf295d1af442ef4198a081f468</code> is <code>MERGEABLE</code> with merge state <code>CLEAN</code>. Deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass.</td></tr>
+    <tr><td>PR #18 after evidence-refresh push</td><td class="ok">pass</td><td>Remote head <code>c2e1467055eed0b753b8b129d875a948ce66c0b7</code> is <code>MERGEABLE</code> with merge state <code>CLEAN</code>. Deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass. This local browser-note refresh is intentionally not pushed yet to avoid restarting hosted checks again.</td></tr>
+    <tr><td>Linear lifecycle reconciliation</td><td class="ok">pass</td><td>JSC-369 moved to <code>In Progress</code>. JSC-370, JSC-371, and JSC-372 moved to <code>In Review</code>. No issue was moved to <code>Done</code>.</td></tr>
+    <tr><td>PR triage lane correction</td><td class="warn">partial</td><td>PR #16 and PR #17 subagent lanes refreshed their artifacts. PR #15 and PR #18 retry lanes failed to write after focused follow-up; coverage gaps were recorded in their triage artifacts instead of treating the gate as approved.</td></tr>
+    <tr><td>PR #17 lifecycle advance</td><td class="ok">pass</td><td>Marked PR #17 ready for review. Follow-up recheck: open, not draft, <code>MERGEABLE</code>, merge state <code>CLEAN</code>, and deterministic gates, CodeRabbit, Semgrep, Socket, and Snyk pass.</td></tr>
   </table>
 
   <h2>Open Questions</h2>
