@@ -156,7 +156,7 @@
 </head>
 <body>
 <main>
-  <p class="refresh">Generated snapshot: <code>2026-05-25 09:08 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
+  <p class="refresh">Generated snapshot: <code>2026-05-25 09:31 Europe/London</code>. Local browser copy may be refreshed manually during implementation.</p>
   <h1>Proof Spine Implementation Notes</h1>
   <p class="meta">Running notes for the governed evals proof-spine implementation. JSC-370, JSC-371, and JSC-372 implementation slices are now represented in stacked PRs; JSC-369 is the parent reconciliation slice and cannot close until child PR, validation, reviewer, tracker, and documentation truth are reconciled. This file captures decisions and tradeoffs that were not fully determined by the spec or plan.</p>
 
@@ -176,7 +176,7 @@
     <tr><td>Active issue</td><td>JSC-369</td></tr>
     <tr><td>Goal</td><td>Reconcile the parent proof-spine program after JSC-370, JSC-371, and JSC-372, without creating new runtime authority or hiding child PR/tracker/reviewer blockers.</td></tr>
     <tr><td>Branch</td><td><code>codex-jsc-369-parent-closeout</code></td></tr>
-    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #18 is clean at latest pushed head b83c51d. PR #17 is ready for review and clean. PR #15 and PR #16 are ready for review, mergeable, and blocked only by pending CodeRabbit contexts at the latest live check. Completion remains blocked by child PR closure, pending PR #15/#16 external review contexts, and recorded PR #15/#18 subagent-refresh coverage gaps.</span></td></tr>
+    <tr><td>Status</td><td><span class="status">Parent reconciliation active; PR #15, PR #16, PR #17, and PR #18 are all mergeable and CLEAN at the latest live check. PR #18 remains draft by design. Completion remains blocked by child PR closure or owner-approved deferral, parent PR lifecycle action, and recorded PR #15/#18 subagent-refresh coverage gaps.</span></td></tr>
     <tr><td>Browser status</td><td><span class="ok">open in Browser plugin</span> at <code>http://127.0.0.1:4370/.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html</code>.</td></tr>
   </table>
 

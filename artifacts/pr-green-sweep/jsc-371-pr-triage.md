@@ -55,6 +55,33 @@ Result:
 - Recovery condition: wait for CodeRabbit review capacity or add credits, then trigger `@coderabbitai review` or push a no-op follow-up only if maintainers explicitly want a retrigger. Mark PR ready for review only when maintainers decide the draft gate can be lifted.
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
 
+## Coordinator Green Recheck - 2026-05-25
+
+The coordinator rechecked PR #16 after CodeRabbit settled.
+
+- PR URL: https://github.com/jscraik/evals/pull/16
+- Head SHA: `d7c02d7f0cb1d5274e406e31f63d8391f87c9c09`
+- PR state: OPEN, not draft.
+- Mergeability: `MERGEABLE`; merge state `CLEAN`.
+- Passing visible checks:
+  - deterministic-gates
+  - CodeRabbit
+  - semgrep-cloud-platform/scan
+  - Socket Security: Project Report
+  - Socket Security: Pull Request Alerts
+  - license/snyk (jscraik)
+  - security/snyk (jscraik)
+- Pending visible checks: none visible in `gh pr view` output.
+- Current blocker classes:
+  - `lifecycle_blocker`: PR #16 remains open and unmerged.
+- Exact coordinator command:
+  - `gh pr view 16 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+- Next coordinator step: PR #16 is green from hosted-check evidence and ready
+  for the configured merge/review decision; do not mark JSC-371 Done until
+  merge or owner-approved deferral is recorded.
+
+WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
+
 ## Coordinator Live Refresh - 2026-05-25
 
 The coordinator marked PR #16 ready for review and rechecked live GitHub state.

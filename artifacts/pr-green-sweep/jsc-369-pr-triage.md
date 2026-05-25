@@ -115,6 +115,48 @@ Wait for PR #18 Semgrep to finish, then reconcile in stack order:
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
 
+## Coordinator Green Recheck - 2026-05-25
+
+The coordinator rechecked the full PR stack after PR #15 and PR #16 CodeRabbit
+contexts settled.
+
+Current live PR state:
+
+- PR #15: OPEN, not draft, head
+  `255b3a11753c069a74cfa3547481e0fd2da10f57`, mergeable, `CLEAN`; all
+  visible checks pass including CodeRabbit.
+- PR #16: OPEN, not draft, head
+  `d7c02d7f0cb1d5274e406e31f63d8391f87c9c09`, mergeable, `CLEAN`; all
+  visible checks pass including CodeRabbit.
+- PR #17: OPEN, not draft, head
+  `69fd8ff9ea2f4aa3253b66ee10b175a7a21f655e`, mergeable, `CLEAN`; all
+  visible checks pass including CodeRabbit.
+- PR #18: OPEN draft, head
+  `ec264f3001cab71680575d673f594240b741ac6f`, mergeable, `CLEAN`; all
+  visible checks pass including CodeRabbit.
+
+Current parent blockers:
+
+- `lifecycle_blocker`: child PRs #15, #16, and #17 remain open and unmerged.
+- `parent_draft`: PR #18 remains draft by design until child state is merged
+  or explicitly deferred with owner-approved rationale.
+- `coverage_gap`: PR #15 and earlier PR #18 subagent artifact refreshes failed
+  after retry and must not be counted as approval evidence.
+
+Exact coordinator commands:
+
+- `gh pr view 15 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+- `gh pr view 16 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+- `gh pr view 17 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+- `gh pr view 18 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+
+Next coordinator step: choose the delivery path for the green stack. Either merge
+child PRs in dependency order and then reconcile JSC-369, or record explicit
+owner-approved deferral. Do not claim parent completion while the stack remains
+open.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
 ## Coordinator Live Refresh - 2026-05-25
 
 The coordinator corrected the PR triage operating model: child PR triage should

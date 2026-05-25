@@ -57,6 +57,35 @@ Local fixes are applied and validated. The PR is not green-claimed until the fix
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
 
+## Coordinator Green Recheck - 2026-05-25
+
+The coordinator rechecked PR #15 after CodeRabbit settled.
+
+- PR URL: https://github.com/jscraik/evals/pull/15
+- Head SHA: `255b3a11753c069a74cfa3547481e0fd2da10f57`
+- PR state: OPEN, not draft.
+- Mergeability: `MERGEABLE`; merge state `CLEAN`.
+- Passing visible checks:
+  - deterministic-gates
+  - CodeRabbit
+  - semgrep-cloud-platform/scan
+  - Socket Security: Project Report
+  - Socket Security: Pull Request Alerts
+  - license/snyk (jscraik)
+  - security/snyk (jscraik)
+- Pending visible checks: none visible in `gh pr view` output.
+- Current blocker classes:
+  - `lifecycle_blocker`: PR #15 remains open and unmerged.
+  - `coverage_gap`: the requested PR #15 subagent refresh failed to write
+    after one retry and is not counted as approval evidence.
+- Exact coordinator command:
+  - `gh pr view 15 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+- Next coordinator step: PR #15 is green from hosted-check evidence and ready
+  for the configured merge/review decision; do not mark JSC-370 Done until
+  merge or owner-approved deferral is recorded.
+
+WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md
+
 ## Coordinator Live Refresh - 2026-05-25
 
 The coordinator marked PR #15 ready for review and rechecked live GitHub state

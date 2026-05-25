@@ -114,6 +114,34 @@ Checked at: 2026-05-25 00:15 Europe/London
 - Next coordinator action: re-poll hosted checks on head `b53f2e4`; repair only if a check returns a concrete failure.
 WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
 
+## Coordinator Green Recheck - 2026-05-25
+
+The coordinator rechecked PR #17 after it was marked ready for review.
+
+- PR URL: https://github.com/jscraik/evals/pull/17
+- Head SHA: `69fd8ff9ea2f4aa3253b66ee10b175a7a21f655e`
+- PR state: OPEN, not draft.
+- Base branch: `codex-jsc-371-repo-local-suite-contract`.
+- Mergeability: `MERGEABLE`; merge state `CLEAN`.
+- Passing visible checks:
+  - deterministic-gates
+  - CodeRabbit
+  - semgrep-cloud-platform/scan
+  - Socket Security: Project Report
+  - Socket Security: Pull Request Alerts
+  - license/snyk (jscraik)
+  - security/snyk (jscraik)
+- Pending visible checks: none visible in `gh pr view` output.
+- Current blocker classes:
+  - `lifecycle_blocker`: PR #17 remains open and unmerged.
+- Exact coordinator command:
+  - `gh pr view 17 --json number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision,url` -> pass.
+- Next coordinator step: PR #17 is green from hosted-check evidence and ready
+  for the configured stacked-PR merge/review decision; do not mark JSC-372 Done
+  until merge or owner-approved deferral is recorded.
+
+WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
+
 ## Live Recheck After Stack Propagation
 
 Checked at: 2026-05-25 00:25 Europe/London
