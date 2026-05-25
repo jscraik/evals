@@ -352,3 +352,93 @@ Because this was delivered as the initial commit to the repository default
 branch, PR creation is not applicable for the current branch. Tracker closure is
 claimed only through the Jamie-approved override, not through a live Linear
 issue.
+
+## 2026-05-25 JSC-369 Parent Reconciliation Addendum
+
+This addendum records the current proof-spine suite-contract parent state. It
+does not replace the earlier phase-one closure evidence above.
+
+### Current Scope
+
+Parent issue:
+
+- JSC-369: Close 2026-05-24 proof-spine and suite-contract gaps.
+
+Child implementation slices:
+
+- JSC-370: latest proof context, collision-resistant run IDs, latest
+  publication ordering, and `check --json` proof-context fields.
+- JSC-371: neutral repo-local suite schema, suite-root resolver, evaluated-repo
+  artifact root behavior, network fail-closed policy, and data-only scorer
+  references.
+- JSC-372: claim/evidence schemas, missing-evidence scorer, runtime evidence
+  packet v1, and scaffolded-family compatibility.
+
+Parent closeout slice:
+
+- JSC-369: reconcile child states, validation commands, artifact paths, PR
+  states, tracker truth, docs/AGENTS checks, and remaining deferrals.
+
+### Current Validation Evidence
+
+| Command / Check | Status | Evidence |
+| --- | --- | --- |
+| `pnpm evals check --json` | pass | Validated latest run `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01/`. Output reported `status: passed`, `context_match: true`, latest consistency pass, schema pass for result/manifest/scorer/baseline/trace artifacts, and runtime-evidence checks pass. |
+| `pnpm verify` | pass | Coordinator ran the full local gate and generated proof bundles `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134/` and `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01/`. |
+| Latest pointer | pass | `.harness/evals/runs/latest.json` points to `20260525T083915Z-pr-closeout-4df36134-01` with case `pr-closeout`, suite `smoke`, execution mode `synthetic`, and artifact root `.harness/evals/runs/20260525T083915Z-pr-closeout-4df36134-01`. |
+| Manifest artifact hashes | pass | Latest manifest lists hashed result, report, command-log, scorer-results, baseline-result, and trace-events artifacts. |
+| Deterministic scorer verdicts | pass | Latest `scorer-results.json` records pass verdicts for `exit-code`, `required-output`, `artifact-completeness`, and `baseline-presence`. |
+| Baseline state | pass / not promoted | Latest `baseline-result.json` records `presence_status: missing`, `comparison_status: not_compared`, and `promotion_status: not_requested`, matching smoke fixture expectations. |
+| Runtime evidence | pass with scaffolded families visible | `pnpm evals check --json` reports implemented-enforced runtime evidence families and scaffolded-not-enforced families explicitly. Telemetry remains explanatory, not authority. |
+| Delivery-state audit artifact | pass with coverage caveat | `artifacts/reviews/jsc-369-delivery-state-audit.md` records file-backed delivery-state evidence. The original delivery-state subagent returned mailbox text but did not write the required artifact, so this remains a reviewer artifact coverage gap rather than a subagent approval. |
+
+### Current PR State
+
+Live GitHub checks at 2026-05-25 09:37 BST:
+
+| PR | Branch | Base | State | Checks | Closeout Meaning |
+| --- | --- | --- | --- | --- | --- |
+| #15 | `codex-jsc-370-latest-proof-context` | `main` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | JSC-370 is implementation-ready but not merged. |
+| #16 | `codex-jsc-371-repo-local-suite-contract` | `main` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | JSC-371 is implementation-ready but not merged. |
+| #17 | `codex-jsc-372-claim-evidence-runtime-packet` | `codex-jsc-371-repo-local-suite-contract` | OPEN, not draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | JSC-372 is implementation-ready but not merged. |
+| #18 | `codex-jsc-369-parent-closeout` | `codex-jsc-372-claim-evidence-runtime-packet` | OPEN, draft, mergeable, `CLEAN` | deterministic-gates, CodeRabbit, Socket, Snyk, and Semgrep visible checks green | Parent reconciliation remains intentionally draft until child PR disposition is decided. |
+
+### Current Tracker State
+
+Live Linear state at 2026-05-25 09:37 BST:
+
+| Issue | Status | Meaning |
+| --- | --- | --- |
+| JSC-369 | In Progress | Parent closeout is not complete. |
+| JSC-370 | In Review | Child implementation is not complete in tracker truth. |
+| JSC-371 | In Review | Child implementation is not complete in tracker truth. |
+| JSC-372 | In Review | Child implementation is not complete in tracker truth. |
+
+### Documentation And Instruction Evidence
+
+The current parent branch contains non-empty documentation/instruction review
+artifacts:
+
+- `artifacts/reviews/evals-proof-spine-docs-expert.md`
+- `artifacts/reviews/evals-proof-spine-agents-md.md`
+
+Documentation and AGENTS accuracy therefore has file-backed review evidence,
+but final closeout still requires PR stack disposition and tracker truth to
+match the chosen disposition.
+
+### Remaining Blockers
+
+| Blocker | Classification | Required Recovery |
+| --- | --- | --- |
+| Child PRs #15, #16, and #17 remain open. | external_state | Merge in an explicit stack order or record owner-approved deferral/supersession with recovery command. |
+| Parent PR #18 remains draft. | external_state | Undraft only after child disposition and parent closeout criteria are reconciled. |
+| Linear issues remain In Progress/In Review. | tracker_state | Mutate tracker state only after GitHub disposition matches reality. |
+| GitHub review-thread closure count is not proven. | verification_gap | Run a dedicated unresolved-thread query for PRs #15-#18, or record the exact access/tool blocker. |
+| Original delivery-state subagent did not write its required artifact. | coverage_gap | Keep `artifacts/reviews/jsc-369-delivery-state-audit.md` as coordinator file-backed audit and do not represent the subagent as approving the slice. |
+
+### Current Closeout Classification
+
+JSC-369 is not complete. The current state is green/open: local validation and
+remote checks are passing, but live delivery state still requires PR stack
+disposition, tracker reconciliation, and review-thread closure proof before the
+parent can be claimed complete.
