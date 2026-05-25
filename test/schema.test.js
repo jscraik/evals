@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { validateProofContractObject } from "../src/lib/proof-contract-validation.js";
 import { supportedSchemaKeywords, validateWithSchema } from "../src/lib/schema.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -117,4 +118,223 @@ test("runtime-state embedded evidence packet schema mirrors the standalone packe
   const packetSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "runtime-evidence-packet.schema.json"), "utf8"));
   assert.deepEqual(stateSchema.properties.evidence_packet.required, packetSchema.required);
   assert.deepEqual(stateSchema.properties.evidence_packet.properties, packetSchema.properties);
+});
+
+test("eval case metadata classifies scenario buckets without making old cases invalid", () => {
+  const caseSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "eval-case.schema.json"), "utf8"));
+  const baseCase = JSON.parse(readFileSync(join(sourceRoot, "fixtures", "smoke", "pr-closeout.case.json"), "utf8"));
+
+  assert.deepEqual(validateWithSchema(baseCase, caseSchema), []);
+  assert.deepEqual(
+    validateWithSchema(
+      {
+        ...baseCase,
+        metadata: {
+          scenario_bucket: "adversarial",
+          claim_ids: ["claim:missing-evidence"]
+        }
+      },
+      caseSchema
+    ),
+    []
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...baseCase,
+        metadata: {
+          scenario_bucket: "marketing"
+        }
+      },
+      caseSchema
+    ).join("\n"),
+    /expected one of/
+  );
+});
+
+test("claim registry schema represents unevaluable claims explicitly", () => {
+  const registrySchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "claim-registry.schema.json"), "utf8"));
+  const registry = {
+    schema_version: 1,
+    registry_id: "agent-skills:release-readiness",
+    source_package: {
+      type: "skill_package",
+      path: "skills/example/SKILL.md",
+      version: "0.1.0",
+      commit: null
+    },
+    claims: [
+      {
+        claim_id: "claim:portable-routing",
+        source: {
+          artifact_path: "skills/example/SKILL.md",
+          span: {
+            start_line: 12,
+            end_line: 18
+          }
+        },
+        claim_type: "capability",
+        scenario_family: "boundary",
+        claim_text: "The skill routes tasks consistently across supported agents.",
+        expected_inputs: ["Task prompt naming the skill"],
+        expected_outputs: ["Bounded routing decision"],
+        required_tools: [],
+        limitations: ["Portability must be proven per host runtime"],
+        evidence_required: ["paired baseline run"],
+        grader_type: "not_evaluable",
+        criticality: "high",
+        status: "not_evaluable"
+      }
+    ]
+  };
+
+  assert.deepEqual(validateWithSchema(registry, registrySchema), []);
+  assert.match(validateWithSchema({ ...registry, claims: [] }, registrySchema).join("\n"), /must contain at least 1 item/);
+  assert.deepEqual(validateProofContractObject("claim-registry", registry, join(sourceRoot, "fixtures", "claim-registry.json")).errors, []);
+  assert.match(
+    validateProofContractObject(
+      "claim-registry",
+      {
+        ...registry,
+        claims: [
+          registry.claims[0],
+          {
+            ...registry.claims[0],
+            source: {
+              artifact_path: "skills/example/SKILL.md",
+              span: {
+                start_line: 30,
+                end_line: 28
+              }
+            }
+          }
+        ]
+      },
+      join(sourceRoot, "fixtures", "claim-registry.json")
+    ).errors.join("\n"),
+    /duplicate claim_id.*end_line: must be >=/s
+  );
+});
+
+test("score vector schema carries gated readiness instead of a single scalar", () => {
+  const scoreVectorSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "score-vector.schema.json"), "utf8"));
+  const scoreVector = {
+    schema_version: 1,
+    score_vector_id: "score:agent-skills-readiness",
+    suite_id: "agent-skills:skill-output",
+    coverage: {
+      tested_claims: 3,
+      total_claims: 5,
+      coverage_status: "partial"
+    },
+    dimensions: [
+      {
+        dimension_id: "instruction-adherence",
+        score: 0.8,
+        weight: 0.4,
+        gate: true,
+        evidence_refs: ["artifacts/scorer-results.json"]
+      }
+    ],
+    gates: [
+      {
+        gate_id: "missing-critical-evidence",
+        status: "fail",
+        severity: "critical",
+        evidence_refs: ["artifacts/claim-registry.json"]
+      }
+    ],
+    readiness: {
+      status: "not_ready",
+      raw_score: 0.82,
+      capped_by_gate: true,
+      cap_reason: "critical evidence gate failed",
+      blocking_gates: ["missing-critical-evidence"]
+    }
+  };
+
+  assert.deepEqual(validateWithSchema(scoreVector, scoreVectorSchema), []);
+  assert.match(validateWithSchema({ ...scoreVector, readiness: { ...scoreVector.readiness, cap_reason: "" } }, scoreVectorSchema).join("\n"), /must have length >= 1/);
+  assert.deepEqual(validateProofContractObject("score-vector", scoreVector, join(sourceRoot, "fixtures", "score-vector.json")).errors, []);
+  assert.match(
+    validateProofContractObject(
+      "score-vector",
+      {
+        ...scoreVector,
+        coverage: {
+          tested_claims: 6,
+          total_claims: 5,
+          coverage_status: "complete"
+        },
+        readiness: {
+          status: "excellent",
+          raw_score: 0.99,
+          capped_by_gate: false,
+          cap_reason: null,
+          blocking_gates: []
+        }
+      },
+      join(sourceRoot, "fixtures", "score-vector.json")
+    ).errors.join("\n"),
+    /tested_claims: must be <=.*capped_by_gate: must be true.*status: must not be excellent.*blocking_gates: missing critical/s
+  );
+});
+
+test("result and manifest schemas allow optional proof-spine artifact references", () => {
+  const resultSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "eval-result.schema.json"), "utf8"));
+  const manifestSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "artifact-manifest.schema.json"), "utf8"));
+  const sha256 = "a".repeat(64);
+  const runId = "20260525T000000Z-case-abc12345-01";
+
+  const result = {
+    schema_version: 1,
+    run_id: runId,
+    case_id: "example.case",
+    suite_id: "example.suite",
+    execution_mode: "synthetic",
+    status: "passed",
+    deterministic_verdict: "pass",
+    scorer_results_path: ".harness/evals/runs/" + runId + "/scorer-results.json",
+    baseline_result_path: ".harness/evals/runs/" + runId + "/baseline-result.json",
+    trace_events_path: ".harness/evals/runs/" + runId + "/trace-events.jsonl",
+    artifact_refs: [
+      {
+        type: "claim-registry",
+        path: ".harness/evals/runs/" + runId + "/claim-registry.json",
+        sha256
+      },
+      {
+        type: "score-vector",
+        path: ".harness/evals/runs/" + runId + "/score-vector.json",
+        sha256
+      },
+      {
+        type: "benchmark-summary",
+        path: ".harness/evals/runs/" + runId + "/benchmark-summary.json",
+        sha256
+      }
+    ],
+    errors: []
+  };
+
+  const manifest = {
+    schema_version: 1,
+    run_id: result.run_id,
+    case_id: result.case_id,
+    created_at: "2026-05-25T00:00:00Z",
+    retention: {
+      status: "retained_local",
+      policy: "optional proof artifacts retained with the run bundle"
+    },
+    privacy: {
+      class: "synthetic",
+      redaction_status: "not_required",
+      contains_private_content: false,
+      contains_credentials: false
+    },
+    artifacts: result.artifact_refs.map((artifact) => ({ ...artifact, required: false }))
+  };
+
+  assert.deepEqual(validateWithSchema(result, resultSchema), []);
+  assert.deepEqual(validateWithSchema(manifest, manifestSchema), []);
 });

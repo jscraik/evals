@@ -75,6 +75,22 @@
         "artifact_path": { "type": ["string", "null"] }
       }
     },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_bucket"],
+      "properties": {
+        "scenario_bucket": {
+          "type": "string",
+          "enum": ["nominal", "boundary", "adversarial", "out_of_scope", "comparative"]
+        },
+        "claim_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+          "uniqueItems": true
+        }
+      }
+    },
     "scorers": {
       "type": "array",
       "items": { "type": "string", "enum": ["exit-code", "artifact-completeness", "required-output", "baseline-presence"] },

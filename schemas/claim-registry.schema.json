@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/claim-registry.schema.json",
+  "title": "Claim Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "source_package", "claims"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "registry_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+    "source_package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "version", "commit"],
+      "properties": {
+        "type": { "type": "string", "enum": ["skill_package", "repo_suite", "architecture_pack", "runtime_harness", "other"] },
+        "path": { "type": "string", "minLength": 1 },
+        "version": { "type": ["string", "null"], "minLength": 1 },
+        "commit": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim_id",
+          "source",
+          "claim_type",
+          "scenario_family",
+          "claim_text",
+          "expected_inputs",
+          "expected_outputs",
+          "required_tools",
+          "limitations",
+          "evidence_required",
+          "grader_type",
+          "criticality",
+          "status"
+        ],
+        "properties": {
+          "claim_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["artifact_path", "span"],
+            "properties": {
+              "artifact_path": { "type": "string", "minLength": 1 },
+              "span": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["start_line", "end_line"],
+                "properties": {
+                  "start_line": { "type": "integer", "minimum": 1 },
+                  "end_line": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          },
+          "claim_type": { "type": "string", "enum": ["triggering", "capability", "safety", "reproducibility", "provenance", "documentation", "performance", "governance", "other"] },
+          "scenario_family": { "type": "string", "enum": ["nominal", "boundary", "adversarial", "out_of_scope", "comparative"] },
+          "claim_text": { "type": "string", "minLength": 1 },
+          "expected_inputs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "expected_outputs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "required_tools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "evidence_required": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "evidence_links": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "grader_type": { "type": "string", "enum": ["deterministic", "semantic", "human_review", "llm_judge_advisory", "mixed", "not_evaluable"] },
+          "criticality": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "status": { "type": "string", "enum": ["evaluable", "not_evaluable", "needs_clarification", "blocked_missing_evidence"] }
+        }
+      }
+    }
+  }
+}

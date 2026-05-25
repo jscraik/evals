@@ -40,9 +40,17 @@ export const schemaTargets = {
     schema: join(schemaDir, "claim.schema.json"),
     label: "claim"
   },
+  claimRegistry: {
+    schema: join(schemaDir, "claim-registry.schema.json"),
+    label: "claim registry"
+  },
   evidence: {
     schema: join(schemaDir, "evidence.schema.json"),
     label: "evidence"
+  },
+  scoreVector: {
+    schema: join(schemaDir, "score-vector.schema.json"),
+    label: "score vector"
   },
   runtimeEvidencePacket: {
     schema: join(schemaDir, "runtime-evidence-packet.schema.json"),
