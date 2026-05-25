@@ -97,4 +97,20 @@ Checked at: 2026-05-25 00:12 Europe/London
   - exact_failure_text: `deterministic-gates queued; semgrep-cloud-platform/scan queued; Socket Security: Project Report in progress; CodeRabbit pending; security/snyk pending; license/snyk pending`
 - Next coordinator action: re-poll hosted checks on head `f721fc1`; repair only if a check returns a concrete failure.
 
+## Follow-up Artifact Push Recheck
+
+Checked at: 2026-05-25 00:15 Europe/London
+
+- Pushed triage artifact commit: `b53f2e49f5857ebd772f08b2b0ba25cde12bb149`
+- Live PR #17 after artifact push:
+  - Status: OPEN, DRAFT
+  - Mergeability: MERGEABLE
+  - Merge state: UNSTABLE
+  - Pending/queued checks: semgrep-cloud-platform/scan queued; security/snyk pending; license/snyk pending.
+- Current blocker:
+  - STATUS: blocked_validation
+  - blocker_class: external_checks_pending
+  - exact_failure_text: `semgrep-cloud-platform/scan queued; security/snyk pending; license/snyk pending`
+- Next coordinator action: re-poll hosted checks on head `b53f2e4`; repair only if a check returns a concrete failure.
+
 WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
