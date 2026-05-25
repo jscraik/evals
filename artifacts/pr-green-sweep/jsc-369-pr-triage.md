@@ -10,6 +10,7 @@ STATUS: blocked_external_check
 - Parent PR: https://github.com/jscraik/evals/pull/18
 - Base branch: `codex-jsc-372-claim-evidence-runtime-packet`
 - Rechecked: 2026-05-25 Europe/London
+- Latest local stack repair: merged `origin/codex-jsc-372-claim-evidence-runtime-packet` into the parent branch after PR #18 became CONFLICTING/DIRTY.
 
 ## Live Parent PR State
 
@@ -111,5 +112,22 @@ Wait for PR #18 Semgrep to finish, then reconcile in stack order:
 3. Advance or merge PR #17, or record owner-approved deferral.
 4. Patch PR #18 body and parent closure evidence to remove the stale PR #17 Semgrep-pending statement.
 5. Re-run the parent validation gate and update PR #18 only after the child queue and Linear state are reconciled.
+
+WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md
+
+## Local Stack Repair And Validation Refresh
+
+Checked at: 2026-05-25 00:31 Europe/London
+
+- Repair action: committed the prior parent proof refresh, then non-destructively merged `origin/codex-jsc-372-claim-evidence-runtime-packet` into `codex-jsc-369-parent-closeout`.
+- Conflict resolution:
+  - `.harness/evals/runs/latest.json`: accepted the newer child latest pointer as a valid intermediate, then reran `pnpm verify` to publish fresh parent proof.
+  - `.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html`: preserved the deep-module architecture answer and changed the active slice to JSC-369 parent reconciliation.
+  - `artifacts/pr-green-sweep/jsc-372-pr-triage.md`: preserved prior triage and appended the live PR #17 clean recheck.
+- Local validation:
+  - `git diff --check` -> pass
+  - `pnpm test` -> pass (123 tests)
+  - `pnpm verify` -> pass; latest proof bundle `20260525T003124Z-pr-closeout-4df36134-01`
+- Current blocker before push/recheck: PR #18 still reflects old remote head `89c9e96` and remains CONFLICTING/DIRTY until the repaired parent branch is committed, pushed, and rechecked.
 
 WROTE: artifacts/pr-green-sweep/jsc-369-pr-triage.md

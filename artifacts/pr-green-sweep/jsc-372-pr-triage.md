@@ -72,4 +72,55 @@ From `gh pr checks 17 --repo jscraik/evals`:
 3. If Semgrep fails, capture failing rule IDs/log excerpt and open a focused repair slice against this branch.
 4. Optional hygiene: if CodeRabbit coverage is required on this non-default base branch, trigger a manual review via the CodeRabbit comment control.
 
+## Follow-up Stack Repair
+
+Checked at: 2026-05-25 00:12 Europe/London
+
+- Repair action: non-destructively merged `origin/codex-jsc-371-repo-local-suite-contract` into `codex-jsc-372-claim-evidence-runtime-packet`.
+- Conflict resolution:
+  - `.harness/evals/runs/latest.json`: preserved the JSC-372 proof bundle, then reran validation to publish fresh latest proof.
+  - `.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html`: preserved JSC-372 active-slice state and added Jamie&apos;s deep-module architecture answer.
+- Local validation:
+  - `pnpm test` -> pass (123 tests)
+  - `pnpm verify` -> pass
+  - `git diff --check` -> pass
+- Pushed merge commit: `f721fc1c45d62bef2ea4cd9b0af9c2eb67c9a588`
+- Live PR #17 after push:
+  - Status: OPEN, DRAFT
+  - Mergeability: MERGEABLE
+  - Merge state: UNSTABLE
+  - Head: `f721fc1c45d62bef2ea4cd9b0af9c2eb67c9a588`
+  - Pending/queued checks: deterministic-gates queued; semgrep-cloud-platform/scan queued; Socket Security: Project Report in progress; CodeRabbit pending; security/snyk pending; license/snyk pending.
+- Current blocker:
+  - STATUS: blocked_validation
+  - blocker_class: external_checks_pending
+  - exact_failure_text: `deterministic-gates queued; semgrep-cloud-platform/scan queued; Socket Security: Project Report in progress; CodeRabbit pending; security/snyk pending; license/snyk pending`
+- Next coordinator action: re-poll hosted checks on head `f721fc1`; repair only if a check returns a concrete failure.
+
+## Follow-up Artifact Push Recheck
+
+Checked at: 2026-05-25 00:15 Europe/London
+
+- Pushed triage artifact commit: `b53f2e49f5857ebd772f08b2b0ba25cde12bb149`
+- Live PR #17 after artifact push:
+  - Status: OPEN, DRAFT
+  - Mergeability: MERGEABLE
+  - Merge state: UNSTABLE
+  - Pending/queued checks: semgrep-cloud-platform/scan queued; security/snyk pending; license/snyk pending.
+- Current blocker:
+  - STATUS: blocked_validation
+  - blocker_class: external_checks_pending
+  - exact_failure_text: `semgrep-cloud-platform/scan queued; security/snyk pending; license/snyk pending`
+- Next coordinator action: re-poll hosted checks on head `b53f2e4`; repair only if a check returns a concrete failure.
+WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md
+
+## Live Recheck After Stack Propagation
+
+Checked at: 2026-05-25 00:25 Europe/London
+
+- Live PR #17 state: OPEN, DRAFT, MERGEABLE, merge state CLEAN.
+- Head: `69fd8ff9ea2f4aa3253b66ee10b175a7a21f655e`.
+- Checks: deterministic-gates pass; CodeRabbit pass; Socket Security project report pass; Socket PR alerts pass; security/snyk pass; license/snyk pass; semgrep-cloud-platform/scan pass.
+- Current blocker: lifecycle only. PR #17 remains draft/open and must be advanced or explicitly deferred before parent closeout.
+
 WROTE: artifacts/pr-green-sweep/jsc-372-pr-triage.md

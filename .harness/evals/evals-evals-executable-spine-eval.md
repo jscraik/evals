@@ -88,12 +88,12 @@ with owner-approved rationale.
 
 ### Child Slice Reconciliation
 
-| Issue | Local Slice State | PR State Rechecked 2026-05-24 | Tracker State Rechecked 2026-05-24 | Parent Decision |
+| Issue | Local Slice State | PR State Rechecked 2026-05-25 | Tracker State Rechecked 2026-05-25 | Parent Decision |
 | --- | --- | --- | --- | --- |
-| JSC-370 | implemented, validated, committed, pushed | PR #15 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-370 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
-| JSC-371 | implemented, validated, committed, pushed | PR #16 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-371 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
+| JSC-370 | implemented, validated, committed, pushed | PR #15 open, draft, mergeable, merge state UNSTABLE; deterministic-gates, Semgrep, Socket, and Snyk pass; CodeRabbit status is FAILURE due to external review-credit exhaustion, with earlier emitted findings addressed | Linear JSC-370 status Todo; PR #15 and parent PR #18 attachments exist | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers; CodeRabbit is classified as external review-credit blocker, not local code proof |
+| JSC-371 | implemented, validated, committed, pushed | PR #16 open, draft, mergeable, merge state UNSTABLE; deterministic-gates, Semgrep, Socket, and Snyk pass; CodeRabbit status is FAILURE due to external review-credit exhaustion and no inline review comments are present | Linear JSC-371 status Todo; PR #16 and parent PR #18 attachments exist | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers; CodeRabbit is classified as external review-credit blocker |
 | JSC-372 | implemented, validated, committed, pushed, PR triage artifact committed | PR #17 open, draft, mergeable, merge state CLEAN; deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit pass | Linear JSC-372 status Todo; PR attachment exists | child implementation proven locally; parent cannot close until PR state is advanced/merged or owner defers |
-| JSC-369 | parent reconciliation active | no parent PR yet | Linear JSC-369 status Triage | keep parent open; do not claim closeout |
+| JSC-369 | parent reconciliation active | PR #18 open, draft; was CONFLICTING/DIRTY before local stack merge repair; local branch has merged the current JSC-372 base and awaits push/recheck | Linear JSC-369 status Todo; PR #18 attachment exists | keep parent open; do not claim closeout |
 
 ### Deep Module Architecture Decision
 
@@ -121,23 +121,20 @@ rules in CLI callers, generated artifacts, PR prose, or agent prompts.
 | JSC-372 | git diff --check; pnpm test; pnpm evals run fixtures/smoke/pr-closeout.case.json --json; pnpm evals check --json; pnpm evals state --json; pnpm verify | pass | recorded in commit 519bde6 and JSC-372 review artifacts |
 | JSC-372 reviewer gate | agent-native-reviewer artifact | pass | artifacts/reviews/jsc-372-agent-native-reviewer.md |
 | JSC-372 adversarial reviewer gate | required artifact | coverage gap | reviewer returned mailbox findings twice but did not write the requested artifact after one retry; coordinator artifact records remediation and gap at artifacts/reviews/jsc-372-review-coordination.md |
-| JSC-372 PR triage | pr-green-sweep artifact | blocked external | artifacts/pr-green-sweep/jsc-372-pr-triage.md records Semgrep pending as external_check_pending |
+| JSC-372 PR triage | pr-green-sweep artifact plus live recheck | pass | artifacts/pr-green-sweep/jsc-372-pr-triage.md records earlier pending checks; live PR #17 recheck on 2026-05-25 shows deterministic-gates, Semgrep, Socket, Snyk, and CodeRabbit passing with merge state CLEAN |
 | Documentation accuracy | docs-expert fallback artifact | partial | artifacts/reviews/evals-proof-spine-docs-expert.md records README accurate for phase-one doctrine but incomplete for unmerged suite/claim/evidence exposition |
 | AGENTS accuracy | agents-md fallback artifact | pass with follow-up | artifacts/reviews/evals-proof-spine-agents-md.md records no blocking AGENTS.md contradiction |
-| JSC-369 parent branch | git diff --check | pass | no whitespace or conflict-marker output after parent reconciliation edits |
+| JSC-369 parent branch | git diff --check | pass | no whitespace or conflict-marker output after parent stack-merge conflict resolution |
 | JSC-369 parent branch | source artifact existence checks | pass | May 24 plan, spec, Linear plan, audit, docs review artifact, and AGENTS review artifact exist in the parent branch |
-| JSC-369 parent branch | pnpm verify | pass | aggregate gate exited 0 and wrote latest proof bundle 20260524T233444Z-pr-closeout-4df36134 |
+| JSC-369 parent branch | pnpm test | pass | 123 tests passed after merging the current JSC-372 base into the parent branch |
+| JSC-369 parent branch | pnpm verify | pass | aggregate gate exited 0 and wrote latest proof bundle 20260525T003124Z-pr-closeout-4df36134-01 |
 
 ### Remaining Blockers Before Parent Completion
 
-- PR #15 and PR #16 remain draft even though all visible checks pass.
-- PR #17 remains draft; its visible checks now pass and merge state is CLEAN.
-- PR #18 remains draft. Its visible checks passed on the latest live recheck
-  before this evidence update; final closeout still requires a fresh live PR
-  recheck because any new evidence commit can rerun hosted checks.
-- Linear JSC-369 is still Triage; JSC-370, JSC-371, and JSC-372 remain Todo
-  despite PR attachments. Do not represent local implementation as live tracker
-  completion.
+- PR #15 and PR #16 remain draft and CodeRabbit-blocked by external review-credit exhaustion even though deterministic-gates, Semgrep, Socket, and Snyk pass.
+- PR #17 remains draft; its visible checks pass and merge state is CLEAN.
+- PR #18 remains draft and required a local merge repair after the JSC-372 base advanced. Final closeout still requires a fresh live PR recheck after the parent branch is pushed because any evidence commit can rerun hosted checks.
+- Linear JSC-369, JSC-370, JSC-371, and JSC-372 remain Todo despite PR attachments. Do not represent local implementation as live tracker completion.
 - README has not yet been updated for JSC-371/JSC-372 because those PRs are not
   merged; docs are partial rather than complete.
 - The JSC-372 adversarial reviewer artifact is missing after one retry. The
