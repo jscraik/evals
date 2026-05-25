@@ -49,6 +49,17 @@
 - Pending checks at the subagent snapshot: semgrep-cloud-platform/scan.
 - Current parent classification: evidence is useful but not final; the artifact-only follow-up commit requires a fresh hosted-check rollup before any merge/readiness claim.
 
+## 2026-05-25 Merge-Conflict Repair
+
+- Live PR recheck: PR #16 is the only open PR and GitHub reported `mergeable: CONFLICTING` at head `0965fbbbf0fe899e9c422f48560ab03d545865bc`.
+- Local repair worktree: `/private/tmp/evals-jsc371` on `codex-jsc-371-repo-local-suite-contract`.
+- Repair action: merged `origin/main` into the PR branch and resolved conflicts.
+- Resolution rule:
+  - kept the PR branch side for still-open executable suite-contract/runtime files: `src/commands/run.js`, `src/commands/validation.js`, `src/lib/latest-run.js`, `src/lib/paths.js`, `src/lib/run-bundle.js`, and `test/cli.test.js`;
+  - kept `origin/main` for already-merged JSC-370 notes, review artifacts, and prior latest pointer evidence because PR #15 is now merged and `main` is the authoritative JSC-370 slice source.
+- Generated proof artifacts: retained the validation run bundles produced during the repair because deletion of generated directories was blocked by the local safety policy and the artifacts are valid local proof evidence.
+- Post-repair local status before push: conflicts fixed locally; merge commit pending, then branch push and live GitHub recheck required.
+
 ## Local Changes and Validation in This Slice
 
 - Code edits by triage subagent: none.
@@ -68,12 +79,20 @@
   - `pnpm evals check --json` -> pass
   - `pnpm evals state --json` -> pass
   - `pnpm verify` -> pass
+- Coordinator validation after merge-conflict repair:
+  - `git diff --check` -> pass
+  - `node --test --test-name-pattern "repo-local suite|suite contract|suite detection" test/cli.test.js` -> pass, 10 selected tests passed
+  - `pnpm test` -> pass, 129 tests passed
+  - `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass, produced run `20260525T154018Z-pr-closeout-4df36134`
+  - `pnpm evals check --json` -> pass, latest proof context matched `pr-closeout` / `smoke` / `synthetic`
+  - `pnpm evals state --json` -> pass, runtime state reported `ready`
+  - `pnpm verify` -> pass, aggregate deterministic gate passed and refreshed latest proof bundle `20260525T154059Z-pr-closeout-4df36134-01`
 
 ## Coordinator Next Step
 
-1. Recheck PR #16 live after the artifact-only head settles.
-2. If deterministic-gates, Semgrep, Socket, and Snyk pass while CodeRabbit remains credit-blocked, route a governance decision for credits or required-check exception.
-3. Do not claim JSC-371 merged/complete until PR state and child tracker state are reconciled.
+1. Commit and push the merge-conflict repair to PR #16.
+2. Recheck PR #16 live after GitHub recomputes mergeability and checks.
+3. If hosted checks pass and no unresolved review blockers remain, proceed with the normal merge-readiness decision; otherwise classify the exact live blocker.
+4. Do not claim JSC-371 merged/complete until PR state and child tracker state are reconciled.
 
 WROTE: artifacts/pr-green-sweep/jsc-371-pr-triage.md
-

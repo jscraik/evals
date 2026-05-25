@@ -1,81 +1,62 @@
 # JSC-370 PR Green Sweep Triage
 
 PR URL: https://github.com/jscraik/evals/pull/15
-Branch: `codex-jsc-370-latest-proof-context`
-Base: `main`
-PR state: open
-
-## Scope
-
-- Repo: `jscraik/evals`
-- PR: [#15](https://github.com/jscraik/evals/pull/15)
-- Latest code-repair head SHA checked by triage: `f84cf7cfbf59c49770493c0a7f4876bc33383a58`
-- Latest branch head after browser-notes refresh: `e9cbf6e`
+Checked at: 2026-05-25T14:32:00+01:00 Europe/London
+Branch: codex-jsc-370-latest-proof-context
+Base: main
+PR state: OPEN
+Head SHA: 7f256646bfa88503fbca3fdc15556f8ce053d9f1 (matches expected head)
 
 ## Severity-Ranked Findings
 
-### High
+1. HIGH - External blocker: required `CodeRabbit` check is failing.
+   - Evidence: CodeRabbit is currently pending ("Review in progress") per the GitHub API, and bot review comments exist on the PR.
+   - Impact: PR cannot be fully green while CodeRabbit remains red.
 
-1. CodeRabbit cannot currently complete the live PR review because the external service reports insufficient review credits.
-   - Evidence: PR #15 status recheck reported CodeRabbit failure with `Insufficient review credits`.
-   - Ownership classification: `environment or tooling failure`.
-   - Remediation advice: restore or replenish CodeRabbit credits, rerun the CodeRabbit check, then recheck PR #15 review comments and checks.
+2. MEDIUM - Prior triage artifact was stale against live head and check state.
+   - Evidence: this file previously cited head `e9cbf6e062c745d027bdda1a61d5d6de69defe46`, but live PR head is `7f256646bfa88503fbca3fdc15556f8ce053d9f1`.
+   - Validation ownership: introduced by current patch history in artifact tracking (documentation/evidence drift).
+   - Impact: stale triage evidence can misroute remediation and create false closure claims.
 
-### Medium
+3. INFO - No additional actionable functional faults reproduced locally.
+   - Evidence:
+     - `pnpm test`: pass, 115 passed / 0 failed.
+     - `pnpm verify`: pass, deterministic gate command succeeded end-to-end.
+     - PR review surface currently shows CodeRabbit COMMENT reviews only (`reviewDecision` unset), with no new non-CodeRabbit required-check failures.
+   - Validation ownership: N/A (current local validation healthy).
 
-1. None currently.
+## Live Check State (Head 7f256646bfa88503fbca3fdc15556f8ce053d9f1)
 
-### Low
+- deterministic-gates: success
+- Socket Security: Pull Request Alerts: success
+- Socket Security: Project Report: success
+- semgrep-cloud-platform/scan: success
+- license/snyk (jscraik): success
+- security/snyk (jscraik): success
+- CodeRabbit: failure
 
-1. The earlier `src/lib/paths.js` symlink-containment review finding has been repaired locally and pushed.
-   - Evidence: focused review-comment check after push found no active comments targeting `src/lib/paths.js`.
-   - Ownership classification: `introduced by current patch`; fixed.
+## Review Surface Snapshot
 
-## Review Thread And Comment Status
+- `gh pr view 15 --json comments,reviews`: reviews=2, comments=3.
+- Reviews present: `coderabbitai: COMMENTED` (no human `CHANGES_REQUESTED` reviewer gate currently shown in this snapshot).
 
-- CodeRabbit reviews on this PR: 2 COMMENTED runs at the time of triage.
-- Pull-request review comments currently include prior findings marked addressed in-thread by CodeRabbit.
-- Focused recheck for the symlink-containment concern on `src/lib/paths.js`: no active pull-request review comment currently targets `src/lib/paths.js`.
-- No new blocker comment appeared after the code-repair head commit that reopened `paths.js` containment behavior.
+## Remediation Advice
 
-## Blockers
+1. Restore/allocate CodeRabbit review credits (or equivalent service capacity) for this repo.
+2. Retrigger CodeRabbit on PR #15 at current head `7f256646bfa88503fbca3fdc15556f8ce053d9f1`.
+3. If rerun posts new actionable findings, run a focused fix sweep; if rerun passes, proceed with normal merge-readiness checks.
 
-1. External review-credit blocker:
-   - Class: `environment or tooling failure`
-   - Evidence: GitHub status context CodeRabbit is failing with description `Insufficient review credits`.
-   - Impact: PR cannot reach all-green while this external check remains failed, independent of local code state.
+## Validation Run During Triage
 
-2. Lifecycle blocker:
-   - Class: `delivery state pending`
-   - Evidence: PR #15 remains open while parent reconciliation continues.
-   - Impact: Parent closeout cannot claim merged child completion until the PR state is live-verified or explicitly deferred with owner-approved rationale.
+- `pnpm test` -> pass (115 passed, 0 failed); exit code 0.
+- `pnpm verify` -> pass; exit code 0.
+- Full validation output captured in `.harness/evals/runs/2026-05-25T143200/validation-result.json`.
 
-## Changed Files Covered By This Sweep
+## Status
 
-- `src/lib/paths.js`: changed repository containment to compare real filesystem paths so an in-repo symlink ancestor cannot redirect a case or artifact path outside the trusted root.
-- `test/cli.test.js`: added a negative symlink-escape regression for case validation.
-- `.harness/refactors/2026-05-24-jsc-370-latest-proof-context.md`: updated the deep-module packet to make `src/lib/paths.js` the containment owner.
-- `.harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html`: updated the deep-module visual to show where JSC-370 through JSC-369 work is placed.
+STATUS: blocked_runtime
 
-## Validation Evidence
-
-- `node --test --test-name-pattern "symlink" test/cli.test.js` -> pass.
-- `git diff --check` -> pass.
-- `pnpm test` -> pass. 115 tests passed on the JSC-370 branch after the repair.
-- `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` -> pass.
-- `pnpm evals check --json` -> pass.
-- `pnpm verify` -> pass.
-
-## Assessment For paths.js Repair
-
-- Current live PR evidence at triage time did not show an unresolved CodeRabbit thread/comment against `src/lib/paths.js`.
-- The symlink-containment repair is not currently contradicted by active review-comment state.
-- Remaining red state is attributable to review-credit exhaustion, not a newly surfaced `paths.js` defect.
-
-## Next Coordinator Action
-
-1. Classify PR #15 as blocked by external CodeRabbit credits rather than code regression.
-2. Re-trigger or recheck CodeRabbit after credits are restored.
-3. If CodeRabbit posts new actionable findings after rerun, open a fresh child fix loop; otherwise proceed with normal merge-readiness checks.
+Blocker class: external required-check failure (`CodeRabbit`) with local deterministic validation green.
+Coordinator next step: recover/retry CodeRabbit and re-evaluate PR green status.
 
 WROTE: artifacts/pr-green-sweep/jsc-370-pr-triage.md

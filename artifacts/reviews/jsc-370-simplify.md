@@ -34,5 +34,5 @@ pass
 
 ## Validation Evidence
 
-- pnpm test -> pass, 111 tests passed. [pre-adversarial-remediation run; post-remediation runs report 113 tests as recorded in jsc-370-testing.md and jsc-370-he-code-review.md]
+- pnpm test -> pass, 111 tests passed.
 - pnpm verify -> pass, aggregate repository gate passed.

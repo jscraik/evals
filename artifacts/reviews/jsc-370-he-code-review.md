@@ -22,7 +22,7 @@ truth findings remain after local review.
 
 ## Validation Evidence
 
-- pnpm test -> pass, 113 tests passed after reviewer-remediation changes. [Note: count reflects post-adversarial-remediation state; earlier ledgers (jsc-370-simplify.md, jsc-370-unslopify.md) report 111 tests from pre-remediation runs; jsc-370-testing.md reports 113 from the same post-remediation state as this review.]
+- pnpm test -> pass, 113 tests passed after reviewer-remediation changes.
 - pnpm verify -> pass, aggregate repository gate passed.
 
 ## Residual Risk
