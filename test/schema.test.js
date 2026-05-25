@@ -109,6 +109,7 @@ test("object constraints apply when object is one member of a type union", () =>
 test("date-time validation requires an explicit timestamp", () => {
   assert.match(validateWithSchema("2026-05-20", { type: "string", format: "date-time" }).join("\n"), /must be a date-time string/);
   assert.deepEqual(validateWithSchema("2026-05-20T19:24:00Z", { type: "string", format: "date-time" }), []);
+  assert.deepEqual(validateWithSchema("2026-05-20t19:24:00z", { type: "string", format: "date-time" }), []);
 });
 
 test("runtime-state embedded evidence packet schema mirrors the standalone packet schema", () => {
