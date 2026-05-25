@@ -20,7 +20,7 @@ Head SHA: 7f256646bfa88503fbca3fdc15556f8ce053d9f1 (matches expected head)
 
 3. INFO - No additional actionable functional faults reproduced locally.
    - Evidence:
-     - `pnpm test`: pass, 115 passed / 0 failed.
+     - `pnpm test`: pass, `tests 131`, `pass 131`, `fail 0`.
      - `pnpm verify`: pass, deterministic gate command succeeded end-to-end.
      - PR review surface currently shows CodeRabbit COMMENT reviews only (`reviewDecision` unset), with no new non-CodeRabbit required-check failures.
    - Validation ownership: N/A (current local validation healthy).
@@ -48,9 +48,16 @@ Head SHA: 7f256646bfa88503fbca3fdc15556f8ce053d9f1 (matches expected head)
 
 ## Validation Run During Triage
 
-- `pnpm test` -> pass (115 passed, 0 failed); exit code 0.
+- `pnpm test` -> pass (`tests 131`, `pass 131`, `fail 0`); exit code 0.
 - `pnpm verify` -> pass; exit code 0.
 - Full validation output captured in `.harness/evals/runs/2026-05-25T143200/validation-result.json`.
+
+## CodeRabbit Thread Recheck (Branch Head)
+
+- 2026-05-25: unresolved CodeRabbit thread `PRRT_kwDOShQiR86EhhNb` was rechecked on branch `codex-fix-pr15-coderabbit-threads`, the follow-up branch opened as PR #19.
+- `pnpm test` was rerun on branch `codex-fix-pr15-coderabbit-threads` and produced the exact Node test summary `tests 131`, `pass 131`, `fail 0`.
+- The stale `115 passed / 0 failed` wording above was replaced with the current exact summary, so retained triage evidence no longer contradicts current validation output.
+- The sibling auto-refresh thread `PRRT_kwDOShQiR86EiPzE` was also rechecked. Evidence: `nl -ba .harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html | sed -n '1,12p'` shows the manual-refresh comment on line 6, and `rg -n '<script|setInterval' .harness/implementation-notes/2026-05-24-jsc-370-implementation-notes.html` returns no matches.
 
 ## Status
 
