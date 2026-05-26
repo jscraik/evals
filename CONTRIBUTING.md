@@ -99,6 +99,13 @@ artifact bundles only when they are part of cited proof or closure evidence.
 '.harness/evals/runs/latest.json' is the current pointer for validation. If a
 new run changes it, validate the run before committing the pointer.
 
+## License
+
+By submitting a contribution, you agree that your contribution is licensed under
+the Apache License, Version 2.0. Do not submit code, fixtures, schemas,
+documentation, or generated artifacts that you do not have the right to
+contribute under that license.
+
 ## PR Expectations
 
 Before asking for review, include:
