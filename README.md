@@ -65,7 +65,7 @@ pnpm test
 - 'AGENTS.md': agent operating rules and scoped discovery.
 - 'CONTRIBUTING.md': contribution workflow, validation, artifact policy, and PR
   expectations.
-- 'LICENSE.md': current license status.
+- 'LICENSE.md': Apache License 2.0 terms.
 - 'SECURITY.md': phase-one security and privacy handling.
 - 'SUPPORT.md': reproduction and troubleshooting path.
 - 'UBIQUITOUS_LANGUAGE.md': project terms and wording boundaries.
@@ -77,6 +77,11 @@ pnpm test
 - LLM judges advise until calibrated.
 - Repo-local suites own domain truth.
 - External frameworks are adapters, not roots.
+
+## License
+
+This repository is licensed under the Apache License, Version 2.0. See
+'LICENSE.md' for the full license text.
 
 The compressed context entrypoint is
 '.harness/core/2026-05-18-evals-core.md'. Read that before deeper strategy,
