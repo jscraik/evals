@@ -1,0 +1,13 @@
+{
+  "command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+  "input_command": "simulate-pr-closeout",
+  "execution_mode": "synthetic",
+  "output_format": "json",
+  "started_at": "2026-05-26T01:38:01.825Z",
+  "finished_at": "2026-05-26T01:38:01.826Z",
+  "duration_ms": 1,
+  "exit_code": 0,
+  "stdout": "{\n  \"case_id\": \"pr-closeout\",\n  \"suite_id\": \"smoke\",\n  \"execution_mode\": \"synthetic\",\n  \"artifact_root\": \".harness/evals/runs/20260526T013801Z-pr-closeout-4df36134-01\",\n  \"logs\": [\n    \"case pr-closeout wrote artifact bundle\",\n    \"deterministic scorers completed\",\n    \"baseline missing: presence_status=missing comparison_status=not_compared promotion_status=not_requested\"\n  ]\n}",
+  "stderr": "",
+  "failure_class": null
+}

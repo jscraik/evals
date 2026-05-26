@@ -1,0 +1,60 @@
+schema_version: 1
+mode: continue
+goal_path: docs/goals/2026-05-26-evals-evidence-led-gap-audit/goal.md
+native_goal_status: active
+board_status: valid
+next_action: commit_push_recheck_pr
+continuation_markers:
+  - "read goal.md and state.yaml first"
+  - "receipts.jsonl"
+truth_lanes:
+  local_validation:
+    status: pass
+    evidence:
+      - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit -> pass"
+      - "pnpm test test/architecture-boundaries.test.js && node scripts/validate-architecture.js -> pass"
+      - "pnpm verify -> pass"
+  generated_artifacts:
+    status: pass
+    evidence:
+      - "artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md"
+      - ".harness/evals/runs/latest.json -> 20260526T020523Z-pr-closeout-4df36134-01"
+  remote_pr_checks:
+    status: unknown
+    evidence:
+      - "Must be rechecked after the next push advances PR #26 head."
+  review_threads:
+    status: pending_remote_recheck
+    evidence:
+      - "PRRT_kwDOShQiR86EqNlg remediated locally with regression coverage; GitHub thread state must be rechecked after push."
+  tracker_state:
+    status: not_applicable
+    evidence:
+      - "This turn did not mutate Linear."
+  merge_readiness:
+    status: blocked
+    evidence:
+      - "PR #26 was UNSTABLE before this local remediation push."
+continuation_gate:
+  queued_user_input: absent
+  pending_work: present
+  decision: continue
+native_blocker_audit:
+  gate_met: false
+  worker_must_pause: false
+  work_should_pause: false
+validation_evidence:
+  outcome: pass
+  commands:
+    - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit -> pass"
+    - "git diff --check -> pass"
+    - "draft-marker scan -> pass (no matches)"
+    - "pnpm test test/architecture-boundaries.test.js && node scripts/validate-architecture.js -> pass"
+    - "pnpm verify -> pass"
+risks:
+  - "Remote CodeRabbit and Semgrep states may remain unstable after push."
+  - "GitHub review thread may remain unresolved even though the code issue is remediated locally."
+  - "Parent goal cannot close until live PR checks, review threads, and merge readiness are reconciled."
+remaining_uncertainty:
+  - "Live PR #26 state after the next push."
+

@@ -257,19 +257,32 @@ test("run writes a valid local artifact bundle", () => {
     const checkResult = runCli(repo, ["check", "--json"]);
     assert.equal(checkResult.status, 0, checkResult.stderr || checkResult.stdout);
     const validation = parseJson(checkResult.stdout);
-    assert.deepEqual(validation.expected_context, {
+    assert.deepEqual(schemaCheckFromObject("validationResult", validation, "pnpm evals check --json").errors, []);
+    assert.equal(validation.check_mode, "observed-latest");
+    assert.equal(validation.expected_context, null);
+    assert.deepEqual(validation.observed_latest_context, {
       case_id: "pr-closeout",
       suite_id: "smoke",
       execution_mode: "synthetic"
     });
-    assert.deepEqual(validation.observed_latest_context, validation.expected_context);
-    assert.equal(validation.context_match, true);
+    assert.equal(validation.context_match, null);
     assert.equal(validation.context_mismatch_reason, null);
     assert.equal(validation.recovery_command, null);
+    assert.equal(validation.strict_smoke_command, "pnpm evals check --smoke --json");
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
-    assert.ok(validation.checks.some((check) => check.label === "latest proof context" && check.status === "pass"));
+    assert.equal(validation.checks.some((check) => check.label === "latest proof context"), false);
     assert.ok(validation.checks.some((check) => check.label === "trace events" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
+
+    const smokeCheckResult = runCli(repo, ["check", "--smoke", "--json"]);
+    assert.equal(smokeCheckResult.status, 0, smokeCheckResult.stderr || smokeCheckResult.stdout);
+    const smokeValidation = parseJson(smokeCheckResult.stdout);
+    assert.deepEqual(schemaCheckFromObject("validationResult", smokeValidation, "pnpm evals check --smoke --json").errors, []);
+    assert.equal(smokeValidation.check_mode, "smoke-context");
+    assert.deepEqual(smokeValidation.expected_context, smokeValidation.observed_latest_context);
+    assert.equal(smokeValidation.context_match, true);
+    assert.equal(smokeValidation.strict_smoke_command, null);
+    assert.ok(smokeValidation.checks.some((check) => check.label === "latest proof context" && check.status === "pass"));
   } finally {
     cleanup(repo);
   }
@@ -502,18 +515,35 @@ test("suite contract rejects executable scorer hooks", () => {
   }
 });
 
-test("check --json rejects latest proof context mismatch before artifact trust", () => {
+test("check defaults to observed latest while smoke mode rejects smoke context mismatch", () => {
   const repo = makeRepo();
   try {
-    runPassingSmoke(repo);
-    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
-    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
-    latest.suite_id = "other-suite";
-    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+    const customCasePath = join(repo, "fixtures", "smoke", "custom-suite.case.json");
+    const customCase = JSON.parse(readFileSync(smokeFixture(repo), "utf8"));
+    customCase.suite_id = "custom-suite";
+    writeFileSync(customCasePath, JSON.stringify(customCase, null, 2) + "\n", "utf8");
+
+    const runResult = runCli(repo, ["run", "fixtures/smoke/custom-suite.case.json", "--json"]);
+    assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
 
     const result = runCli(repo, ["check", "--json"]);
-    assert.equal(result.status, 1);
-    const validation = parseJson(result.stdout);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const defaultValidation = parseJson(result.stdout);
+    assert.equal(defaultValidation.check_mode, "observed-latest");
+    assert.equal(defaultValidation.expected_context, null);
+    assert.equal(defaultValidation.context_match, null);
+    assert.deepEqual(defaultValidation.observed_latest_context, {
+      case_id: "pr-closeout",
+      suite_id: "custom-suite",
+      execution_mode: "synthetic"
+    });
+    assert.ok(defaultValidation.checks.some((check) => check.label === "closure latest consistency" && check.status === "pass"));
+    assert.equal(defaultValidation.checks.some((check) => check.label === "latest proof context"), false);
+
+    const smokeResult = runCli(repo, ["check", "--smoke", "--json"]);
+    assert.equal(smokeResult.status, 1);
+    const validation = parseJson(smokeResult.stdout);
+    assert.equal(validation.check_mode, "smoke-context");
     assert.equal(validation.context_match, false);
     assert.equal(validation.context_mismatch_reason, "suite_id_mismatch");
     assert.equal(validation.recovery_command, "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
@@ -778,6 +808,26 @@ test("state reports invalid runtime packet for malformed latest JSON", () => {
 
     const schemaResult = schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json");
     assert.equal(schemaResult.status, "pass", schemaResult.errors.join("\n"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("state reports invalid runtime packet for duplicate latest JSON keys", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "{\n  \"run_id\": \"first\",\n  \"run_id\": \"second\"\n}\n", "utf8");
+
+    const result = runCli(repo, ["state", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const state = parseJson(result.stdout);
+    assert.equal(state.status, "invalid");
+    assert.equal(state.latest.status, "invalid");
+    assert.equal(state.validation.status, "failed");
+    assert.equal(state.non_ready_reason_code, "latest_invalid");
+    assert.match(state.validation.errors.join("\n"), /duplicate JSON key "run_id" at \$/);
   } finally {
     cleanup(repo);
   }
@@ -1800,6 +1850,7 @@ test("validate enforces the same phase-one policy contract as run", () => {
     assert.equal(validateResult.status, 1);
     assert.equal(validateResult.stderr, "");
     const validation = parseJson(validateResult.stdout);
+    assert.deepEqual(schemaCheckFromObject("validationResult", validation, "pnpm evals validate fixtures/smoke/policy-invalid.case.json --json").errors, []);
     assert.equal(validation.status, "failed");
     assert.match(validation.errors.join("\n"), /synthetic fixtures must use input.command simulate-pr-closeout/);
 
@@ -2013,13 +2064,15 @@ test("latest validation rejects missing latest schema fields before artifact rea
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
+    assert.equal(validation.check_mode, "observed-latest");
     assert.equal(validation.latest_path, ".harness/evals/runs/latest.json");
-    assert.deepEqual(validation.expected_context, {
+    assert.equal(validation.expected_context, null);
+    assert.deepEqual(validation.observed_latest_context, {
       case_id: "pr-closeout",
       suite_id: "smoke",
       execution_mode: "synthetic"
     });
-    assert.equal(validation.context_match, true);
+    assert.equal(validation.context_match, null);
     assert.equal(validation.context_mismatch_reason, null);
     assert.equal(validation.recovery_command, null);
     assert.match(validation.errors.join("\n"), /latest run .*result_path.*missing required property/);
@@ -2030,7 +2083,7 @@ test("latest validation rejects missing latest schema fields before artifact rea
   }
 });
 
-test("check --json keeps proof-context fields when latest JSON is malformed", () => {
+test("check --json reports observed mode when latest JSON is malformed", () => {
   const repo = makeRepo();
   try {
     runPassingSmoke(repo);
@@ -2042,6 +2095,32 @@ test("check --json keeps proof-context fields when latest JSON is malformed", ()
     assert.equal(result.stderr, "");
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
+    assert.equal(validation.check_mode, "observed-latest");
+    assert.equal(validation.latest_path, ".harness/evals/runs/latest.json");
+    assert.equal(validation.expected_context, null);
+    assert.equal(validation.observed_latest_context, null);
+    assert.equal(validation.context_match, null);
+    assert.equal(validation.context_mismatch_reason, null);
+    assert.equal(validation.recovery_command, null);
+    assert.match(validation.errors.join("\n"), /JSON/);
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("check --smoke --json keeps proof-context recovery fields when latest JSON is malformed", () => {
+  const repo = makeRepo();
+  try {
+    runPassingSmoke(repo);
+    const latestPath = join(repo, ".harness", "evals", "runs", "latest.json");
+    writeFileSync(latestPath, "{", "utf8");
+
+    const result = runCli(repo, ["check", "--smoke", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.equal(validation.check_mode, "smoke-context");
     assert.equal(validation.latest_path, ".harness/evals/runs/latest.json");
     assert.deepEqual(validation.expected_context, {
       case_id: "pr-closeout",
@@ -2255,6 +2334,24 @@ test("latest validation rejects malformed trace event JSON", () => {
     const validation = parseJson(result.stdout);
     assert.equal(validation.status, "failed");
     assert.match(validation.errors.join("\n"), /trace events line 1: JSON parse failed/);
+    assert.ok(validation.checks.some((check) => check.label === "trace events" && check.status === "fail"));
+  } finally {
+    cleanup(repo);
+  }
+});
+
+test("latest validation rejects duplicate trace event JSON keys", () => {
+  const repo = makeRepo();
+  try {
+    const output = runPassingSmoke(repo);
+    writeFileSync(join(repo, output.trace_events_path), "{\"event_type\":\"run_started\",\"event_type\":\"run_finished\"}\n", "utf8");
+
+    const result = runCli(repo, ["check", "--json"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "");
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /trace events line 1: .*duplicate JSON key "event_type" at \$/);
     assert.ok(validation.checks.some((check) => check.label === "trace events" && check.status === "fail"));
   } finally {
     cleanup(repo);

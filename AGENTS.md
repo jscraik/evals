@@ -29,6 +29,11 @@ Load the deeper planning surfaces only when the task touches their scope:
   sequencing, validation expansion, or delivery-state edits.
 - '.harness/references/local-reuse-map.md' when borrowing concepts from
   'coding-harness' or 'agent-skills'.
+- 'ARCHITECTURE.md' when choosing module placement, changing public command or
+  schema boundaries, or implementing deep-module owner changes.
+- The latest matching '.harness/research/audits/*evidence-led-codebase-gap-audit.md'
+  before fixing audit-derived runtime, validation, governance, traceability, or
+  architecture gaps.
 - '.harness/refactors/2026-05-20-deep-module-fix-mechanics.md' before
   implementing fixes from evidence-led audits or changing runner, schema,
   validation, artifact, baseline, trace, state, or governance mechanics.
@@ -99,12 +104,21 @@ queue-complete proof, and heartbeat state.
 
 ## Tracker Rule
 
-Current tracker state is 'override_approved'. The Linear parent issue is not
-created because 'mcp__codex_apps__linear_save_issue' fails with
-'unsupported call', but Jamie approved the exceptional override recorded at
+Tracker truth is lane-specific and must be rechecked before closeout or tracker
+mutation. Do not carry tracker state from one implementation lane into another.
+
+For the original 2026-05-18 executable-spine tracker lane, the state is
+'override_approved'. The Linear parent issue was not created because
+'mcp__codex_apps__linear_save_issue' failed with 'unsupported call', but Jamie
+approved the exceptional override recorded at
 '.harness/linear/2026-05-18-evals-tracker-override-approved.md'. Do not
-represent the override as a live Linear issue; preserve the recovery condition
-to create or link the parent issue when issue creation becomes available.
+represent that historical override as a live Linear issue.
+
+For later proof-spine or suite-contract work, inspect the relevant
+'.harness/linear/*-linear-plan.md' artifact and recheck live Linear state when
+available. If Linear mutation is unavailable, record the exact blocker and
+recovery condition instead of representing local plan state as live tracker
+truth.
 
 ## Validation
 
@@ -120,14 +134,22 @@ pnpm evals run fixtures/smoke/pr-closeout.case.json
 pnpm evals run fixtures/smoke/pr-closeout.case.json --json
 pnpm evals state --json
 pnpm evals check --json
+pnpm evals check --smoke --json
 pnpm verify
 ~~~
 
 `pnpm verify` is the CI gate command (see `.harness/ci-required-checks.json`). It
-runs all deterministic checks including file-existence guards, the smoke run,
-latest-artifact validation, and credential scanning with a Node fallback when
-`rg` is unavailable. Run it locally before pushing to confirm the same gate CI
-enforces.
+runs deterministic checks including file-existence guards, the smoke run, the
+latest-artifact validation produced during the gate, and credential scanning
+with a Node fallback when `rg` is unavailable. Run it locally before pushing to
+confirm the same gate CI enforces.
+
+When auditing stale/latest trust boundaries, use the pre-mutation latest check
+inside `pnpm verify` as the proof that the pre-run
+`.harness/evals/runs/latest.json` was already valid or absent for a clean
+bootstrap. `pnpm evals check --json` validates the observed latest packet for
+artifact consistency. `pnpm evals check --smoke --json` additionally requires
+latest to match the canonical smoke case context.
 
 For a lightweight direct credential scan when `rg` is available:
 
@@ -136,10 +158,11 @@ credential_pattern='sk-[A-Za-z0-9_-]{20,}|(api[_-]?key|token|secret|password)\s*
 rg -n -o --replace "credential-like pattern redacted" "$credential_pattern" fixtures schemas src scripts test tests .harness/evals .harness/research .harness/specs .harness/plan .harness/plans .harness/linear
 ~~~
 
-The check command validates the smoke fixture against
-'schemas/eval-case.schema.json' and validates the latest result, manifest,
-scorer results, baseline result, trace event timeline, and manifest artifact
-hashes from '.harness/evals/runs/latest.json'.
+The default check command validates the latest result, manifest, scorer
+results, baseline result, trace event timeline, and manifest artifact hashes
+from '.harness/evals/runs/latest.json'. The smoke check variant also validates
+the smoke fixture against 'schemas/eval-case.schema.json' and rejects latest
+packets that do not match the canonical smoke proof context.
 
 The regex check is a lightweight phase-one privacy aid, not full secret-scan
 coverage. It uses credential-shaped patterns so documentation prose can discuss

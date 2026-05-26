@@ -1,0 +1,355 @@
+---
+schema_version: 1
+title: "Evals Evidence-Led Gap Audit Implementation Notes"
+goal: "docs/goals/2026-05-26-evals-evidence-led-gap-audit/goal.md"
+status: "t008-delivery-packaging-active"
+updated: "2026-05-26"
+---
+
+# Evals Evidence-Led Gap Audit Implementation Notes
+
+This artifact tracks decisions, deep-module placement, runtime truth, blast
+radius, and validation coverage for the governed implementation goal created
+from `.harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md`.
+
+## Deep Module Topology
+
+<DeepModuleMap
+  modules={[
+    {
+      name: "Latest Artifact Integrity",
+      owner: "runner / artifact validation",
+      placement: "scripts/verify.js, src runtime validation helpers, schemas, tests",
+      responsibility: "Reject stale, missing, malformed, or schema-invalid latest artifacts before mutation or success claims.",
+      phase: "P0"
+    },
+    {
+      name: "Check Semantics Boundary",
+      owner: "CLI validation surface",
+      placement: "src/cli.js, src/commands/validation.js, src/lib/latest-run.js, scripts/verify.js, test/cli.test.js, README.md, AGENTS.md",
+      responsibility: "Separate observed-latest validation from explicit smoke proof-context validation so repo-local suite runs cannot be falsely rejected by smoke-only assumptions.",
+      phase: "P0"
+    },
+    {
+      name: "Agent-Facing JSON Contracts",
+      owner: "schemas and command output fixtures",
+      placement: "schemas, src output builders, schema validation tests",
+      responsibility: "Make machine-readable command surfaces explicit, additive, and testable.",
+      phase: "P1"
+    },
+    {
+      name: "Architecture Boundary Enforcement",
+      owner: "repo validation gate",
+      placement: "ARCHITECTURE.md, scripts, tests, verify wiring",
+      responsibility: "Mechanically enforce phase-one hard blocks and deep-module ownership boundaries.",
+      phase: "P1"
+    },
+    {
+      name: "Authoritative JSON Parsing",
+      owner: "artifact parsing and diagnostics",
+      placement: "src parsing helpers, fixtures, negative tests",
+      responsibility: "Provide path-aware diagnostics and reject duplicate keys where JSON artifacts carry authority.",
+      phase: "P1"
+    }
+  ]}
+/>
+
+## Current Slice Insertion Map
+
+<InsertionPoint
+  activeSlice="T008 PM: package implementation series for GitHub review"
+  nextInsertion="Create a codex/ branch, stage the latest pointer with its matching run bundle, commit, push, and open a PR or record the exact delivery blocker"
+  files={[
+    "docs/goals/2026-05-26-evals-evidence-led-gap-audit/goal.md",
+    "docs/goals/2026-05-26-evals-evidence-led-gap-audit/state.yaml",
+    "docs/goals/2026-05-26-evals-evidence-led-gap-audit/receipts.jsonl",
+    ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx",
+    "src/cli.js",
+    "src/commands/validation.js",
+    "src/lib/latest-run.js",
+    "scripts/verify.js",
+    "test/cli.test.js",
+    "test/schema.test.js",
+    "src/lib/schema.js",
+    "schemas/validation-result.schema.json",
+    ".harness/refactors/2026-05-26-validation-result-output-contract.md",
+    "README.md",
+    "AGENTS.md",
+    "ARCHITECTURE.md",
+    ".harness/evals/evals-evals-executable-spine-eval.md",
+    ".harness/evals/runs/latest.json",
+    ".harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/**"
+  ]}
+  note="T002 through T006 are locally implemented and reconciled. T007 confirmed the local evidence state is green. T008 is the delivery packaging lane and no GitHub delivery is claimed until the branch, commit, push, and PR actually exist."
+/>
+
+## Runtime Truth Surface
+
+<RuntimeCardState
+  currentState="t008-delivery-packaging-active"
+  authority="Goal board, native goal, local validation, reviewer artifacts, and refreshed latest proof bundle; PR/branch delivery has not started for this goal."
+  latestKnownRisks={[
+    "worktree remains dirty because the implementation series is not yet packaged onto a branch",
+    "branch creation is blocked by local .git ref write permission in the active sandbox",
+    "T003 adversarial artifact coverage is incomplete after one retry; mailbox findings reported no blocking defects but are not approval evidence",
+    "GitHub branch, commit, push, PR, CI, and review-thread evidence are absent for this local series",
+    "latest.json now points at a refreshed proof bundle that must be committed with its run-local artifacts if delivery proceeds",
+    "future public JSON contract changes require explicit compatibility review"
+  ]}
+  nextRequiredEvidence={[
+    "clean codex/ branch or separate worktree for delivery packaging",
+    "permission to create local git refs in /Users/jamiecraik/dev/evals/.git or a user-created codex/ branch",
+    "atomic commit that includes latest.json and its matching proof bundle when latest is staged",
+    "GitHub PR with validation evidence and explicit T003 coverage-gap disclosure"
+  ]}
+/>
+
+## Blast Radius View
+
+<BlastRadiusMap
+  boundaries={[
+    "runner and artifact validation",
+    "CLI check/state output contracts",
+    "schemas and fixtures",
+    "verify gate wiring",
+    "README, AGENTS, and ARCHITECTURE documentation surfaces"
+  ]}
+  protectedAreas={[
+    "phase-one hard blocks",
+    "consumer repository suite intent and domain truth",
+    "external services and networked execution",
+    "runtime dependencies on sibling repositories"
+  ]}
+  stopTriggers={[
+    "destructive operation",
+    "dependency or package install requirement",
+    "public contract break without owner decision",
+    "phase-one hard-blocked capability",
+    "unclassified validation failure"
+  ]}
+/>
+
+## Validation Coverage
+
+<ValidatorCoverage
+  setup={[
+    "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit",
+    "git status --short --branch"
+  ]}
+  implementation={[
+    "slice-specific narrow regression test",
+    "pnpm test when code/schema behavior changes",
+    "pnpm evals run fixtures/smoke/pr-closeout.case.json --json when runner or artifact behavior changes",
+    "pnpm evals check --json when latest/check/artifact validation changes",
+    "pnpm evals state --json when runtime state behavior changes",
+    "pnpm verify before ready-for-PR or closeout claims"
+  ]}
+  currentCoverage="T002 passed narrow tests, full tests, latest check, aggregate verify, adversarial review, and agent-native review. T003 passed narrow CLI tests, verify wiring tests, full tests, observed-latest check, smoke-context check, state check, CLI help check, and aggregate verify; agent-native review passed and adversarial review remains a recorded coverage gap because the required artifact was missing after one retry. T004 passed schema tests, CLI schema-backed tests, full tests, validate JSON, observed-latest check, smoke-context check, state check, aggregate verify, adversarial review, and agent-native review. T005 passed architecture-boundary tests, direct architecture validation, full tests, aggregate verify, adversarial review, and agent-native review. T006 passed parser seam tests, CLI focused tests, full tests, aggregate verify, adversarial review, and agent-native review. T007 passed git diff --check, the Goal Governor board validator, draft-marker scan, and pnpm verify. T008 has fresh aggregate proof from pnpm verify with latest run id 20260526T012330Z-pr-closeout-4df36134-01 and now needs branch, commit, push, and PR evidence."
+/>
+
+## Decision Log
+
+- Created the goal as a parent implementation loop instead of a single patch
+  task because the audit spans several trust boundaries and needs slice-level
+  validation.
+- Ordered P0 work around false-success and stale-evidence risk before broader
+  architecture maturity, matching the audit's highest-leverage fix sequence.
+- Used `docs/goals/2026-05-26-evals-evidence-led-gap-audit/` for the board so
+  the Goal Governor validator can locate implementation notes using its
+  documented board-layout conventions.
+- Kept setup separate from feature implementation to avoid mixing goal
+  scaffolding with runtime changes in an already dirty worktree.
+- Started T002 with scripts/verify.js as the owner module for aggregate gate
+  ordering and src/lib/latest-run.js as the hidden latest-validation authority.
+- Added a pre-mutation latest integrity check before smoke commands so corrupt
+  preexisting latest evidence fails before pnpm verify can refresh smoke
+  artifacts.
+- Classified absent latest state as a setup pass because clean repositories may
+  rely on the smoke run to create the first latest pointer before post-smoke
+  validation.
+- Advanced the goal board to T003 only after local validation passed and the two
+  required T002 reviewer artifacts existed and were non-empty.
+- Implemented T003 as an additive CLI contract: pnpm evals check --json now
+  validates the observed latest packet, while pnpm evals check --smoke --json
+  performs the stricter smoke proof-context binding used by pnpm verify.
+- Kept observed latest context in validateLatestRun() even when no expected
+  context is supplied so machine consumers can see what was validated without
+  inheriting smoke-only assumptions.
+- Updated README and AGENTS validation wording after confirming the live
+  package scripts and CLI help expose the new command surface.
+- Added a verify wiring regression after adversarial mailbox review called out
+  that the aggregate gate must remain bound to pnpm evals check --smoke --json
+  rather than the permissive observed-latest default.
+- Marked T003 complete with an explicit adversarial coverage gap: the reviewer
+  returned no blocking mailbox findings twice but did not write the required
+  artifact after one focused retry.
+- Implemented T004 as a schema-owned public envelope for validation and check
+  command JSON results, with detailed nested evidence remaining owned by the
+  command-specific result builders.
+- Allowed `strict_smoke_command` to be `null` in the schema because live
+  `check --smoke --json` output currently emits null for that metadata field;
+  the slice records the observed behavior instead of inventing a stricter
+  runtime guarantee.
+
+## Slice Evidence
+
+### T002: Pre-Mutation Latest Integrity
+
+- owner module: scripts/verify.js
+- hidden implementation rule: validate an existing .harness/evals/runs/latest.json
+  through validateLatestRun() before smoke commands run
+- caller contract: pnpm verify fails corrupt preexisting latest evidence before
+  mutation; post-smoke proof still depends on pnpm evals check --json
+- seam test: test/verify.test.js
+- deep module packet: .harness/refactors/2026-05-26-latest-integrity-pre-mutation.md
+- rollback path: remove preMutationLatestIntegrityCheck() and the associated
+  tests
+- validation:
+  - pnpm test test/verify.test.js passed
+  - pnpm test passed
+  - pnpm evals check --json passed
+  - pnpm verify passed
+- reviewer artifacts:
+  - artifacts/reviews/2026-05-26-t002-latest-integrity-adversarial-reviewer.md
+  - artifacts/reviews/2026-05-26-t002-latest-integrity-agent-native-reviewer.md
+- reviewer outcome: no critical findings; agent-native visibility drift was
+  remediated by updating goal board state and receipts.
+
+### T003: Check and State Semantics Boundary
+
+- owner module: src/commands/validation.js
+- CLI routing surface: src/cli.js
+- hidden latest authority: src/lib/latest-run.js
+- aggregate gate wiring: scripts/verify.js
+- documentation surfaces: README.md and AGENTS.md
+- public contract: default pnpm evals check --json validates observed latest
+  artifact consistency; pnpm evals check --smoke --json additionally binds
+  latest to the canonical smoke fixture context.
+- seam test: test/cli.test.js
+- deep module packet: .harness/refactors/2026-05-26-check-state-semantics-boundary.md
+- rollback path: remove the --smoke check mode, restore default smoke-context
+  binding, and restore pnpm verify to pnpm evals check --json after reverting
+  the command tests.
+- validation:
+  - pnpm test test/cli.test.js passed
+  - pnpm test test/verify.test.js passed
+  - pnpm test passed
+  - pnpm evals check --json passed
+  - pnpm evals check --smoke --json passed
+  - pnpm evals state --json passed
+  - pnpm evals --help passed
+  - pnpm verify passed
+- reviewer artifacts:
+  - artifacts/reviews/2026-05-26-t003-check-state-semantics-agent-native-reviewer.md passed
+  - artifacts/reviews/2026-05-26-t003-check-state-semantics-adversarial-reviewer.md blocked because the artifact was missing after one focused retry
+- reviewer outcome: no blocking mailbox findings were reported by the adversarial
+  reviewer, but approval is not claimed because the artifact contract was not
+  satisfied.
+
+### T004: Validation Result Output Contract
+
+- owner module: schemas/validation-result.schema.json
+- schema registry: src/lib/schema.js
+- command-output seams: test/schema.test.js and test/cli.test.js
+- public contract: validation and check JSON results expose a stable top-level
+  envelope with status, checks, errors, mode/context fields where relevant, and
+  additive nested evidence under check entries.
+- hidden implementation rule: schema ownership stops at the shared result
+  envelope; command-specific nested evidence remains validated by existing
+  artifact, manifest, scorer, trace, baseline, and policy checks.
+- deep module packet: .harness/refactors/2026-05-26-validation-result-output-contract.md
+- rollback path: remove the validationResult schema target, schema file, and
+  schema-backed CLI assertions while preserving the existing command behavior.
+- validation:
+  - pnpm test test/schema.test.js passed
+  - pnpm test test/schema.test.js test/cli.test.js passed after allowing the
+    live `strict_smoke_command: null` output shape
+  - pnpm test passed
+  - pnpm evals validate fixtures/smoke/pr-closeout.case.json --json passed
+  - pnpm evals check --json passed
+  - pnpm evals check --smoke --json passed
+  - pnpm evals state --json passed
+  - pnpm verify passed
+- reviewer artifacts:
+  - artifacts/reviews/2026-05-26-t004-validation-result-contract-adversarial-reviewer.md passed after final documentation-split remediation
+  - artifacts/reviews/2026-05-26-t004-validation-result-contract-agent-native-reviewer.md passed
+- reviewer outcome: no material findings remain. The adversarial re-review found
+  one deep-module packet contradiction about additive top-level fields; the
+  packet now matches the schema and tests by stating that unknown top-level
+  fields remain accepted for additive compatibility.
+- state: T004 done; T005 activated as the next mechanical architecture-boundary
+  validation slice.
+
+### T005: Architecture Boundary Validation
+
+- owner module: scripts/validate-architecture.js
+- aggregate gate wiring: scripts/verify.js
+- public contract: node scripts/validate-architecture.js exits non-zero with
+  path-specific findings when source imports, runtime loaders, or package
+  declarations cross phase-one hard-block or deep-module ownership boundaries.
+- hidden implementation rule: the validator is a deterministic phase-one guard,
+  not a general dependency graph framework; it scans source and package
+  declarations for the repo's current hard blocks and owner-boundary rules.
+- seam test: test/architecture-boundaries.test.js
+- deep module packet: .harness/refactors/2026-05-26-architecture-boundary-validation.md
+- rollback path: remove the verify step, validator, seam tests, and packet while
+  preserving existing runtime behavior.
+- validation:
+  - pnpm test test/architecture-boundaries.test.js passed
+  - node scripts/validate-architecture.js passed
+  - pnpm test passed
+  - pnpm verify passed
+- reviewer artifacts:
+  - artifacts/reviews/2026-05-26-t005-architecture-boundary-adversarial-reviewer.md passed after dynamic import, require, createRequire, and comment-only finding remediations
+  - artifacts/reviews/2026-05-26-t005-architecture-boundary-agent-native-reviewer.md passed
+- reviewer outcome: no material findings remain. Residual risk is that the
+  validator remains a bounded source scanner rather than an AST-level import
+  graph engine; the current slice intentionally avoids new dependencies.
+- state: T005 done; T006 activated as the JSON diagnostics and duplicate-key
+  rejection slice.
+
+### T006: JSON Diagnostics and Duplicate-Key Rejection
+
+- owner module: src/lib/json.js
+- caller seams: src/lib/case-contract.js and src/lib/trace-events.js
+- public contract: trusted JSON artifact reads go through parseJson/readJson and
+  emit path-qualified parse or duplicate-key diagnostics; trace event JSONL
+  diagnostics include the event file and line number.
+- hidden implementation rule: native JSON.parse remains the syntax authority;
+  the repository scanner runs only after syntax acceptance to reject duplicate
+  object member names, including escape-decoded aliases, before parsed artifacts
+  can become validation evidence.
+- seam tests: test/json.test.js and test/cli.test.js
+- deep module packet: .harness/refactors/2026-05-26-json-parse-diagnostics.md
+- rollback path: restore readJson to direct JSON.parse, remove parseJson caller
+  wiring, remove duplicate-key CLI regressions and parser seam tests, and keep
+  existing schema and artifact validation behavior unchanged.
+- validation:
+  - node --input-type=module inline parser sanity check passed
+  - pnpm test test/json.test.js passed
+  - pnpm test test/cli.test.js passed
+  - pnpm test passed
+  - pnpm verify passed
+- reviewer artifacts:
+  - artifacts/reviews/2026-05-26-t006-json-diagnostics-adversarial-reviewer.md passed after final parser seam coverage was added
+  - artifacts/reviews/2026-05-26-t006-json-diagnostics-agent-native-reviewer.md passed
+- reviewer outcome: no material findings remain. Residual risk is bounded to
+  custom scanner maintenance; the highest-risk escaped-key alias and nested
+  ownership cases are now directly tested.
+- state: T007 done locally; T008 activated for delivery packaging.
+
+## Open Coordination Items
+
+- Package the reconciled local implementation series onto a clean \`codex/\`
+  branch or separate worktree before any PR workflow. Current branch creation is
+  blocked by local .git ref write permission in the active sandbox.
+- If \`.harness/evals/runs/latest.json\` is staged, force-add its matching proof
+  bundle \`.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/\` so the
+  tracked latest pointer does not reference absent artifacts.
+- Decide whether deleted latest state in a long-lived repository should become a
+  strict-mode failure in a later hardening slice; T002 intentionally preserves
+  bootstrap-safe missing latest behavior.
+- Decide whether adversarial artifact write failures should pause later slices
+  or remain an explicit coverage gap when mailbox findings are non-blocking.
+- Keep the T003 adversarial reviewer artifact gap explicit in PR text and
+  closeout evidence; do not convert mailbox text into approval evidence.

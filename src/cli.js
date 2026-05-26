@@ -15,7 +15,7 @@ function usage(exitCode = 1) {
     "  pnpm evals run <case-file|suite.json> [--json]",
     "  pnpm evals validate <case-file|latest.json> [--json]",
     "  pnpm evals validate-schema <claim-registry|score-vector> <json-file> [--json]",
-    "  pnpm evals check [--json]",
+    "  pnpm evals check [--smoke] [--json]",
     "  pnpm evals state [--json]"
   ].join("\n");
   if (exitCode === 0) console.log(message);
@@ -26,11 +26,13 @@ function usage(exitCode = 1) {
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) usage(0);
 const jsonMode = args.includes("--json");
-const positional = args.filter((arg) => arg !== "--json");
+const smokeMode = args.includes("--smoke");
+const positional = args.filter((arg) => arg !== "--json" && arg !== "--smoke");
 
+if (smokeMode && positional[0] !== "check") usage(1);
 if (positional[0] === "run" && positional.length === 2) runTarget(positional[1], jsonMode);
 if (positional[0] === "validate" && positional.length === 2) validateCommand(positional[1], jsonMode);
 if (positional[0] === "validate-schema" && positional.length === 3) validateSchemaCommand(positional[1], positional[2], jsonMode);
-if (positional[0] === "check" && positional.length === 1) checkCommand(jsonMode);
+if (positional[0] === "check" && positional.length === 1) checkCommand(jsonMode, { smokeContext: smokeMode });
 if (positional[0] === "state" && positional.length === 1) stateCommand(jsonMode);
 usage(1);

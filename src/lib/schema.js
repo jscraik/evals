@@ -63,6 +63,10 @@ export const schemaTargets = {
   runtimeEvidenceCase: {
     schema: join(schemaDir, "runtime-evidence-case.schema.json"),
     label: "runtime evidence case"
+  },
+  validationResult: {
+    schema: join(schemaDir, "validation-result.schema.json"),
+    label: "validation result"
   }
 };
 

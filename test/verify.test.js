@@ -9,6 +9,8 @@ import {
   credentialScanPaths,
   credentialScanRootCandidates,
   credentialScanWithRg,
+  checks,
+  preMutationLatestIntegrityCheck,
   scanCredentialPatterns
 } from "../scripts/verify.js";
 
@@ -39,6 +41,49 @@ test("credential scan includes canonical proof roots when present", () => {
       .sort();
 
     assert.deepEqual(scannedRoots, [...credentialScanRootCandidates].sort());
+  });
+});
+
+test("pre-mutation latest integrity check runs before smoke mutation commands", () => {
+  const preMutationIndex = checks.findIndex((check) => check.command === "pre-mutation latest integrity: .harness/evals/runs/latest.json");
+  const firstSmokeMutationIndex = checks.findIndex((check) => check.command === "pnpm evals run fixtures/smoke/pr-closeout.case.json");
+
+  assert.notEqual(preMutationIndex, -1);
+  assert.notEqual(firstSmokeMutationIndex, -1);
+  assert.ok(preMutationIndex < firstSmokeMutationIndex);
+});
+
+test("verify gate uses strict smoke-context check after smoke latest mutation", () => {
+  const smokeJsonRunIndex = checks.findIndex((check) => check.command === "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
+  const smokeCheckIndex = checks.findIndex((check) => check.command === "pnpm evals check --smoke --json");
+  const permissiveCheckIndex = checks.findIndex((check) => check.command === "pnpm evals check --json");
+
+  assert.notEqual(smokeJsonRunIndex, -1);
+  assert.notEqual(smokeCheckIndex, -1);
+  assert.equal(permissiveCheckIndex, -1);
+  assert.ok(smokeJsonRunIndex < smokeCheckIndex);
+});
+
+test("pre-mutation latest integrity check fails corrupt latest before smoke can overwrite it", () => {
+  withTempRepo((repo) => {
+    writeNested(repo, ".harness/evals/runs/latest.json", "{");
+
+    const result = preMutationLatestIntegrityCheck(repo);
+
+    assert.equal(result.status, "fail");
+    assert.match(result.output, /preexisting latest pointer failed before smoke mutation/);
+    assert.match(result.output, /JSON parse failed|Expected property name|Unexpected end/);
+  });
+});
+
+test("pre-mutation latest integrity check classifies absent latest without failing clean setup", () => {
+  withTempRepo((repo) => {
+    mkdirSync(join(repo, ".harness", "evals", "runs"), { recursive: true });
+
+    const result = preMutationLatestIntegrityCheck(repo);
+
+    assert.equal(result.status, "pass");
+    assert.match(result.output, /preexisting latest pointer absent/);
   });
 });
 

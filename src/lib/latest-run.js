@@ -47,14 +47,16 @@ export function validateLatestRun(latestPath, options = {}) {
   try {
     latest = readJson(absoluteLatestPath);
   } catch (error) {
+    const observedContext = null;
     const proofComparison = options.expectedContext
-      ? compareProofContext(options.expectedContext, null, options.recoveryCommand)
+      ? compareProofContext(options.expectedContext, observedContext, options.recoveryCommand)
       : null;
     return {
       status: "failed",
       latest_path: relativeToArtifactRoot(absoluteLatestPath),
       errors: [error.message],
       checks: [],
+      observed_latest_context: observedContext,
       ...proofContextFields(proofComparison)
     };
   }
@@ -62,8 +64,9 @@ export function validateLatestRun(latestPath, options = {}) {
   const checks = [schemaCheckFromObject("latest", latest, absoluteLatestPath)];
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
 
+  const observedContext = observedProofContextFromLatest(latest);
   const proofComparison = options.expectedContext
-    ? compareProofContext(options.expectedContext, observedProofContextFromLatest(latest), options.recoveryCommand)
+    ? compareProofContext(options.expectedContext, observedContext, options.recoveryCommand)
     : null;
 
   if (errors.length > 0) {
@@ -73,6 +76,7 @@ export function validateLatestRun(latestPath, options = {}) {
       run_id: latest.run_id,
       checks,
       errors,
+      observed_latest_context: observedContext,
       ...proofContextFields(proofComparison)
     };
   }
@@ -88,6 +92,7 @@ export function validateLatestRun(latestPath, options = {}) {
         run_id: latest.run_id,
         checks,
         errors,
+        observed_latest_context: observedContext,
         ...proofContextFields(proofComparison)
       };
     }
@@ -148,6 +153,7 @@ export function validateLatestRun(latestPath, options = {}) {
     run_id: latest.run_id,
     checks,
     errors,
+    observed_latest_context: observedContext,
     ...proofContextFields(proofComparison)
   };
 }

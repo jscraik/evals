@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/validation-result.schema.json",
+  "title": "Validation Result",
+  "type": "object",
+  "required": ["status", "checks", "errors"],
+  "properties": {
+    "status": { "type": "string", "enum": ["passed", "failed"] },
+    "check_mode": { "type": "string", "enum": ["observed-latest", "smoke-context"] },
+    "latest_path": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "expected_context": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["case_id", "suite_id", "execution_mode"],
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1 },
+        "suite_id": { "type": "string", "minLength": 1 },
+        "execution_mode": { "type": "string", "enum": ["synthetic", "real"] }
+      }
+    },
+    "observed_latest_context": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["case_id", "suite_id", "execution_mode"],
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1 },
+        "suite_id": { "type": "string", "minLength": 1 },
+        "execution_mode": { "type": "string", "enum": ["synthetic", "real"] }
+      }
+    },
+    "context_match": { "type": ["boolean", "null"] },
+    "context_mismatch_reason": { "type": ["string", "null"], "minLength": 1 },
+    "recovery_command": { "type": ["string", "null"], "minLength": 1 },
+    "strict_smoke_command": { "type": ["string", "null"], "minLength": 1 },
+    "runtime_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_coverage": {
+          "type": "object",
+          "required": ["status", "families", "errors"],
+          "properties": {
+            "status": { "type": "string", "enum": ["pass", "fail"] },
+            "families": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["case_id", "family", "declaration_path", "enforcement_status"],
+                "properties": {
+                  "case_id": { "type": "string", "minLength": 1 },
+                  "family": { "type": "string", "minLength": 1 },
+                  "declaration_path": { "type": "string", "minLength": 1 },
+                  "enforcement_status": {
+                    "type": "string",
+                    "enum": ["implemented_enforced", "scaffolded_not_enforced", "missing_enforcement"]
+                  },
+                  "scorer_id": { "type": "string", "minLength": 1 },
+                  "scaffold_reason": { "type": "string", "minLength": 1 },
+                  "error_code": { "type": "string", "minLength": 1 },
+                  "failure_reason": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "errors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "requirement": { "type": "string", "minLength": 1 },
+    "target_schema": { "type": "string", "minLength": 1 },
+    "recovery": { "type": "string", "minLength": 1 },
+    "supported_schemas": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "status", "errors"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "schema_path": { "type": "string", "minLength": 1 },
+          "data_path": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["pass", "fail"] },
+          "errors": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "scorer_results": { "type": "array", "items": { "type": "object" } },
+          "policy_coverage": {
+            "type": "object",
+            "required": ["status", "families", "errors"],
+            "properties": {
+              "status": { "type": "string", "enum": ["pass", "fail"] },
+              "families": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["case_id", "family", "declaration_path", "enforcement_status"],
+                  "properties": {
+                    "case_id": { "type": "string", "minLength": 1 },
+                    "family": { "type": "string", "minLength": 1 },
+                    "declaration_path": { "type": "string", "minLength": 1 },
+                    "enforcement_status": {
+                      "type": "string",
+                      "enum": ["implemented_enforced", "scaffolded_not_enforced", "missing_enforcement"]
+                    },
+                    "scorer_id": { "type": "string", "minLength": 1 },
+                    "scaffold_reason": { "type": "string", "minLength": 1 },
+                    "error_code": { "type": "string", "minLength": 1 },
+                    "failure_reason": { "type": "string", "minLength": 1 }
+                  }
+                }
+              },
+              "errors": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

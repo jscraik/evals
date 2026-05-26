@@ -4,6 +4,8 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { validateLatestRun } from "../src/lib/latest-run.js";
+
 const credentialPatternSource = [
   "sk-[A-Za-z0-9_-]{20,}",
   "(api[_-]?key|token|secret|password)\\s*[:=]\\s*[\"']?[A-Za-z0-9_./+=-]{16,}",
@@ -37,7 +39,7 @@ const excludedCredentialScanDirectories = new Set([
   ".turbo"
 ]);
 
-const checks = [
+export const checks = [
   {
     command: "test -f README.md",
     run: () => existsSync("README.md") ? pass("") : fail("README.md is missing")
@@ -59,6 +61,14 @@ const checks = [
     run: () => existsSync("fixtures/smoke/pr-closeout.case.json") ? pass("") : fail("fixtures/smoke/pr-closeout.case.json is missing")
   },
   {
+    command: "pre-mutation latest integrity: .harness/evals/runs/latest.json",
+    run: () => preMutationLatestIntegrityCheck()
+  },
+  {
+    command: "node scripts/validate-architecture.js",
+    run: () => runCommand("node", ["scripts/validate-architecture.js"])
+  },
+  {
     command: "pnpm test",
     run: () => runCommand("pnpm", ["test"])
   },
@@ -75,8 +85,8 @@ const checks = [
     run: () => runCommand("pnpm", ["evals", "state", "--json"])
   },
   {
-    command: "pnpm evals check --json",
-    run: () => runCommand("pnpm", ["evals", "check", "--json"])
+    command: "pnpm evals check --smoke --json",
+    run: () => runCommand("pnpm", ["evals", "check", "--smoke", "--json"])
   },
   {
     command: credentialScanCommand,
@@ -88,6 +98,24 @@ export function credentialScanPaths(cwd = ".") {
   return credentialScanRootCandidates
     .map((path) => join(cwd, path))
     .filter((path) => existsSync(path));
+}
+
+export function preMutationLatestIntegrityCheck(cwd = ".") {
+  const latestPath = ".harness/evals/runs/latest.json";
+  const absoluteLatestPath = join(cwd, latestPath);
+  if (!existsSync(absoluteLatestPath)) {
+    return pass("preexisting latest pointer absent; smoke run will create latest before post-smoke check");
+  }
+
+  const validation = validateLatestRun(latestPath, { artifactRepoRoot: cwd });
+  if (validation.status === "passed") {
+    return pass("preexisting latest pointer is valid for run_id " + validation.run_id);
+  }
+
+  return fail([
+    "preexisting latest pointer failed before smoke mutation",
+    ...validation.errors
+  ].join("\n"));
 }
 
 function credentialScanCommand() {

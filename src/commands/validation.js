@@ -95,32 +95,42 @@ export function validateSchemaCommand(schemaKey, targetPath, jsonMode) {
 }
 
 /**
- * Run a smoke case and the repository's latest run validations, print a combined validation result and exit with code 0 on success or 1 on failure.
+ * Run the repository's latest run validations, print a combined validation result and exit with code 0 on success or 1 on failure.
+ *
+ * By default, this validates the observed latest packet for internal artifact consistency.
+ * With `options.smokeContext`, it also binds latest to the canonical smoke case proof context.
  *
  * @param {boolean} jsonMode - If true, print the validation as pretty-printed JSON; otherwise print a human-readable summary.
+ * @param {Object} [options] - Optional check controls.
+ * @param {boolean} [options.smokeContext] - Require latest to match the canonical smoke case context.
  */
-export function checkCommand(jsonMode) {
+export function checkCommand(jsonMode, options = {}) {
   const latestPath = join(repoRoot, ".harness", "evals", "runs", "latest.json");
   const smokeCasePath = "fixtures/smoke/pr-closeout.case.json";
   const smokeRecoveryCommand = "pnpm evals run " + smokeCasePath + " --json";
-  const caseCheck = validateCaseFile(smokeCasePath);
-  const expectedContext = caseCheck.status === "pass" ? expectedProofContextFromCase(caseCheck.testCase) : null;
-  const latestValidation = validateLatestRun(latestPath, {
-    expectedContext,
-    recoveryCommand: smokeRecoveryCommand
-  });
+  const smokeContext = options.smokeContext === true;
+  const caseCheck = smokeContext ? validateCaseFile(smokeCasePath) : null;
+  const expectedContext = caseCheck?.status === "pass" ? expectedProofContextFromCase(caseCheck.testCase) : null;
+  const latestValidation = smokeContext
+    ? validateLatestRun(latestPath, {
+        expectedContext,
+        recoveryCommand: smokeRecoveryCommand
+      })
+    : validateLatestRun(latestPath);
   const runtimeEvidenceValidation = validateRuntimeEvidenceSuite();
-  const checks = [caseCheck].concat(latestValidation.checks, runtimeEvidenceValidation.checks);
-  const errors = caseCheck.errors.concat(latestValidation.errors, runtimeEvidenceValidation.errors);
+  const checks = (caseCheck ? [caseCheck] : []).concat(latestValidation.checks, runtimeEvidenceValidation.checks);
+  const errors = (caseCheck?.errors || []).concat(latestValidation.errors, runtimeEvidenceValidation.errors);
   const validation = {
     status: errors.length === 0 ? "passed" : "failed",
+    check_mode: smokeContext ? "smoke-context" : "observed-latest",
     latest_path: rel(latestPath),
     run_id: latestValidation.run_id,
-    expected_context: latestValidation.expected_context || expectedContext,
+    expected_context: smokeContext ? latestValidation.expected_context || expectedContext : null,
     observed_latest_context: latestValidation.observed_latest_context || null,
-    context_match: latestValidation.context_match ?? null,
-    context_mismatch_reason: latestValidation.context_mismatch_reason || (expectedContext ? null : "expected_context_unavailable"),
-    recovery_command: latestValidation.recovery_command || null,
+    context_match: smokeContext ? latestValidation.context_match ?? null : null,
+    context_mismatch_reason: smokeContext ? latestValidation.context_mismatch_reason || (expectedContext ? null : "expected_context_unavailable") : null,
+    recovery_command: smokeContext ? latestValidation.recovery_command || null : null,
+    strict_smoke_command: smokeContext ? null : "pnpm evals check --smoke --json",
     runtime_evidence: {
       policy_coverage: runtimeEvidenceValidation.policy_coverage
     },
