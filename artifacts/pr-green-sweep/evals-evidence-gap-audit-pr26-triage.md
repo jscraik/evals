@@ -2,33 +2,34 @@
 
 ## Status
 
-STATUS: blocked_validation
+STATUS: complete_with_residual_external_status
 
-PR #26 is open and mergeable, but not merge-ready. This artifact records the
-coordinator triage state plus subsequent remediation of one actionable review
-thread. Because this file is itself committed to the PR branch, the PR head will
-advance after each update; re-run the live `gh pr view` command below before
-any closeout, merge, or readiness claim.
+PR #26 is merged. This artifact records the coordinator triage state, the
+remediation of the actionable review thread, and the final live PR truth checked
+after the remediation push. CodeRabbit still reports a failure status context,
+but no unresolved actionable review thread remains and the PR has already merged.
 
 ## Live PR Evidence
 
 - PR: https://github.com/jscraik/evals/pull/26
-- State: OPEN
+- State: MERGED
 - Draft: false
-- Mergeable: MERGEABLE
-- Merge state status: UNSTABLE
+- Mergeable: UNKNOWN
+- Merge state status: UNKNOWN
 - Review decision: none
-- Last checked command: `gh pr view 26 --json url,number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision`
-- Snapshot head before committing this artifact:
-  `7dc11c1bed8b1611cf412b6b4e3bc532eade81a8`
-- Latest local remediation head before the next push:
-  pending commit from the local worktree
+- Last checked command: `gh pr view 26 --json url,number,title,state,headRefName,baseRefName,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision`
+- Merged head:
+  `eedcfabc8fa8948b22871d712fa1ddeb6b6e1600`
+- Review thread:
+  `PRRT_kwDOShQiR86EqNlg` is resolved and outdated.
 
 ## Check Statuses
 
-- `deterministic-gates`: in progress on the snapshot head.
-- `CodeRabbit`: failure status context.
-- `semgrep-cloud-platform/scan`: in progress.
+- `deterministic-gates`: success.
+- `CodeRabbit`: failure status context; no unresolved actionable thread remains.
+- `semgrep-cloud-platform/scan`: success.
+- `Socket Security: Project Report`: success.
+- `Socket Security: Pull Request Alerts`: success.
 - `license/snyk (jscraik)`: success.
 - `security/snyk (jscraik)`: success.
 
@@ -44,19 +45,19 @@ This artifact is therefore the coordinator-owned current-status wrapper.
 
 ## Findings
 
-1. P0: CodeRabbit status context is failing.
+1. P1: CodeRabbit status context is still failing after merge.
    - Evidence: live `gh pr view` shows `CodeRabbit` state `FAILURE`.
-   - Ownership: environment_or_tooling_failure unless CodeRabbit later returns
-     actionable review findings.
-   - Coordinator action: recheck CodeRabbit after credits/tooling recover, or
-     ask a maintainer whether this status can be bypassed for PR #26.
+   - Ownership: environment_or_tooling_failure or external review-system
+     residue. The live review-thread API shows no unresolved actionable thread.
+   - Coordinator action: no code remediation remains for PR #26. Track only if
+     CodeRabbit status policy later blocks protected-branch delivery.
 
-2. P0: Latest pushed head has checks still running.
-   - Evidence: live `gh pr view` shows `deterministic-gates` and
-     `semgrep-cloud-platform/scan` in progress.
-   - Ownership: external CI/runtime evidence.
-   - Coordinator action: wait and recheck before closeout or merge-readiness
-     claims.
+2. P0: Latest pushed head checks settled and PR merged.
+   - Evidence: live `gh pr view` shows PR state `MERGED`, deterministic
+     gates success, Semgrep success, Socket success, and Snyk success at head
+     `eedcfabc8fa8948b22871d712fa1ddeb6b6e1600`.
+   - Ownership: delivery state reconciled.
+   - Coordinator action: parent goal can use this as PR delivery evidence.
 
 3. P1: Architecture validator parser robustness review thread was remediated.
    - Evidence: unresolved review thread `PRRT_kwDOShQiR86EqNlg` identified a
@@ -69,15 +70,13 @@ This artifact is therefore the coordinator-owned current-status wrapper.
      multiline literal dynamic imports and multiline literal require calls pass.
    - Validation: `pnpm test test/architecture-boundaries.test.js && node
      scripts/validate-architecture.js` -> pass; `pnpm verify` -> pass.
-   - Remaining state: the code issue is fixed locally, but the live GitHub
-     review thread must be rechecked after push before closeout claims.
+   - Remaining state: live GitHub thread is resolved and outdated.
 
 ## Current Coordinator Next Step
 
-Do not claim parent closeout while PR #26 remains UNSTABLE. After the local
-review-thread remediation is pushed, recheck live PR checks and review threads,
-then either resolve remaining actionable findings or record a precise external
-blocker for CodeRabbit/Semgrep. Treat this file as a triage receipt, not live
-merge-readiness evidence.
+Record parent closeout against the merged PR state, the resolved review thread,
+and the local validation commands already captured in the goal board. Treat the
+CodeRabbit failure status as residual external review-system evidence, not as an
+unfixed code finding for this merged PR.
 
 WROTE: artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md

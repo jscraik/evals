@@ -1,15 +1,15 @@
 version: 2
 goal:
   slug: 2026-05-26-evals-evidence-led-gap-audit
-  status: active
+  status: done
   native_goal_id: "019e5b54-1e75-7660-860c-6342172b278f"
-  native_status: active
+  native_status: complete
   native_objective: "Set up and execute a governed implementation goal for /Users/jamiecraik/dev/evals/.harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md, starting from current repo evidence and preserving evals phase-one authority. The first execution priority is to close false-success and stale-evidence trust boundaries before broader architecture, schema, trace, recovery, context, or governance maturity work."
   native_created_at: "2026-05-26T00:00:00Z"
-  native_updated_at: "2026-05-25T23:44:23Z"
+  native_updated_at: "2026-05-26T02:16:47Z"
   token_budget: null
-  tokens_used: 6915
-  time_used_seconds: 9
+  tokens_used: 2528334
+  time_used_seconds: 9949
 rules:
   one_active_task: true
   require_fresh_verification: true
@@ -57,12 +57,12 @@ artifacts:
   architecture: "ARCHITECTURE.md"
   receipts: "docs/goals/2026-05-26-evals-evidence-led-gap-audit/receipts.jsonl"
 continuation_gate:
-  native_status: active
+  native_status: complete
   thread_idle: pass
   queued_user_input: absent
   goal_active: pass
-  pending_work: present
-  auto_continue_allowed: yes
+  pending_work: absent
+  auto_continue_allowed: "no"
 claims:
   - id: C001
     claim: "The evidence-led audit is the implementation input for this goal."
@@ -311,7 +311,8 @@ tasks:
   - id: T009
     type: pm
     title: "Triage PR #26 live review and check blockers"
-    status: active
+    status: done
+    receipt_id: R020
     priority: P1
     assignee: PM
     objective: "Inspect live PR #26 state, classify CodeRabbit/Semgrep/review blockers, and return an artifact-first triage report before parent closeout is claimed."
@@ -521,6 +522,14 @@ checks:
     command: "pnpm verify"
     status: pass
     reason: "Aggregate gate passed after PR review remediation with 160 tests, architecture validation, strict smoke check, credential scan, and refreshed latest run id 20260526T020523Z-pr-closeout-4df36134-01."
+  - name: t009-post-push-pr-state
+    command: "gh pr view 26 --json url,number,title,state,headRefName,baseRefName,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision"
+    status: pass
+    reason: "PR #26 is merged at head eedcfabc8fa8948b22871d712fa1ddeb6b6e1600. Deterministic gates, Semgrep, Socket, and Snyk checks passed. CodeRabbit remains a failure status context, but the PR is merged and its actionable thread is resolved."
+  - name: t009-review-thread-resolved
+    command: "GitHub review thread PRRT_kwDOShQiR86EqNlg"
+    status: pass
+    reason: "The only review thread is resolved and outdated after the multiline runtime-load remediation; is_resolved=true and is_outdated=true."
   - name: t008-non-mutating-regression
     command: "pnpm test"
     status: pass

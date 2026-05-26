@@ -1,9 +1,9 @@
 schema_version: 1
 mode: continue
 goal_path: docs/goals/2026-05-26-evals-evidence-led-gap-audit/goal.md
-native_goal_status: active
+native_goal_status: complete
 board_status: valid
-next_action: commit_push_recheck_pr
+next_action: separate_branch_cleanup_if_desired
 continuation_markers:
   - "read goal.md and state.yaml first"
   - "receipts.jsonl"
@@ -20,25 +20,27 @@ truth_lanes:
       - "artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md"
       - ".harness/evals/runs/latest.json -> 20260526T020523Z-pr-closeout-4df36134-01"
   remote_pr_checks:
-    status: unknown
+    status: pass
     evidence:
-      - "Must be rechecked after the next push advances PR #26 head."
+      - "PR #26 is merged at head eedcfabc8fa8948b22871d712fa1ddeb6b6e1600."
+      - "deterministic-gates -> success; semgrep-cloud-platform/scan -> success; Socket checks -> success; Snyk license/security contexts -> success."
+      - "CodeRabbit status context remains FAILURE, but the PR is merged and no unresolved actionable review thread remains."
   review_threads:
-    status: pending_remote_recheck
+    status: pass
     evidence:
-      - "PRRT_kwDOShQiR86EqNlg remediated locally with regression coverage; GitHub thread state must be rechecked after push."
+      - "PRRT_kwDOShQiR86EqNlg is_resolved=true and is_outdated=true after remediation."
   tracker_state:
     status: not_applicable
     evidence:
       - "This turn did not mutate Linear."
   merge_readiness:
-    status: blocked
+    status: pass
     evidence:
-      - "PR #26 was UNSTABLE before this local remediation push."
+      - "PR #26 state is MERGED."
 continuation_gate:
   queued_user_input: absent
-  pending_work: present
-  decision: continue
+  pending_work: absent
+  decision: close
 native_blocker_audit:
   gate_met: false
   worker_must_pause: false
@@ -52,9 +54,7 @@ validation_evidence:
     - "pnpm test test/architecture-boundaries.test.js && node scripts/validate-architecture.js -> pass"
     - "pnpm verify -> pass"
 risks:
-  - "Remote CodeRabbit and Semgrep states may remain unstable after push."
-  - "GitHub review thread may remain unresolved even though the code issue is remediated locally."
-  - "Parent goal cannot close until live PR checks, review threads, and merge readiness are reconciled."
+  - "CodeRabbit still reports a failure status context even though the PR is merged and the actionable review thread is resolved."
+  - "The current worktree remains on the merged PR branch until an explicit branch-cleanup step checks out main and prunes branches."
 remaining_uncertainty:
-  - "Live PR #26 state after the next push."
-
+  - "Whether the external CodeRabbit failure context will remain visible on the historical merged PR."
