@@ -4,9 +4,11 @@
 
 STATUS: blocked_validation
 
-PR #26 is open and mergeable, but not merge-ready. The current live PR head is
-`7dc11c1bed8b1611cf412b6b4e3bc532eade81a8` on
-`codex/evals-evidence-gap-audit-hardening`.
+PR #26 is open and mergeable, but not merge-ready. This artifact records the
+coordinator triage snapshot taken before committing this artifact. Because this
+file is itself committed to the PR branch, the PR head will advance after the
+snapshot; re-run the live `gh pr view` command below before any closeout,
+merge, or readiness claim.
 
 ## Live PR Evidence
 
@@ -17,10 +19,12 @@ PR #26 is open and mergeable, but not merge-ready. The current live PR head is
 - Merge state status: UNSTABLE
 - Review decision: none
 - Last checked command: `gh pr view 26 --json url,number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision`
+- Snapshot head before committing this artifact:
+  `7dc11c1bed8b1611cf412b6b4e3bc532eade81a8`
 
 ## Check Statuses
 
-- `deterministic-gates`: in progress on the latest pushed head.
+- `deterministic-gates`: in progress on the snapshot head.
 - `CodeRabbit`: failure status context.
 - `semgrep-cloud-platform/scan`: in progress.
 - `license/snyk (jscraik)`: success.
@@ -65,6 +69,7 @@ This artifact is therefore the coordinator-owned current-status wrapper.
 
 Do not claim parent closeout while PR #26 remains UNSTABLE. Recheck live PR
 checks after CI settles, then either remediate actionable review findings or
-record a precise external blocker for CodeRabbit/Semgrep.
+record a precise external blocker for CodeRabbit/Semgrep. Treat this file as a
+triage receipt, not live merge-readiness evidence.
 
 WROTE: artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md
