@@ -290,7 +290,8 @@ tasks:
   - id: T008
     type: pm
     title: "Package implementation series for GitHub review"
-    status: active
+    status: done
+    receipt_id: R015
     priority: P1
     assignee: PM
     objective: "Move the reconciled local implementation series from dirty main into an auditable branch, commit, push, and PR path without losing latest-run artifact evidence."
@@ -307,6 +308,27 @@ tasks:
     stop_if:
       - "staging would include unrelated user changes that cannot be separated"
       - "remote write or PR creation is blocked"
+  - id: T009
+    type: pm
+    title: "Triage PR #26 live review and check blockers"
+    status: active
+    priority: P1
+    assignee: PM
+    objective: "Inspect live PR #26 state, classify CodeRabbit/Semgrep/review blockers, and return an artifact-first triage report before parent closeout is claimed."
+    allowed_files:
+      - "artifacts/pr-green-sweep/**"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "Live PR state is checked after PR creation."
+      - "CI, CodeRabbit, Semgrep, and review-thread blockers are classified as introduced, external/tooling, pre-existing, or unknown."
+      - "A non-empty triage artifact exists or a precise blocked status is recorded."
+      - "Parent closeout remains blocked until PR state is stable or remaining blockers have an owner and recovery action."
+    verify:
+      - "gh pr view 26 --json url,number,title,state,headRefName,baseRefName,isDraft,mergeStateStatus,statusCheckRollup"
+      - "artifact verification: artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md"
+    stop_if:
+      - "PR review or check access is unavailable"
+      - "required remote state cannot be verified"
 checks:
   - name: goal-board
     command: "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit"
@@ -462,6 +484,22 @@ checks:
     command: "git commit -m 'fix: harden eval evidence trust boundaries'"
     status: pass
     reason: "Local commit created for the governed implementation series on branch codex/evals-evidence-gap-audit-hardening; push and PR evidence are still pending."
+  - name: t008-branch-push
+    command: "GIT_TERMINAL_PROMPT=0 git push -u origin codex/evals-evidence-gap-audit-hardening"
+    status: pass
+    reason: "Branch codex/evals-evidence-gap-audit-hardening was pushed and set to track origin/codex/evals-evidence-gap-audit-hardening."
+  - name: t008-pr-created
+    command: "gh pr create --base main --head codex/evals-evidence-gap-audit-hardening --title 'fix: harden eval evidence trust boundaries'"
+    status: pass
+    reason: "PR #26 exists at https://github.com/jscraik/evals/pull/26. GitHub connector PR creation returned a transport error, but gh reported the PR already existed."
+  - name: t008-live-pr-state
+    command: "gh pr view 26 --json url,number,title,state,headRefName,baseRefName,isDraft,mergeStateStatus,statusCheckRollup"
+    status: blocked
+    reason: "PR is open and ready for review, deterministic-gates/Snyk/Socket passed, but mergeStateStatus is UNSTABLE because CodeRabbit is failing and Semgrep was still in progress at the last live check."
+  - name: t009-pr-triage-launch
+    command: "spawn_agent evals_pr26_triage"
+    status: pass
+    reason: "Subagent /root/evals_pr26_triage was launched to inspect PR #26 and produce artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md."
   - name: t008-non-mutating-regression
     command: "pnpm test"
     status: pass
