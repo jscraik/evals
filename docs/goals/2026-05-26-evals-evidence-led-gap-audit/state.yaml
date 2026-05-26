@@ -500,6 +500,10 @@ checks:
     command: "spawn_agent evals_pr26_triage"
     status: pass
     reason: "Subagent /root/evals_pr26_triage was launched to inspect PR #26 and produce artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md."
+  - name: t009-pr-triage-artifact
+    command: "artifact verification: artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md"
+    status: pass
+    reason: "Required triage artifact exists and records current PR head 7dc11c1bed8b1611cf412b6b4e3bc532eade81a8, CodeRabbit failure, and in-progress deterministic-gates/Semgrep blockers."
   - name: t008-non-mutating-regression
     command: "pnpm test"
     status: pass
