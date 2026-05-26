@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 import { emitFailure } from "./failures.js";
+import { parseJson } from "./json.js";
 import { insideRepo, insideRoot } from "./paths.js";
 import { schemaCheck, schemaTargets, validateDocument } from "./schema.js";
 
@@ -78,7 +79,7 @@ export function validateCaseFileContract(casePath, options = {}) {
   const check = schemaCheck("case", absoluteCasePath);
   let testCase;
   try {
-    testCase = JSON.parse(readFileSync(absoluteCasePath, "utf8"));
+    testCase = parseJson(readFileSync(absoluteCasePath, "utf8"), { path: absoluteCasePath });
   } catch {
     return check;
   }
@@ -134,7 +135,7 @@ export function parseCase(casePath, jsonMode, options = {}) {
   }
   let testCase;
   try {
-    testCase = JSON.parse(rawCase);
+    testCase = parseJson(rawCase, { path: absoluteCasePath });
   } catch (error) {
     emitFailure(jsonMode, {
       status: "failed",

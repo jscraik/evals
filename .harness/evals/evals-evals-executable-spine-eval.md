@@ -162,6 +162,97 @@ historical outstanding review threads through PR #22, rechecked live Linear
 state, and rerun the merged-main validation gate. No phase-one hard-blocked
 capability was introduced.
 
+## 2026-05-26 Evidence-Led Gap Audit Implementation Addendum
+
+This addendum records the governed implementation loop created from
+`.harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md`.
+It is local implementation evidence on the current dirty worktree, not a claim
+that these changes have been committed, pushed, reviewed in GitHub, or merged.
+
+### Goal Board
+
+| Surface | Status | Evidence |
+| --- | --- | --- |
+| Native goal | active | 019e5b54-1e75-7660-860c-6342172b278f |
+| Goal board | pass | `python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit` |
+| Implementation notes | present | `.harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx` |
+| Receipts | present | `docs/goals/2026-05-26-evals-evidence-led-gap-audit/receipts.jsonl` |
+| Current active task | T008 active | T007 final readiness audit passed locally; T008 owns branch, commit, push, PR, CI, and review evidence packaging |
+
+### Slice Reconciliation
+
+| Slice | Status | Main Change | Evidence |
+| --- | --- | --- | --- |
+| T001 | done | Confirmed launch state, repository truth, and first P0 slice. | R003 in goal receipts |
+| T002 | done | Added pre-mutation latest-artifact integrity validation to `pnpm verify`. | R004; `pnpm test`; `pnpm evals check --json`; `pnpm verify`; reviewer artifacts for T002 |
+| T003 | done with coverage gap | Split observed-latest checks from strict smoke-context checks. | R006; `pnpm evals check --json`; `pnpm evals check --smoke --json`; agent-native artifact passed; adversarial artifact missing after retry |
+| T004 | done | Added schema-backed validation result output contract. | R008; `schemas/validation-result.schema.json`; `pnpm verify`; reviewer artifacts for T004 |
+| T005 | done | Added mechanical architecture-boundary validation and wired it into `pnpm verify`. | R009; `scripts/validate-architecture.js`; `test/architecture-boundaries.test.js`; reviewer artifacts for T005 |
+| T006 | done | Centralized trusted JSON parsing diagnostics and duplicate-key rejection. | R010; `src/lib/json.js`; `test/json.test.js`; `pnpm verify`; reviewer artifacts for T006 |
+| T007 | done locally / delivery pending | Final readiness audit and closeout reconciliation. | This addendum; current goal board state; `git diff --check`; `pnpm verify` |
+
+### Live Validation Evidence
+
+| Command / Check | Status | Evidence |
+| --- | --- | --- |
+| `git diff --check` | pass | no whitespace or conflict-marker output |
+| `pnpm evals run fixtures/smoke/pr-closeout.case.json --json` | pass | latest JSON smoke run in `pnpm verify` wrote run id `20260526T012330Z-pr-closeout-4df36134-01` |
+| `pnpm evals check --json` | pass | observed-latest validation passed inside `pnpm evals state --json` evidence for latest run id `20260526T012330Z-pr-closeout-4df36134-01` |
+| `pnpm evals check --smoke --json` | pass | smoke-context mode passed with expected and observed context both `case_id=pr-closeout`, `suite_id=smoke`, `execution_mode=synthetic` |
+| `pnpm evals state --json` | pass | runtime state reported `status=ready`, latest present, artifacts present, validation passed, runtime evidence ready |
+| `pnpm test` | pass | `pnpm verify` ran `pnpm test`; 158 tests passed |
+| `pnpm verify` | pass | aggregate gate passed with pre-mutation latest integrity, architecture validation, smoke run, state check, strict smoke check, and credential scan |
+| Goal board validator | pass | goal board is valid with T008 active |
+| Draft-marker scan | pass | no draft marker matches in active board, implementation notes, closeout addendum, docs, source, scripts, tests, or schemas |
+
+### Latest Artifact Packet
+
+| Field | Value |
+| --- | --- |
+| run_id | `20260526T012330Z-pr-closeout-4df36134-01` |
+| result_path | `.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/result.json` |
+| manifest_path | `.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/manifest.json` |
+| trace_events_path | `.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/trace-events.jsonl` |
+| baseline_result_path | `.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/baseline-result.json` |
+| scorer_results_path | `.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/scorer-results.json` |
+
+### Documentation and Instruction Accuracy
+
+README.md and AGENTS.md now describe the split between observed-latest
+validation and strict smoke-context validation. ARCHITECTURE.md records the
+deep-module placement and the role of `pnpm verify` as the broad local gate.
+The current validation evidence supports those claims.
+
+### Remaining Deferrals / Blockers
+
+- The worktree remains dirty and uncommitted. Git add, commit, push, PR, CI,
+  review-thread, and merge evidence are absent for this addendum.
+- Creating the delivery branch is currently blocked by local .git ref write
+  permission in the active sandbox. Recovery command:
+  \`git checkout -b codex/evals-evidence-gap-audit-hardening\`.
+- The refreshed tracked latest pointer names ignored run-local artifacts under
+  `.harness/evals/runs/20260526T012330Z-pr-closeout-4df36134-01/`. If delivery
+  proceeds with this latest pointer, that bundle must be force-added so future
+  checkouts have the artifacts named by `latest.json`.
+- T003 has an explicit adversarial artifact coverage gap. The agent-native
+  artifact exists and local validation is green, but adversarial approval is not
+  claimed for that slice.
+- The native goal remains active because delivery packaging is still open.
+- Broader audit recommendations beyond T002 through T006 remain out of scope for
+  this addendum unless selected as later slices.
+
+### Current Evidence-Led Goal Verdict
+
+The local implementation has closed the first false-success and stale-evidence
+trust-boundary slices selected from the evidence-led audit without adding
+phase-one hard-blocked capabilities. Runtime evidence, latest validation,
+schema-backed command output, architecture-boundary validation, and trusted JSON
+diagnostics all have deterministic local proof. T007 has reconciled the local
+state, including the T003 reviewer coverage gap and delivery limitation. The
+parent goal is not closed until the implementation series is packaged or an
+owner-approved local-only deferral explicitly supersedes branch, PR, CI, and
+review evidence.
+
 ## Command Output
 
 Human command:

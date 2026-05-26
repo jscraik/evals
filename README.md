@@ -30,6 +30,12 @@ Canonical validation command:
 pnpm evals check --json
 ```
 
+Canonical smoke proof-context validation command:
+
+```bash
+pnpm evals check --smoke --json
+```
+
 Current-state command:
 
 ```bash
@@ -159,12 +165,15 @@ pass/fail/blocked/not-applicable classification for docs, schema, smoke,
 security, accessibility, traceability, and implementation checks.
 
 Schema validation is proven by `pnpm evals check --json`, which validates the
-smoke fixture, latest result, latest manifest, latest scorer results, latest
-baseline result, and manifest artifact hashes.
+observed latest result, latest manifest, latest scorer results, latest baseline
+result, trace event timeline, and manifest artifact hashes. Use
+`pnpm evals check --smoke --json` when a gate must additionally prove that the
+latest packet matches the canonical smoke fixture context.
 
 Runtime readiness is queried with `pnpm evals state --json`; the state packet is
 advisory evidence for humans and agents, while `pnpm evals check --json` remains
-the deterministic validation gate.
+the observed-latest validation gate and `pnpm evals check --smoke --json` remains
+the deterministic smoke-context gate.
 
 Optional claim registries and score vectors can be checked directly with
 `pnpm evals validate-schema <claim-registry|score-vector> <json-file> --json`.

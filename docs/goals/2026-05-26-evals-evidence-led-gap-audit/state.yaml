@@ -1,0 +1,468 @@
+version: 2
+goal:
+  slug: 2026-05-26-evals-evidence-led-gap-audit
+  status: active
+  native_goal_id: "019e5b54-1e75-7660-860c-6342172b278f"
+  native_status: active
+  native_objective: "Set up and execute a governed implementation goal for /Users/jamiecraik/dev/evals/.harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md, starting from current repo evidence and preserving evals phase-one authority. The first execution priority is to close false-success and stale-evidence trust boundaries before broader architecture, schema, trace, recovery, context, or governance maturity work."
+  native_created_at: "2026-05-26T00:00:00Z"
+  native_updated_at: "2026-05-25T23:44:23Z"
+  token_budget: null
+  tokens_used: 6915
+  time_used_seconds: 9
+rules:
+  one_active_task: true
+  require_fresh_verification: true
+  require_final_audit: true
+completion_contract:
+  outcome: "Evidence-led evals gap audit recommendations are converted into governed, validated implementation slices without widening phase-one authority."
+  verification_surface:
+    - "Goal Governor board validation"
+    - "slice-specific narrow tests"
+    - "pnpm test when code/schema behavior changes"
+    - "pnpm evals run fixtures/smoke/pr-closeout.case.json --json when runner or artifact behavior changes"
+    - "pnpm evals check --json when latest/check/artifact validation changes"
+    - "pnpm evals state --json when runtime state behavior changes"
+    - "pnpm verify before a slice is committed or claimed ready"
+  constraints:
+    - "preserve phase-one hard blocks"
+    - "do not introduce runtime dependencies on sibling repos or external collectors"
+    - "keep public JSON output additive unless a compatibility decision is recorded"
+    - "prefer deep owner modules over caller choreography"
+    - "separate documentation-only fixes from runtime enforcement fixes"
+  boundaries:
+    - "no dashboards"
+    - "no plugin systems"
+    - "no cloud runners"
+    - "no external adapter roots"
+    - "no source-mining automation in runtime"
+    - "no required LLM judge gates"
+    - "no telemetry exporters as authority"
+  iteration_policy: "Work highest-risk false-success and stale-evidence trust boundaries first, then mechanical enforcement, runtime maturity, context compression, and governance scaling."
+  blocked_stop_condition: "Stop for user or owner decision before public contract breaks, package/dependency changes, destructive operations, or phase-one hard-blocked capabilities."
+artifacts:
+  implementation_notes:
+    path: ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+    format: mdx
+    status: present
+    browser_preview:
+      surface: localhost
+      status: blocked
+      blocker: "No MDX preview renderer has been started for this setup-only board creation turn."
+      live_update:
+        status: blocked
+        blocker: "No local watcher command has been selected for Goal Governor MDX notes in this repository."
+  audit: ".harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md"
+  mining_audit: ".harness/research/audits/2026-05-25-evals-router-external-code-tree-mining.md"
+  architecture: "ARCHITECTURE.md"
+  receipts: "docs/goals/2026-05-26-evals-evidence-led-gap-audit/receipts.jsonl"
+continuation_gate:
+  native_status: active
+  thread_idle: pass
+  queued_user_input: absent
+  goal_active: pass
+  pending_work: present
+  auto_continue_allowed: yes
+claims:
+  - id: C001
+    claim: "The evidence-led audit is the implementation input for this goal."
+    status: confirmed
+    evidence_surface:
+      - ".harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md"
+    route: reproduced
+    remaining_uncertainty:
+      - "Audit recommendations still require live implementation and validation."
+  - id: C002
+    claim: "The goal must preserve evals phase-one hard blocks."
+    status: confirmed
+    evidence_surface:
+      - "AGENTS.md"
+      - ".harness/core/2026-05-18-evals-core.md"
+    route: reproduced
+    remaining_uncertainty:
+      - "Future public-contract decisions require explicit owner approval."
+  - id: C003
+    claim: "The board is ready for governed execution once validation passes."
+    status: supported
+    evidence_surface:
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/goal.md"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/state.yaml"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+    route: proxy
+    remaining_uncertainty:
+      - "Setup readiness is complete; runtime implementation has started with T002."
+tasks:
+  - id: T001
+    type: scout
+    title: "Confirm launch state and select the first P0 implementation slice"
+    status: done
+    receipt_id: R003
+    priority: P0
+    assignee: Scout
+    objective: "Confirm launch state, record current repository truth, and select the first P0 implementation slice without editing runtime code."
+    allowed_files:
+      - "AGENTS.md"
+      - ".harness/core/2026-05-18-evals-core.md"
+      - "UBIQUITOUS_LANGUAGE.md"
+      - ".harness/research/audits/2026-05-25-evidence-led-codebase-gap-audit.md"
+      - ".harness/research/audits/2026-05-25-evals-router-external-code-tree-mining.md"
+      - "ARCHITECTURE.md"
+      - ".harness/refactors/2026-05-20-deep-module-fix-mechanics.md"
+      - ".harness/refactors/2026-05-20-parent-child-loop-guardrail.md"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "Current git status is recorded without reverting unrelated work."
+      - "The active slice is chosen from the audit's highest-risk false-success or stale-evidence gaps."
+      - "Deep module packet requirements are confirmed before code edits."
+      - "A launch receipt identifies the next worker task and any blockers."
+    verify:
+      - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit"
+      - "git status --short --branch"
+    stop_if:
+      - "canonical source conflict is found"
+      - "phase-one hard-blocked capability is required"
+      - "unrelated dirty worktree state would be overwritten"
+  - id: T002
+    type: worker
+    title: "Add pre-mutation latest-artifact integrity validation"
+    status: done
+    receipt_id: R004
+    priority: P0
+    assignee: Worker
+    objective: "Implement the P0 latest-artifact integrity boundary so stale or malformed latest state cannot be treated as success."
+    allowed_files:
+      - "scripts/verify.js"
+      - "test/**"
+      - "tests/**"
+      - "src/**"
+      - "schemas/**"
+      - ".harness/refactors/**"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "Malformed or schema-invalid latest artifacts fail before mutation or overwrite; missing latest is explicitly classified as bootstrap-safe and remains covered by post-smoke validation."
+      - "Negative regression fixture or test exists for corrupt latest state."
+      - "Rollback path is documented in the implementation notes."
+      - "No public JSON contract is made breaking without an explicit decision."
+    verify:
+      - "pnpm test"
+      - "pnpm evals check --json"
+      - "pnpm verify"
+    stop_if:
+      - "fix requires changing public CLI semantics beyond additive output"
+      - "fix requires package or dependency changes"
+      - "validation fails without a classified blocker"
+  - id: T003
+    type: worker
+    title: "Split latest-artifact checks from live-state checks"
+    status: done
+    receipt_id: R006
+    priority: P0
+    assignee: Worker
+    objective: "Separate latest-artifact validation from live-state reporting so command semantics cannot produce false readiness."
+    allowed_files:
+      - "src/**"
+      - "scripts/**"
+      - "test/**"
+      - "tests/**"
+      - "schemas/**"
+      - "README.md"
+      - "AGENTS.md"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "Latest-artifact validation and live-state reporting have separate semantics."
+      - "Command output names fields so agents cannot infer live readiness from artifact-only checks."
+      - "Tests prove both paths and the false-success boundary."
+      - "Docs and AGENTS examples match live command behavior."
+    verify:
+      - "pnpm test"
+      - "pnpm evals check --json"
+      - "pnpm evals state --json"
+      - "pnpm verify"
+    stop_if:
+      - "public contract break is required without owner decision"
+      - "docs and command behavior cannot be aligned in the same slice"
+  - id: T004
+    type: worker
+    title: "Add JSON output schemas for agent-facing command results"
+    status: done
+    receipt_id: R008
+    priority: P1
+    assignee: Worker
+    objective: "Add explicit schemas or schema-backed tests for command outputs consumed by agents and validation gates."
+    allowed_files:
+      - "schemas/**"
+      - "src/**"
+      - "scripts/**"
+      - "test/**"
+      - "tests/**"
+      - "README.md"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "Agent-facing JSON outputs have schemas or schema-backed validation tests."
+      - "Schema additions are additive unless a compatibility decision is recorded."
+      - "Tests validate representative outputs against schemas."
+    verify:
+      - "pnpm test"
+      - "pnpm verify"
+    stop_if:
+      - "schema change would invalidate existing fixtures without migration note"
+  - id: T005
+    type: worker
+    title: "Add mechanical architecture-boundary validation"
+    status: done
+    receipt_id: R009
+    priority: P1
+    assignee: Worker
+    objective: "Add deterministic architecture-boundary validation for phase-one hard blocks and deep-module ownership drift."
+    allowed_files:
+      - "ARCHITECTURE.md"
+      - "scripts/**"
+      - "test/**"
+      - "tests/**"
+      - "package.json"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "A deterministic validator catches phase-one hard-block dependency or ownership drift."
+      - "The validator is wired into the narrowest appropriate repo-native gate."
+      - "Validation output is actionable and path-specific."
+    verify:
+      - "pnpm test"
+      - "pnpm verify"
+    stop_if:
+      - "new third-party dependency is required"
+      - "validator scope would become a broad repo rewrite"
+  - id: T006
+    type: worker
+    title: "Improve JSON diagnostics and duplicate-key rejection"
+    status: done
+    receipt_id: R010
+    priority: P1
+    assignee: Worker
+    objective: "Improve authoritative JSON parsing diagnostics and duplicate-key rejection for trusted artifact inputs."
+    allowed_files:
+      - "src/**"
+      - "scripts/**"
+      - "test/**"
+      - "tests/**"
+      - "fixtures/**"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+    acceptance:
+      - "Malformed JSON diagnostics identify the relevant path and failure class."
+      - "Duplicate-key fixtures are rejected where parsed artifacts carry authority."
+      - "Tests cover success and failure cases."
+    verify:
+      - "pnpm test"
+      - "pnpm verify"
+    stop_if:
+      - "implementation requires replacing the repo's parser stack without owner decision"
+  - id: T007
+    type: judge
+    title: "Final readiness audit and closeout reconciliation"
+    status: done
+    receipt_id: R011
+    priority: P1
+    assignee: Judge
+    objective: "Audit all child slice states, validation evidence, documentation truth, and remaining deferrals before parent closeout."
+    allowed_files:
+      - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+      - ".harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx"
+      - ".harness/evals/evals-evals-executable-spine-eval.md"
+      - "README.md"
+      - "AGENTS.md"
+      - "ARCHITECTURE.md"
+    acceptance:
+      - "All child slice states are reconciled."
+      - "Validation evidence is classified as pass, fail, blocked, or not applicable."
+      - "Documentation and AGENTS claims are accurate against live repo behavior."
+      - "Remaining deferrals have owners, blockers, and recovery commands."
+    verify:
+      - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit"
+      - "pnpm verify"
+    stop_if:
+      - "any P0 blocker lacks owner-approved deferral"
+      - "review, PR, CI, tracker, or docs state is unknown but claimed complete"
+  - id: T008
+    type: pm
+    title: "Package implementation series for GitHub review"
+    status: active
+    priority: P1
+    assignee: PM
+    objective: "Move the reconciled local implementation series from dirty main into an auditable branch, commit, push, and PR path without losing latest-run artifact evidence."
+    allowed_files:
+      - "**"
+    acceptance:
+      - "A codex/ branch or isolated worktree contains the reconciled implementation series."
+      - "If .harness/evals/runs/latest.json is staged, its matching run bundle is staged too."
+      - "Commit evidence exists for the local series."
+      - "Push and PR evidence are either present or explicitly blocked with exact recovery conditions."
+    verify:
+      - "git status --short --branch"
+      - "pnpm verify"
+    stop_if:
+      - "staging would include unrelated user changes that cannot be separated"
+      - "remote write or PR creation is blocked"
+checks:
+  - name: goal-board
+    command: "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit"
+    status: pass
+  - name: repo-state
+    command: "git status --short --branch"
+    status: pass
+  - name: phase-one-gate
+    command: "pnpm verify"
+    status: pass
+    reason: "T002 implementation slice passed aggregate verification after adding the pre-mutation latest integrity check."
+  - name: t002-adversarial-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t002-latest-integrity-adversarial-reviewer.md"
+    status: pass
+  - name: t002-agent-native-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t002-latest-integrity-agent-native-reviewer.md"
+    status: pass
+  - name: t003-cli-semantics-test
+    command: "pnpm test test/cli.test.js"
+    status: pass
+  - name: t003-verify-wiring-test
+    command: "pnpm test test/verify.test.js"
+    status: pass
+  - name: t003-full-test
+    command: "pnpm test"
+    status: pass
+  - name: t003-observed-latest-check
+    command: "pnpm evals check --json"
+    status: pass
+  - name: t003-smoke-context-check
+    command: "pnpm evals check --smoke --json"
+    status: pass
+  - name: t003-state-check
+    command: "pnpm evals state --json"
+    status: pass
+  - name: t003-phase-one-gate
+    command: "pnpm verify"
+    status: pass
+  - name: t003-agent-native-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t003-check-state-semantics-agent-native-reviewer.md"
+    status: pass
+  - name: t003-adversarial-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t003-check-state-semantics-adversarial-reviewer.md"
+    status: blocked
+    reason: "Reviewer returned mailbox findings twice but did not write the required artifact after one focused retry; recorded as a coverage gap, not approval."
+  - name: t004-schema-focused-test
+    command: "pnpm test test/schema.test.js"
+    status: pass
+  - name: t004-schema-cli-test
+    command: "pnpm test test/schema.test.js test/cli.test.js"
+    status: pass
+  - name: t004-full-test
+    command: "pnpm test"
+    status: pass
+  - name: t004-validate-smoke
+    command: "pnpm evals validate fixtures/smoke/pr-closeout.case.json --json"
+    status: pass
+  - name: t004-observed-latest-check
+    command: "pnpm evals check --json"
+    status: pass
+  - name: t004-smoke-context-check
+    command: "pnpm evals check --smoke --json"
+    status: pass
+  - name: t004-state-check
+    command: "pnpm evals state --json"
+    status: pass
+  - name: t004-phase-one-gate
+    command: "pnpm verify"
+    status: pass
+  - name: t004-adversarial-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t004-validation-result-contract-adversarial-reviewer.md"
+    status: pass
+  - name: t004-agent-native-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t004-validation-result-contract-agent-native-reviewer.md"
+    status: pass
+  - name: t005-architecture-focused-test
+    command: "pnpm test test/architecture-boundaries.test.js"
+    status: pass
+  - name: t005-architecture-direct-validator
+    command: "node scripts/validate-architecture.js"
+    status: pass
+  - name: t005-full-test
+    command: "pnpm test"
+    status: pass
+  - name: t005-phase-one-gate
+    command: "pnpm verify"
+    status: pass
+  - name: t005-adversarial-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t005-architecture-boundary-adversarial-reviewer.md"
+    status: pass
+    reason: "Final re-review recorded no findings; residual risk is heuristic parsing rather than AST-level proof."
+  - name: t005-agent-native-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t005-architecture-boundary-agent-native-reviewer.md"
+    status: pass
+  - name: t006-json-parser-seam-test
+    command: "pnpm test test/json.test.js"
+    status: pass
+  - name: t006-cli-focused-test
+    command: "pnpm test test/cli.test.js"
+    status: pass
+  - name: t006-full-test
+    command: "pnpm test"
+    status: pass
+  - name: t006-phase-one-gate
+    command: "pnpm verify"
+    status: pass
+  - name: t006-adversarial-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t006-json-diagnostics-adversarial-reviewer.md"
+    status: pass
+    reason: "Final re-review recorded no material findings after escaped-key and nested-scope parser seam coverage was added."
+  - name: t006-agent-native-review
+    command: "artifact verification: artifacts/reviews/2026-05-26-t006-json-diagnostics-agent-native-reviewer.md"
+    status: pass
+  - name: t007-diff-hygiene
+    command: "git diff --check"
+    status: pass
+  - name: t007-goal-board-validator
+    command: "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit"
+    status: pass
+  - name: t007-draft-marker-scan
+    command: "rg -n -i \"T[O]DO|T[B]D|not imple[m]ented|place[h]older|lo[r]em|fix[m]e\" docs/goals/2026-05-26-evals-evidence-led-gap-audit .harness/implementation-notes/2026-05-26-evals-evidence-led-gap-audit-notes.mdx .harness/evals/evals-evals-executable-spine-eval.md AGENTS.md README.md ARCHITECTURE.md src scripts test schemas"
+    status: pass
+    reason: "No matches."
+  - name: t007-phase-one-gate
+    command: "pnpm verify"
+    status: pass
+    reason: "Aggregate gate passed with 158 tests, refreshed latest run id 20260526T012330Z-pr-closeout-4df36134-01, strict smoke check, architecture validation, and credential scan."
+  - name: t008-branch-create
+    command: "git checkout -b codex/evals-evidence-gap-audit-hardening"
+    status: blocked
+    reason: "Local sandbox denied writing .git refs: cannot lock ref refs/heads/codex/evals-evidence-gap-audit-hardening; scoped permission request did not complete during this turn."
+  - name: t008-branch-create-escalated-retry
+    command: "git checkout -b codex/evals-evidence-gap-audit-hardening"
+    status: blocked
+    reason: "A second branch-create attempt with scoped .git write permission and a third attempt with full escalation both failed to return through the approval path and were terminated; HEAD remains main."
+  - name: t008-delivery-inventory
+    command: "git diff --stat && git ls-files --others --exclude-standard"
+    status: pass
+    reason: "Current implementation inventory was captured for delivery packaging; tracked source/docs/test edits and untracked governed artifacts are visible, but branch, commit, push, and PR evidence remain absent."
+  - name: t008-branch-active
+    command: "git checkout codex/evals-evidence-gap-audit-hardening && git rev-parse --abbrev-ref HEAD"
+    status: pass
+    reason: "Branch codex/evals-evidence-gap-audit-hardening exists and is the active worktree branch; earlier branch-creation blocker is superseded for local packaging."
+  - name: t008-staged-latest-bundle
+    command: "git add -A && git add -f .harness/evals/runs/20260526T013801Z-pr-closeout-4df36134-01 && git status --short --branch"
+    status: pass
+    reason: "The refreshed latest pointer for run_id 20260526T013801Z-pr-closeout-4df36134-01 and its matching ignored run bundle are staged together."
+  - name: t008-precommit-verify
+    command: "pnpm verify"
+    status: pass
+    reason: "Aggregate verification passed on branch codex/evals-evidence-gap-audit-hardening and refreshed latest run id 20260526T013801Z-pr-closeout-4df36134-01."
+  - name: t008-local-commit
+    command: "git commit -m 'fix: harden eval evidence trust boundaries'"
+    status: pass
+    reason: "Local commit created for the governed implementation series on branch codex/evals-evidence-gap-audit-hardening; push and PR evidence are still pending."
+  - name: t008-non-mutating-regression
+    command: "pnpm test"
+    status: pass
+    reason: "158 tests passed after recording the T008 branch-creation blocker; latest pointer was not refreshed by this command."

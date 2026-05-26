@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
+import { parseJson } from "./json.js";
 import { rel, repoRelativePath } from "./paths.js";
 import { schemaCheckFromObject } from "./schema.js";
 
@@ -150,9 +151,10 @@ export function validateTraceEventsFile(tracePath, expected) {
   for (const [index, line] of lines.entries()) {
     let event;
     try {
-      event = JSON.parse(line);
+      event = parseJson(line, { path: dataPath + ":" + (index + 1) });
     } catch (error) {
-      errors.push("line " + (index + 1) + ": JSON parse failed: " + error.message);
+      const prefix = error?.name === "DuplicateJsonKeyError" ? "" : "JSON parse failed: ";
+      errors.push("line " + (index + 1) + ": " + prefix + error.message);
       continue;
     }
     events.push(event);

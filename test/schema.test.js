@@ -5,7 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { validateProofContractObject } from "../src/lib/proof-contract-validation.js";
-import { supportedSchemaKeywords, validateWithSchema } from "../src/lib/schema.js";
+import { schemaCheckFromObject, schemaTargets, supportedSchemaKeywords, validateWithSchema } from "../src/lib/schema.js";
 
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -118,6 +118,134 @@ test("runtime-state embedded evidence packet schema mirrors the standalone packe
   const packetSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "runtime-evidence-packet.schema.json"), "utf8"));
   assert.deepEqual(stateSchema.properties.evidence_packet.required, packetSchema.required);
   assert.deepEqual(stateSchema.properties.evidence_packet.properties, packetSchema.properties);
+});
+
+test("validation-result schema validates representative validate and check JSON output", () => {
+  const validationResultSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "validation-result.schema.json"), "utf8"));
+
+  const validateOutput = {
+    status: "passed",
+    checks: [
+      {
+        label: "eval case",
+        schema_path: "schemas/eval-case.schema.json",
+        data_path: "fixtures/smoke/pr-closeout.case.json",
+        status: "pass",
+        errors: []
+      }
+    ],
+    errors: []
+  };
+
+  const checkOutput = {
+    status: "passed",
+    check_mode: "smoke-context",
+    latest_path: ".harness/evals/runs/latest.json",
+    run_id: "20260526T000000Z-pr-closeout-abc12345",
+    expected_context: {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    },
+    observed_latest_context: {
+      case_id: "pr-closeout",
+      suite_id: "smoke",
+      execution_mode: "synthetic"
+    },
+    context_match: true,
+    context_mismatch_reason: null,
+    recovery_command: null,
+    strict_smoke_command: null,
+    runtime_evidence: {
+      policy_coverage: {
+        status: "pass",
+        families: [
+          {
+            case_id: "subagent-artifact-contract",
+            family: "subagent_artifacts",
+            declaration_path: "declared_contract.artifact_contract",
+            enforcement_status: "implemented_enforced",
+            scorer_id: "subagent-artifact-contract"
+          }
+        ],
+        errors: []
+      }
+    },
+    checks: [
+      {
+        label: "latest run",
+        schema_path: "schemas/latest-run.schema.json",
+        data_path: ".harness/evals/runs/latest.json",
+        status: "pass",
+        errors: []
+      },
+      {
+        label: "runtime evidence policy coverage",
+        status: "pass",
+        errors: [],
+        policy_coverage: {
+          status: "pass",
+          families: [
+            {
+              case_id: "subagent-artifact-contract",
+              family: "subagent_artifacts",
+              declaration_path: "declared_contract.artifact_contract",
+              enforcement_status: "implemented_enforced",
+              scorer_id: "subagent-artifact-contract"
+            }
+          ],
+          errors: []
+        }
+      }
+    ],
+    errors: []
+  };
+
+  assert.equal(schemaTargets.validationResult.label, "validation result");
+  assert.deepEqual(validateWithSchema(validateOutput, validationResultSchema), []);
+  assert.deepEqual(validateWithSchema(checkOutput, validationResultSchema), []);
+  assert.deepEqual(schemaCheckFromObject("validationResult", checkOutput, "pnpm evals check --smoke --json").errors, []);
+});
+
+test("validation-result schema enforces the public output envelope", () => {
+  const validationResultSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "validation-result.schema.json"), "utf8"));
+  const validOutput = {
+    status: "passed",
+    checks: [{ label: "eval case", status: "pass", errors: [] }],
+    errors: []
+  };
+
+  assert.match(validateWithSchema({ ...validOutput, status: "ok" }, validationResultSchema).join("\n"), /expected one of passed, failed/);
+  assert.match(validateWithSchema({ status: "passed", errors: [] }, validationResultSchema).join("\n"), /\$\.checks: missing required property/);
+  assert.deepEqual(validateWithSchema({ ...validOutput, future_additive_field: "kept-compatible" }, validationResultSchema), []);
+  assert.match(
+    validateWithSchema({ ...validOutput, checks: [{ label: "eval case", status: "maybe", errors: [] }] }, validationResultSchema).join("\n"),
+    /expected one of pass, fail/
+  );
+  assert.match(
+    validateWithSchema({ ...validOutput, runtime_evidence: { policy_coverage: { families: [], errors: [] } } }, validationResultSchema).join("\n"),
+    /\.runtime_evidence\.policy_coverage\.status: missing required property/
+  );
+  assert.match(
+    validateWithSchema({ ...validOutput, checks: [{ label: "runtime evidence policy coverage", status: "pass", errors: [], policy_coverage: { status: "pass", errors: [] } }] }, validationResultSchema).join("\n"),
+    /\.checks\[0\]\.policy_coverage\.families: missing required property/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...validOutput,
+        runtime_evidence: {
+          policy_coverage: {
+            status: "pass",
+            families: [{ case_id: "case-1", declaration_path: "declared_contract.permission_profile", enforcement_status: "implemented_enforced" }],
+            errors: []
+          }
+        }
+      },
+      validationResultSchema
+    ).join("\n"),
+    /\.runtime_evidence\.policy_coverage\.families\[0\]\.family: missing required property/
+  );
 });
 
 test("eval case metadata classifies scenario buckets without making old cases invalid", () => {
