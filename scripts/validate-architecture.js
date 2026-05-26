@@ -121,14 +121,55 @@ function validateRuntimeLoadExpressions(relPath, source) {
     if (/\bcreateRequire\b/.test(structuralLine)) {
       errors.push(relPath + ":" + lineNumber + ": createRequire is not allowed in phase-one runtime code; use static ESM imports");
     }
-    if (/\bimport\s*\(/.test(structuralLine) && !/\bimport\s*\(\s*["'][^"']+["']\s*\)/.test(line)) {
-      errors.push(relPath + ":" + lineNumber + ": non-literal dynamic import is not allowed in phase-one runtime code");
-    }
-    if (/\brequire\s*\(/.test(structuralLine) && !/\brequire\s*\(\s*["'][^"']+["']\s*\)/.test(line)) {
-      errors.push(relPath + ":" + lineNumber + ": non-literal require is not allowed in phase-one runtime code");
+  }
+  errors.push(...validateLiteralRuntimeLoads(relPath, source, "import", "non-literal dynamic import is not allowed in phase-one runtime code"));
+  errors.push(...validateLiteralRuntimeLoads(relPath, source, "require", "non-literal require is not allowed in phase-one runtime code"));
+  return errors;
+}
+
+function validateLiteralRuntimeLoads(relPath, source, callee, message) {
+  const errors = [];
+  const callPattern = new RegExp("\\b" + callee + "\\s*\\(", "g");
+  for (const match of source.matchAll(callPattern)) {
+    const argumentStart = match.index + match[0].length;
+    if (!hasSingleLiteralRuntimeLoadArgument(source, argumentStart)) {
+      errors.push(relPath + ":" + lineNumberAt(source, match.index) + ": " + message);
     }
   }
   return errors;
+}
+
+function hasSingleLiteralRuntimeLoadArgument(source, argumentStart) {
+  let index = skipWhitespace(source, argumentStart);
+  const quote = source[index];
+  if (quote !== "\"" && quote !== "'") return false;
+  index += 1;
+  while (index < source.length) {
+    const char = source[index];
+    if (char === "\\") {
+      index += 2;
+      continue;
+    }
+    if (char === quote) {
+      index += 1;
+      return source[skipWhitespace(source, index)] === ")";
+    }
+    index += 1;
+  }
+  return false;
+}
+
+function skipWhitespace(source, index) {
+  while (index < source.length && /\s/.test(source[index])) index += 1;
+  return index;
+}
+
+function lineNumberAt(source, index) {
+  let lineNumber = 1;
+  for (let cursor = 0; cursor < index; cursor += 1) {
+    if (source[cursor] === "\n") lineNumber += 1;
+  }
+  return lineNumber;
 }
 
 function structuralCodeLine(line) {

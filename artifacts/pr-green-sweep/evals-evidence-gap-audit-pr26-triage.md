@@ -5,10 +5,10 @@
 STATUS: blocked_validation
 
 PR #26 is open and mergeable, but not merge-ready. This artifact records the
-coordinator triage snapshot taken before committing this artifact. Because this
-file is itself committed to the PR branch, the PR head will advance after the
-snapshot; re-run the live `gh pr view` command below before any closeout,
-merge, or readiness claim.
+coordinator triage state plus subsequent remediation of one actionable review
+thread. Because this file is itself committed to the PR branch, the PR head will
+advance after each update; re-run the live `gh pr view` command below before
+any closeout, merge, or readiness claim.
 
 ## Live PR Evidence
 
@@ -21,6 +21,8 @@ merge, or readiness claim.
 - Last checked command: `gh pr view 26 --json url,number,state,isDraft,mergeable,mergeStateStatus,headRefOid,statusCheckRollup,reviewDecision`
 - Snapshot head before committing this artifact:
   `7dc11c1bed8b1611cf412b6b4e3bc532eade81a8`
+- Latest local remediation head before the next push:
+  pending commit from the local worktree
 
 ## Check Statuses
 
@@ -56,20 +58,26 @@ This artifact is therefore the coordinator-owned current-status wrapper.
    - Coordinator action: wait and recheck before closeout or merge-readiness
      claims.
 
-3. P1: Architecture validator parser robustness should remain a follow-up
-   watch item.
-   - Evidence: subagent report notes `scripts/validate-architecture.js`
-     uses a manual comment/string scanner.
-   - Ownership: introduced_by_current_patch as a possible false
-     positive/negative edge case, not a current failing gate.
-   - Coordinator action: consider template-literal seam coverage before
-     broadening the validator's authority.
+3. P1: Architecture validator parser robustness review thread was remediated.
+   - Evidence: unresolved review thread `PRRT_kwDOShQiR86EqNlg` identified a
+     false-positive path for multiline literal `import(` and `require(`
+     expressions in `scripts/validate-architecture.js`.
+   - Fix: runtime-load checks now scan stripped source instead of evaluating
+     each line in isolation, while still accepting only a single string-literal
+     argument followed by the closing call.
+   - Regression coverage: `test/architecture-boundaries.test.js` now proves
+     multiline literal dynamic imports and multiline literal require calls pass.
+   - Validation: `pnpm test test/architecture-boundaries.test.js && node
+     scripts/validate-architecture.js` -> pass; `pnpm verify` -> pass.
+   - Remaining state: the code issue is fixed locally, but the live GitHub
+     review thread must be rechecked after push before closeout claims.
 
 ## Current Coordinator Next Step
 
-Do not claim parent closeout while PR #26 remains UNSTABLE. Recheck live PR
-checks after CI settles, then either remediate actionable review findings or
-record a precise external blocker for CodeRabbit/Semgrep. Treat this file as a
-triage receipt, not live merge-readiness evidence.
+Do not claim parent closeout while PR #26 remains UNSTABLE. After the local
+review-thread remediation is pushed, recheck live PR checks and review threads,
+then either resolve remaining actionable findings or record a precise external
+blocker for CodeRabbit/Semgrep. Treat this file as a triage receipt, not live
+merge-readiness evidence.
 
 WROTE: artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md

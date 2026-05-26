@@ -318,9 +318,14 @@ tasks:
     allowed_files:
       - "artifacts/pr-green-sweep/**"
       - "docs/goals/2026-05-26-evals-evidence-led-gap-audit/**"
+      - "scripts/validate-architecture.js"
+      - "test/architecture-boundaries.test.js"
+      - ".harness/evals/runs/latest.json"
+      - ".harness/evals/runs/**"
     acceptance:
       - "Live PR state is checked after PR creation."
       - "CI, CodeRabbit, Semgrep, and review-thread blockers are classified as introduced, external/tooling, pre-existing, or unknown."
+      - "Actionable PR review findings are remediated with focused regression coverage before the PR is represented as ready."
       - "A non-empty triage artifact exists or a precise blocked status is recorded."
       - "Parent closeout remains blocked until PR state is stable or remaining blockers have an owner and recovery action."
     verify:
@@ -504,6 +509,18 @@ checks:
     command: "artifact verification: artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md"
     status: pass
     reason: "Required triage artifact exists and records the PR triage snapshot plus the rule that live PR state must be rechecked because committing the artifact advances the PR head."
+  - name: t009-review-thread-multiline-runtime-loads
+    command: "GitHub review thread PRRT_kwDOShQiR86EqNlg"
+    status: pass
+    reason: "Actionable review feedback was remediated locally by scanning runtime-load expressions across stripped source and allowing only single literal import/require arguments across whitespace."
+  - name: t009-architecture-focused-test
+    command: "pnpm test test/architecture-boundaries.test.js && node scripts/validate-architecture.js"
+    status: pass
+    reason: "Focused regression coverage passed with multiline literal import/require acceptance and non-literal runtime-load rejection preserved."
+  - name: t009-phase-one-gate
+    command: "pnpm verify"
+    status: pass
+    reason: "Aggregate gate passed after PR review remediation with 160 tests, architecture validation, strict smoke check, credential scan, and refreshed latest run id 20260526T020523Z-pr-closeout-4df36134-01."
   - name: t008-non-mutating-regression
     command: "pnpm test"
     status: pass

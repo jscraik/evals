@@ -70,6 +70,29 @@ test("architecture boundary rejects non-literal dynamic imports", () => {
   });
 });
 
+test("architecture boundary allows multiline literal dynamic imports", () => {
+  withTempRepo((repo) => {
+    writeFile(repo, "src/lib/helper.js", "export const helper = 1;\n");
+    writeFile(repo, "src/lib/runtime.js", "const helper = await import(\n  './helper.js'\n);\nexport const runtime = helper;\n");
+
+    const result = validateArchitectureBoundaries({ root: repo });
+
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.status, "pass");
+  });
+});
+
+test("architecture boundary allows multiline literal require calls", () => {
+  withTempRepo((repo) => {
+    writeFile(repo, "src/lib/runtime.js", "const fs = require(\n  'node:fs'\n);\nexport const runtime = fs;\n");
+
+    const result = validateArchitectureBoundaries({ root: repo });
+
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.status, "pass");
+  });
+});
+
 test("architecture boundary rejects require-based blocked runtime loads", () => {
   withTempRepo((repo) => {
     assertBoundaryFailure(repo, "src/lib/runtime.js", "const helper = require('agent-skills/runtime');\n", /agent-skills is phase-one blocked/);
