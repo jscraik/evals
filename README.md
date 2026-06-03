@@ -6,6 +6,12 @@ synthetic smoke fixture, writes one replayable artifact bundle, computes
 deterministic scorer verdicts, records baseline state, and leaves closure
 evidence under '.harness/evals/'.
 
+Evals is a shared contract verifier, not a behavior oracle. It proves reusable
+promises such as artifact integrity, schema validity, evidence-backed claims,
+and deterministic scorer verdict shape. Project-local tests and evals still own
+project-specific behavior, product truth, thresholds, real fixtures, CI status,
+and baseline promotion.
+
 Canonical command:
 
 ```bash
@@ -42,6 +48,20 @@ Current-state command:
 pnpm evals state --json
 ```
 
+External artifact inspection commands:
+
+```bash
+pnpm evals check --repo-root /path/to/consumer-repo --json
+pnpm evals state --repo-root /path/to/consumer-repo --json
+```
+
+These commands inspect the consumer repo's already-written
+`.harness/evals/runs/latest.json` and repo-relative artifact bundle paths. They
+do not execute consumer behavior, prove domain correctness, prove CI or PR
+readiness, promote baselines, or make evals the source of truth for that
+project. The smoke proof-context check is evals-owned and cannot be combined
+with `--repo-root`.
+
 Proof contract schema command:
 
 ```bash
@@ -76,6 +96,8 @@ pnpm test
 - Telemetry explains.
 - LLM judges advise until calibrated.
 - Repo-local suites own domain truth.
+- Shared evals verify reusable contracts; project-local tests and evals prove
+  project truth.
 - External frameworks are adapters, not roots.
 
 ## License
@@ -115,6 +137,7 @@ Until a later ADR or spec explicitly opens the next phase, do not add:
 - plugin system;
 - source-mining automation;
 - required LLM judge gate;
+- runtime dependency on prior-art assertion frameworks;
 - runtime dependency on 'coding-harness' or 'agent-skills'.
 
 Sibling repos are prior-art references and future consumers. They do not own
@@ -142,6 +165,12 @@ A passing smoke run writes:
 - '.harness/evals/runs/<run-id>/baseline-result.json'
 - '.harness/evals/runs/latest.json'
 
+'scorer-results.json' contains deterministic scorer results plus assertion
+diagnostics in the evals-owned Given/should shape: given context, expected
+behavior, actual value, expected value, evidence references, reproduce command,
+and pass/fail status. 'result.json' repeats failed assertions so failure
+triage can start from the artifact bundle without scraping report prose.
+
 'latest.json' names the latest run ID, case ID, manifest path, result path,
 report path, command log path, baseline result path, and scorer results path
 so agents do not have to guess the newest artifact directory or detour through
@@ -156,6 +185,25 @@ The state packet also includes a runtime evidence packet with local git state,
 recommended commands, blocker state, validation evidence, runtime-evidence
 contract health, and claim/evidence sufficiency. Telemetry and model confidence
 remain advisory; local artifacts and deterministic validators decide readiness.
+
+Current public packet versions are:
+
+- validation result: `schema_version: 2`
+- runtime state: `schema_version: 3`
+- runtime evidence packet: `schema_version: 2`
+- embedded claim and evidence records: `schema_version: 1`
+
+The runtime state and runtime evidence packet versions were bumped when shared
+contract metadata, runtime-evidence health, and advisory external-root readiness
+became part of the public shape. Claim and evidence records stayed at version 1
+because their individual record contract did not change.
+
+When `--repo-root` points at another repository, `pnpm evals check --repo-root
+<path> --json` validates artifact consistency only. Until that repository has
+an explicit runtime-evidence policy, the command fails the runtime-evidence
+coverage check and the state packet's readiness verdict remains fail/advisory.
+That prevents a self-consistent artifact bundle from being mistaken for project
+readiness.
 
 Phase-one run artifacts are retained locally. Automatic retention duration is
 not defined yet; keep committed artifact bundles only when they are part of

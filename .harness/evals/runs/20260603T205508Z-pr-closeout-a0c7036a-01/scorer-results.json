@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "scorer_id": "exit-code",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "execution.exit_code",
+        "expected.exit_code"
+      ],
+      "evidence": "actual=0; expected=0",
+      "failure_reason": null,
+      "assertions": [
+        {
+          "assertion_id": "exit-code.matches-expected",
+          "given": "synthetic execution exit code",
+          "should": "match expected exit code",
+          "actual": "0",
+          "expected": "0",
+          "status": "pass",
+          "evidence_refs": [
+            "execution.exit_code",
+            "expected.exit_code"
+          ],
+          "reproduce_command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+          "diagnostic": "actual=0; expected=0"
+        }
+      ]
+    },
+    {
+      "scorer_id": "required-output",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "execution.stdout",
+        "execution.output_format",
+        "expected.required_output_contains"
+      ],
+      "evidence": "stdout parsed as JSON; all required output fragments found",
+      "failure_reason": null,
+      "assertions": [
+        {
+          "assertion_id": "required-output.contains-fragments",
+          "given": "execution stdout",
+          "should": "contain every required output fragment",
+          "actual": "all fragments present",
+          "expected": "[\"artifact bundle\",\"deterministic scorers\",\"baseline missing\"]",
+          "status": "pass",
+          "evidence_refs": [
+            "execution.stdout",
+            "execution.output_format",
+            "expected.required_output_contains"
+          ],
+          "reproduce_command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+          "diagnostic": "stdout parsed as JSON; all required output fragments found"
+        }
+      ]
+    },
+    {
+      "scorer_id": "artifact-completeness",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "expected.required_artifacts",
+        "planned_final_artifact_set"
+      ],
+      "evidence": "all required artifact names are planned for the final bundle",
+      "failure_reason": null,
+      "assertions": [
+        {
+          "assertion_id": "artifact-completeness.required-artifacts-planned",
+          "given": "planned final artifact set",
+          "should": "include every required artifact name",
+          "actual": "[\"result.json\",\"report.md\",\"command-log.json\",\"manifest.json\",\"scorer-results.json\",\"baseline-result.json\",\"trace-events.jsonl\"]",
+          "expected": "[\"result.json\",\"report.md\",\"command-log.json\",\"manifest.json\",\"scorer-results.json\",\"baseline-result.json\"]",
+          "status": "pass",
+          "evidence_refs": [
+            "expected.required_artifacts",
+            "planned_final_artifact_set"
+          ],
+          "reproduce_command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+          "diagnostic": "all required artifact names are planned for the final bundle"
+        }
+      ]
+    },
+    {
+      "scorer_id": "baseline-presence",
+      "scorer_version": "1.0.0",
+      "status": "pass",
+      "inputs_inspected": [
+        "baseline.presence_status",
+        "testCase.baseline.expected_presence",
+        "testCase.baseline.artifact_path",
+        "baseline.comparison_status"
+      ],
+      "evidence": "observed=missing; expected=missing; No baseline artifact_path provided; observed baseline presence is missing.",
+      "failure_reason": null,
+      "assertions": [
+        {
+          "assertion_id": "baseline-presence.matches-contract",
+          "given": "baseline presence and comparison packet",
+          "should": "match expected presence without comparison error",
+          "actual": "{\"presence_status\":\"missing\",\"comparison_status\":\"not_compared\"}",
+          "expected": "{\"presence_status\":\"missing\",\"comparison_status\":\"not error\"}",
+          "status": "pass",
+          "evidence_refs": [
+            "baseline.presence_status",
+            "testCase.baseline.expected_presence",
+            "testCase.baseline.artifact_path",
+            "baseline.comparison_status"
+          ],
+          "reproduce_command": "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+          "diagnostic": "observed=missing; expected=missing; No baseline artifact_path provided; observed baseline presence is missing."
+        }
+      ]
+    }
+  ]
+}

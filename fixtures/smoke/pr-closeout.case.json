@@ -36,5 +36,39 @@
     "expected_presence": "missing",
     "artifact_path": null
   },
+  "scenario_contract": {
+    "primary_actor": "future implementation agent",
+    "goal": "close out local eval proof without overstating external PR, CI, review, tracker, or merge readiness",
+    "stakeholder_interests": [
+      "Jamie needs artifact-backed local proof to stay separate from external delivery lanes",
+      "Consumer repos need shared eval mechanics without moving project-specific truth into evals"
+    ],
+    "preconditions": [
+      "the synthetic smoke command can produce a local artifact bundle",
+      "no live PR, CI, review-thread, tracker, or mergeability evidence is checked by this fixture"
+    ],
+    "success_end_condition": "the run reports deterministic scorer evidence, artifact bundle paths, and baseline state without claiming external delivery readiness",
+    "failure_modes": [
+      "local validation is collapsed into PR readiness",
+      "artifact evidence is missing or incomplete",
+      "baseline presence, comparison, and promotion state are conflated"
+    ],
+    "acceptance_paths": [
+      {
+        "given": "a synthetic closeout run writes the expected local artifacts",
+        "should": "produce deterministic scorer evidence and explicit baseline missing state",
+        "evidence_refs": [
+          "result.json",
+          "scorer-results.json",
+          "baseline-result.json"
+        ],
+        "scorers": [
+          "artifact-completeness",
+          "required-output",
+          "baseline-presence"
+        ]
+      }
+    ]
+  },
   "scorers": ["exit-code", "artifact-completeness", "required-output", "baseline-presence"]
 }

@@ -4,6 +4,10 @@ import { readJson } from "./json.js";
 import { rel, schemaDir } from "./paths.js";
 
 export const schemaTargets = {
+  assertionResult: {
+    schema: join(schemaDir, "assertion-result.schema.json"),
+    label: "assertion result"
+  },
   case: {
     schema: join(schemaDir, "eval-case.schema.json"),
     label: "eval case"
@@ -63,6 +67,10 @@ export const schemaTargets = {
   runtimeEvidenceCase: {
     schema: join(schemaDir, "runtime-evidence-case.schema.json"),
     label: "runtime evidence case"
+  },
+  contract: {
+    schema: join(schemaDir, "contract.schema.json"),
+    label: "shared eval contract"
   },
   validationResult: {
     schema: join(schemaDir, "validation-result.schema.json"),

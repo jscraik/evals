@@ -16,12 +16,16 @@ vocabulary, read UBIQUITOUS_LANGUAGE.md. For the compressed doctrine, read
 
 ## Bird's Eye View
 
-Evals is a local-first executable proof spine.
+Evals is a local-first executable proof spine. It is also a shared contract
+verifier, not a behavior oracle.
 
 Its job is to take repo-local evaluation data, run a deterministic local command,
 write an artifact bundle, and make that bundle checkable by humans and agents.
 It does not try to be a hosted evaluation platform, a dashboard, a provider
 adapter system, or a domain-truth owner for consumer repositories.
+Project-local suites and tests prove project-specific behavior. Evals verifies
+the reusable artifact, schema, scorer, and evidence contracts those projects
+choose to emit.
 
 The core flow is:
 
@@ -77,7 +81,9 @@ The primary validation surfaces are:
 
 - pnpm evals run fixtures/smoke/pr-closeout.case.json --json;
 - pnpm evals check --json;
+- pnpm evals check --repo-root /path/to/consumer-repo --json;
 - pnpm evals state --json;
+- pnpm evals state --repo-root /path/to/consumer-repo --json;
 - pnpm evals validate-schema claim-registry path/to/file.json --json;
 - pnpm evals validate-schema score-vector path/to/file.json --json;
 - pnpm test;
@@ -107,6 +113,17 @@ surface and dispatches to command modules.
 Architecture Invariant: src/cli.js is not a domain owner. It should route to
 commands, print usage, and stay boring. Proof behavior belongs in src/lib
 owners.
+
+### src/lib/repo-root-option.js
+
+repo-root-option owns the optional artifact repository root accepted by
+inspection commands. It resolves a user-supplied directory and keeps the
+contract explicit: external roots are artifact roots for check/state, not
+execution roots for consumer behavior.
+
+Architecture Invariant: --repo-root is read-side artifact authority only. It
+must not become an adapter system, plugin hook, source-mining root, or hidden
+permission to run consumer commands.
 
 ### src/commands
 
@@ -173,11 +190,25 @@ external telemetry and they do not replace artifact validation.
 
 scoring owns the built-in deterministic scorer behavior. It simulates the smoke
 run output, evaluates runtime status, artifact completeness, baseline presence,
-and combines scorer results into a deterministic verdict.
+and combines scorer results into a deterministic verdict. Every scorer result
+also emits assertion-result diagnostics so humans and agents can see the given
+context, expected behavior, actual value, expected value, evidence references,
+and reproduce command behind the verdict.
 
 Architecture Invariant: absent deterministic scorer evidence is not success.
 The repository should fail closed when it lacks the scorer facts required for a
 verdict.
+
+### src/lib/assertion-results.js
+
+assertion-results owns the evals-native assertion diagnostic shape used by
+deterministic scorers and shared contract checks. It borrows the readable
+Given/should grammar from prior art, but keeps the runtime shape local and
+schema-backed.
+
+Architecture Invariant: assertion diagnostics explain deterministic evals-owned
+checks. They are not a framework adapter, executable prompt suite, source-mining
+contract, or required LLM judge aggregation surface.
 
 ### src/lib/schema.js
 
@@ -212,6 +243,9 @@ other consumer repo.
 runtime-state builds the JSON state packet emitted by pnpm evals state --json.
 It aggregates latest validation, runtime evidence health, schema inventory, git
 state, recommended commands, and blocker information.
+It can also inspect a consumer repo's already-written latest artifact bundle
+when routed through --repo-root, while marking evals-local runtime evidence
+contract fixtures as not_configured for that external root.
 
 Architecture Invariant: state output is an inspection surface. It helps agents
 and humans decide what to run next, but check remains the deterministic gate.

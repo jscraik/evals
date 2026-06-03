@@ -2,10 +2,11 @@ import { existsSync, statSync, writeFileSync } from "node:fs";
 import { join, sep } from "node:path";
 
 import { expectedLatestPath } from "../lib/artifact-bundle.js";
+import { failedAssertionsFromScorerResults } from "../lib/assertion-results.js";
 import { parseCase } from "../lib/case-contract.js";
 import { clearActiveRunContext, emitFailure, setActiveRunContext } from "../lib/failures.js";
 import { sha256File, sha256Text } from "../lib/hash.js";
-import { writeJson, writeJsonAtomic } from "../lib/json.js";
+import { readJson, writeJson, writeJsonAtomic } from "../lib/json.js";
 import { validateLatestRun } from "../lib/latest-run.js";
 import { relFrom, repoRelativePath, repoRoot, rootRelativePath } from "../lib/paths.js";
 import { buildReport } from "../lib/report.js";
@@ -182,9 +183,10 @@ export function executeCase(casePath, jsonMode, options = {}) {
   const execution = syntheticExecution(testCase, displayCasePath, jsonMode, startedAt, { artifactRoot });
   const baseline = buildBaseline(testCase, commandLogPath, execution, { artifactRepoRoot, caseRoot });
 
-  const scorerResults = scoreRuntime(testCase, execution)
-    .concat(scoreArtifactCompleteness(testCase, artifactNames))
-    .concat(scoreBaselinePresence(testCase, baseline));
+  const scorerContext = { reproduceCommand: execution.command };
+  const scorerResults = scoreRuntime(testCase, execution, scorerContext)
+    .concat(scoreArtifactCompleteness(testCase, artifactNames, scorerContext))
+    .concat(scoreBaselinePresence(testCase, baseline, scorerContext));
   const deterministicVerdict = verdictFor(scorerResults);
   const status = deterministicVerdict === "pass" ? "passed" : "failed";
   const scorerEnvelope = { schema_version: 1, results: scorerResults };
@@ -195,6 +197,7 @@ export function executeCase(casePath, jsonMode, options = {}) {
     deterministicVerdict,
     baseline,
     execution,
+    scorerResults,
     paths: artifactRelPaths
   });
 
@@ -243,6 +246,7 @@ export function executeCase(casePath, jsonMode, options = {}) {
     scorer_results_path: artifactRel(scorerResultsPath),
     baseline_result_path: artifactRel(baselineResultPath),
     trace_events_path: artifactRel(traceEventsPath),
+    failed_assertions: failedAssertionsFromScorerResults(scorerResults),
     artifact_refs: artifactRefs,
     errors: []
   };
@@ -281,6 +285,15 @@ export function executeCase(casePath, jsonMode, options = {}) {
     suite_id: testCase.suite_id,
     execution_mode: execution.execution_mode,
     generated_at: startedAt.toISOString(),
+    producer: buildProducerMetadata({
+      artifactRepoRoot,
+      artifactRootPrefix,
+      casePath,
+      displayCasePath,
+      suitePath: options.suitePath || null,
+      jsonMode,
+      generatedAt: startedAt.toISOString()
+    }),
     artifact_root: artifactRoot,
     manifest_path: artifactRel(manifestPath),
     result_path: artifactRel(resultPath),
@@ -381,6 +394,28 @@ export function executeCase(casePath, jsonMode, options = {}) {
   };
 }
 
+function buildProducerMetadata(options) {
+  const packageInfo = readJson(join(repoRoot, "package.json"));
+  const sourcePath = options.suitePath || options.displayCasePath;
+  return {
+    package_name: packageInfo.name,
+    package_version: packageInfo.version,
+    command: "pnpm evals run " + sourcePath + (options.jsonMode ? " --json" : ""),
+    generated_at: options.generatedAt,
+    evaluated_repo_root: options.artifactRepoRoot === repoRoot ? "." : options.artifactRepoRoot,
+    artifact_root_prefix: options.artifactRootPrefix,
+    case_path: producerPath(options.artifactRepoRoot, options.casePath),
+    case_sha256: sha256File(options.casePath),
+    suite_path: options.suitePath ? producerPath(options.artifactRepoRoot, options.suitePath) : null,
+    suite_sha256: options.suitePath ? sha256File(options.suitePath) : null
+  };
+}
+
+function producerPath(root, path) {
+  const relative = relFrom(root, path);
+  return relative && !relative.split(/[\/]+/).includes("..") ? relative : path;
+}
+
 export function runCase(casePath, jsonMode) {
   const result = executeCase(casePath, jsonMode);
   process.exit(result.exitCode);
@@ -404,6 +439,7 @@ export function runSuite(suitePath, jsonMode) {
       artifactRepoRoot: suiteRequest.evaluatedRepoRoot,
       artifactRootPrefix: suiteRequest.artifactRootPrefix,
       displayCasePath: casePath,
+      suitePath,
       suppressOutput: true
     }).output
   );

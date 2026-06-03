@@ -5,7 +5,9 @@ import { latestArtifactContracts } from "./artifact-bundle.js";
 import { buildRuntimeEvidencePacket } from "./claim-evidence-contract.js";
 import { readJson } from "./json.js";
 import { validateLatestRun } from "./latest-run.js";
-import { rel, repoRelativePath, repoRoot } from "./paths.js";
+import { relFrom, rootRelativePath, repoRoot } from "./paths.js";
+import { proofBoundary, validationCommandForArtifactRoot } from "./proof-boundary.js";
+import { isDefaultRepoRoot } from "./repo-root-option.js";
 import { validateRuntimeEvidenceSuite } from "./runtime-evidence-contract.js";
 import { schemaCheckFromObject } from "./schema.js";
 
@@ -15,18 +17,40 @@ const canonicalLatestPath = ".harness/evals/runs/latest.json";
  * Build the current runtime state packet from local artifact evidence.
  *
  * @param {Date} [now=new Date()] - Timestamp source for deterministic tests.
+ * @param {Object} [options] - Optional runtime-state controls.
+ * @param {string} [options.artifactRepoRoot] - Repository root whose latest artifact packet should be inspected.
  * @returns {{schema_version: number, generated_at: string, status: string, latest_path: string, latest: object, artifacts: Array, validation: object, contract_health: object, non_ready_reason_code: string | null, recommended_commands: string[]}}
  *   A schema-backed runtime state packet describing the current latest pointer,
  *   artifact presence, validation status, and recommended next commands.
  */
-export function buildRuntimeState(now = new Date()) {
-  const latestPath = join(repoRoot, canonicalLatestPath);
-  const runtimeEvidenceHealth = runtimeEvidenceContractHealth();
+export function buildRuntimeState(now = new Date(), options = {}) {
+  if (!(now instanceof Date)) {
+    options = now || {};
+    now = new Date();
+  }
+  const artifactRepoRoot = options.artifactRepoRoot || repoRoot;
+  const defaultRepoRoot = isDefaultRepoRoot(artifactRepoRoot);
+  const latestPath = join(artifactRepoRoot, canonicalLatestPath);
+  const latestDisplayPath = defaultRepoRoot ? canonicalLatestPath : relFrom(artifactRepoRoot, latestPath);
+  const runtimeEvidenceHealth = runtimeEvidenceContractHealth({ enabled: defaultRepoRoot });
+  const missingCommands = defaultRepoRoot
+    ? [
+        "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
+        "pnpm evals check --json"
+      ]
+    : [
+        "pnpm evals run <repo-local .evals/suite.json> --json",
+        validationCommandForArtifactRoot(artifactRepoRoot)
+      ];
+  const readyCommands = defaultRepoRoot
+    ? ["pnpm evals check --json", "pnpm verify"]
+    : [validationCommandForArtifactRoot(artifactRepoRoot)];
   const base = {
-    schema_version: 2,
+    schema_version: 3,
     generated_at: now.toISOString(),
+    ...proofBoundary({ artifactRepoRoot }),
     status: "missing",
-    latest_path: canonicalLatestPath,
+    latest_path: latestDisplayPath,
     latest: {
       status: "missing",
       run_id: null,
@@ -47,19 +71,16 @@ export function buildRuntimeState(now = new Date()) {
     contract_health: {
       runtime_evidence: runtimeEvidenceHealth
     },
-    non_ready_reason_code: runtimeEvidenceHealth.status === "ready" ? "latest_missing" : "runtime_evidence_failed",
-    recommended_commands: [
-      "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
-      "pnpm evals check --json"
-    ]
+    non_ready_reason_code: runtimeEvidenceBlocks(runtimeEvidenceHealth) ? "runtime_evidence_failed" : "latest_missing",
+    recommended_commands: missingCommands
   };
 
   if (!existsSync(latestPath)) {
     return finalizeRuntimeState({
       ...base,
-      status: runtimeEvidenceHealth.status === "ready" ? "missing" : "invalid",
+      status: runtimeEvidenceBlocks(runtimeEvidenceHealth) ? "invalid" : "missing",
       validation: runtimeEvidenceValidationState({ status: "not_run", errors: [] }, runtimeEvidenceHealth)
-    }, null, runtimeEvidenceHealth);
+    }, null, runtimeEvidenceHealth, artifactRepoRoot);
   }
 
   let latest;
@@ -68,7 +89,7 @@ export function buildRuntimeState(now = new Date()) {
   } catch (error) {
     const latestValidation = {
       status: "failed",
-      errors: [rel(latestPath) + ": JSON parse failed: " + error.message]
+      errors: [relFrom(artifactRepoRoot, latestPath) + ": JSON parse failed: " + error.message]
     };
     const validation = runtimeEvidenceValidationState(latestValidation, runtimeEvidenceHealth);
     return finalizeRuntimeState({
@@ -95,15 +116,15 @@ export function buildRuntimeState(now = new Date()) {
         latestValidationStatus: latestValidation.status,
         runtimeEvidenceHealth
       })
-    }, null, runtimeEvidenceHealth);
+    }, null, runtimeEvidenceHealth, artifactRepoRoot);
   }
 
   const latestCheck = schemaCheckFromObject("latest", latest, latestPath);
-  const artifacts = artifactStates(latest);
-  const validation = validateLatestRun(latestPath);
+  const artifacts = artifactStates(latest, artifactRepoRoot);
+  const validation = validateLatestRun(latestPath, { artifactRepoRoot });
   const hasInvalidArtifact = artifacts.some((artifact) => artifact.status === "invalid");
   const hasMissingArtifact = artifacts.some((artifact) => artifact.status === "missing");
-  const hasRuntimeEvidenceFailure = runtimeEvidenceHealth.status !== "ready";
+  const hasRuntimeEvidenceFailure = runtimeEvidenceBlocks(runtimeEvidenceHealth);
   const latestStatus = latestCheck.status === "pass" ? "present" : "invalid";
   const status = latestStatus === "invalid" || hasInvalidArtifact || hasRuntimeEvidenceFailure
     ? "invalid"
@@ -130,13 +151,21 @@ export function buildRuntimeState(now = new Date()) {
     artifacts,
     validation: runtimeEvidenceValidationState(validation, runtimeEvidenceHealth),
     non_ready_reason_code: nonReadyReasonCode,
-    recommended_commands: status === "ready"
-      ? ["pnpm evals check --json", "pnpm verify"]
-      : ["pnpm evals run fixtures/smoke/pr-closeout.case.json --json", "pnpm evals check --json"]
-  }, latest, runtimeEvidenceHealth);
+    recommended_commands: status === "ready" ? readyCommands : missingCommands
+  }, latest, runtimeEvidenceHealth, artifactRepoRoot);
 }
 
-function runtimeEvidenceContractHealth() {
+function runtimeEvidenceContractHealth(options = {}) {
+  if (options.enabled === false) {
+    const policyCoverage = runtimeEvidencePolicyCoverage("not_configured");
+    return {
+      status: "not_configured",
+      policy_coverage_status: "not_configured",
+      policy_coverage: policyCoverage,
+      check_count: 0,
+      errors: []
+    };
+  }
   try {
     const validation = validateRuntimeEvidenceSuite();
     return {
@@ -147,19 +176,24 @@ function runtimeEvidenceContractHealth() {
       errors: validation.errors
     };
   } catch (error) {
+    const errors = ["runtime evidence validation unavailable: " + error.message];
     return {
       status: "unavailable",
       policy_coverage_status: "unavailable",
-      policy_coverage: { status: "unavailable", families: [], errors: [] },
+      policy_coverage: runtimeEvidencePolicyCoverage("unavailable"),
       check_count: 0,
-      errors: ["runtime evidence validation unavailable: " + error.message]
+      errors
     };
   }
 }
 
+function runtimeEvidencePolicyCoverage(status, errors = []) {
+  return { status, families: [], errors };
+}
+
 function runtimeEvidenceValidationState(latestValidation, runtimeEvidenceHealth) {
   const errors = latestValidation.errors.concat(runtimeEvidenceHealth.errors);
-  const failed = latestValidation.status === "failed" || runtimeEvidenceHealth.status !== "ready";
+  const failed = latestValidation.status === "failed" || runtimeEvidenceBlocks(runtimeEvidenceHealth);
   return {
     status: failed ? "failed" : latestValidation.status,
     errors
@@ -168,7 +202,7 @@ function runtimeEvidenceValidationState(latestValidation, runtimeEvidenceHealth)
 
 function nonReadyReason(status, facts) {
   if (status === "ready") return null;
-  if (facts.runtimeEvidenceHealth.status !== "ready") return "runtime_evidence_failed";
+  if (runtimeEvidenceBlocks(facts.runtimeEvidenceHealth)) return "runtime_evidence_failed";
   if (facts.latestStatus === "invalid") return "latest_invalid";
   if (facts.hasInvalidArtifact) return "artifact_invalid";
   if (facts.hasMissingArtifact) return "artifact_missing";
@@ -176,11 +210,15 @@ function nonReadyReason(status, facts) {
   return "latest_missing";
 }
 
-function artifactStates(latest) {
+function runtimeEvidenceBlocks(runtimeEvidenceHealth) {
+  return runtimeEvidenceHealth.status !== "ready" && runtimeEvidenceHealth.status !== "not_configured";
+}
+
+function artifactStates(latest, artifactRepoRoot) {
   return latestArtifactContracts.map((contract) => {
     const path = latest?.[contract.key];
     const errors = [];
-    const artifactPath = repoRelativePath(path, "latest." + contract.key, errors);
+    const artifactPath = rootRelativePath(artifactRepoRoot, path, "latest." + contract.key, errors);
     if (!artifactPath) {
       return {
         key: contract.key,
@@ -213,10 +251,11 @@ function stringOrNull(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-function finalizeRuntimeState(packet, rawLatest, runtimeEvidenceHealth) {
+function finalizeRuntimeState(packet, rawLatest, runtimeEvidenceHealth, artifactRepoRoot) {
   return withSchemaGuard({
     ...packet,
     evidence_packet: buildRuntimeEvidencePacket({
+      artifactRepoRoot,
       generatedAt: packet.generated_at,
       status: packet.status,
       latestPath: packet.latest_path,
@@ -227,11 +266,11 @@ function finalizeRuntimeState(packet, rawLatest, runtimeEvidenceHealth) {
       nonReadyReasonCode: packet.non_ready_reason_code,
       recommendedCommands: packet.recommended_commands
     })
-  });
+  }, artifactRepoRoot);
 }
 
-function withSchemaGuard(packet) {
-  const check = schemaCheckFromObject("state", packet, join(repoRoot, canonicalLatestPath));
+function withSchemaGuard(packet, artifactRepoRoot = repoRoot) {
+  const check = schemaCheckFromObject("state", packet, join(artifactRepoRoot, canonicalLatestPath));
   if (check.status === "pass") return packet;
   return {
     ...packet,

@@ -8,6 +8,8 @@ Status: core invariant index
 
 Artifacts decide. Telemetry explains. LLM judges advise until calibrated.
 Repo-local suites own domain truth. External frameworks are adapters.
+The shared eval suite is a contract verifier, not a behavior oracle.
+Project-local tests and evals prove project-specific behavior.
 
 ## Load Order For Future Agents
 
@@ -35,6 +37,9 @@ Repo-local suites own domain truth. External frameworks are adapters.
 - Keep telemetry explanatory.
 - Keep required gates deterministic until judges are calibrated.
 - Keep repo-local suites owner-controlled.
+- Keep shared contracts separate from project behavior.
+- Keep external repo checks artifact-only unless a later ADR opens execution
+  authority.
 - Keep fixtures provenance-backed.
 - Keep frameworks behind adapters.
 - Keep dashboards, plugin systems, and cloud-first workflows out of phase one.
@@ -46,6 +51,7 @@ Repo-local suites own domain truth. External frameworks are adapters.
 - No framework term becomes canonical because a library made it convenient.
 - No fixture becomes trusted without provenance and privacy metadata.
 - No telemetry, summary, PR comment, or judge report replaces local artifacts.
+- No consumer project behavior becomes canonical in evals.
 - No governance survives unless it reduces ambiguity or becomes executable.
 
 ## Evidence Base

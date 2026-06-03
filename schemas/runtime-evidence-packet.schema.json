@@ -7,6 +7,11 @@
   "required": [
     "schema_version",
     "generated_at",
+    "shared_contract_status",
+    "local_project_truth_status",
+    "adopted_contracts",
+    "proves",
+    "does_not_prove",
     "repo",
     "git_state",
     "runtime_state",
@@ -20,8 +25,25 @@
     "readiness_verdict"
   ],
   "properties": {
-    "schema_version": { "type": "integer", "const": 1 },
+    "schema_version": { "type": "integer", "const": 2 },
     "generated_at": { "type": "string", "format": "date-time" },
+    "shared_contract_status": { "type": "string", "enum": ["artifact_consistency_checked", "contract_catalog_validated"] },
+    "local_project_truth_status": { "type": "string", "enum": ["not_evaluated"] },
+    "adopted_contracts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "proves": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "does_not_prove": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
     "repo": {
       "type": "object",
       "additionalProperties": false,

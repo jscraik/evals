@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,9 +28,10 @@ const expectedTraceEventTypes = [
 
 function makeRepo() {
   const repo = mkdtempSync(join(tmpdir(), "evals-cli-test-"));
-  for (const entry of ["src", "schemas", "fixtures"]) {
+  for (const entry of ["src", "schemas", "fixtures", "contracts"]) {
     cpSync(join(sourceRoot, entry), join(repo, entry), { recursive: true });
   }
+  cpSync(join(sourceRoot, "package.json"), join(repo, "package.json"));
   return repo;
 }
 
@@ -68,6 +69,30 @@ function assertRepoRelativeArtifact(repo, output, key) {
   assert.equal(artifactPath.startsWith("/"), false, key + " should be repository-relative");
   assert.equal(artifactPath.split(/[\\/]+/).includes(".."), false, key + " should not contain traversal segments");
   assert.ok(existsSync(join(repo, artifactPath)), key + " should point to an existing artifact");
+}
+
+function assertEveryContractExercisedGoodAndBadFixtures(validation) {
+  assert.ok(validation.checks.every((check) => check.assertion_results.length === 2));
+  for (const check of validation.checks) {
+    assert.ok(check.assertion_results.every((result) => result.assertion_id));
+    assert.ok(check.assertion_results.every((result) => result.given));
+    assert.ok(check.assertion_results.every((result) => result.should));
+    assert.ok(check.assertion_results.every((result) => result.actual));
+    assert.ok(check.assertion_results.every((result) => result.expected));
+    assert.ok(check.assertion_results.every((result) => result.evidence_refs.length >= 1));
+    assert.ok(check.assertion_results.every((result) => result.reproduce_command === "pnpm evals validate-contracts --json"));
+    assert.ok(check.assertion_results.every((result) => typeof result.diagnostic === "string"));
+    assert.ok(check.assertion_results.some((result) => (
+      result.fixture_kind === "good" &&
+      result.expected_status === "pass" &&
+      result.actual_status === "pass"
+    )));
+    assert.ok(check.assertion_results.some((result) => (
+      result.fixture_kind === "bad" &&
+      result.expected_status === "fail" &&
+      result.actual_status === "fail"
+    )));
+  }
 }
 
 function makeConsumerSuite(repo, overrides = {}) {
@@ -216,15 +241,28 @@ test("run writes a valid local artifact bundle", () => {
     const result = JSON.parse(readFileSync(join(repo, output.result_path), "utf8"));
     assert.equal(result.execution_mode, "synthetic");
     assert.equal(result.trace_events_path, output.trace_events_path);
+    assert.deepEqual(result.failed_assertions, []);
     assert.ok(result.artifact_refs.some((artifact) => artifact.type === "trace-events" && artifact.path === output.trace_events_path));
 
     const scorerResults = JSON.parse(readFileSync(join(repo, output.scorer_results_path), "utf8"));
+    assert.ok(scorerResults.results.every((item) => item.assertions.length >= 1));
+    assert.ok(scorerResults.results.flatMap((item) => item.assertions).some((assertion) => (
+      assertion.assertion_id === "exit-code.matches-expected" &&
+      assertion.given === "synthetic execution exit code" &&
+      assertion.should === "match expected exit code" &&
+      assertion.actual === "0" &&
+      assertion.expected === "0" &&
+      assertion.status === "pass"
+    )));
     assert.ok(scorerResults.results.some((item) => item.scorer_id === "baseline-presence" && item.status === "pass"));
     assert.ok(scorerResults.results.some((item) =>
       item.scorer_id === "required-output" &&
       item.status === "pass" &&
       item.evidence.includes("stdout parsed as JSON")
     ));
+    const report = readFileSync(join(repo, output.report_path), "utf8");
+    assert.match(report, /## Deterministic Assertions/);
+    assert.match(report, /Given synthetic execution exit code: should match expected exit code/);
     const baseline = JSON.parse(readFileSync(join(repo, output.baseline_result_path), "utf8"));
 
     const traceEvents = readFileSync(join(repo, output.trace_events_path), "utf8")
@@ -307,6 +345,103 @@ test("run accepts a repo-local suite and writes artifacts under the evaluated re
   } finally {
     cleanup(repo);
     cleanup(consumer);
+  }
+});
+
+test("check and state can inspect repo-local suite artifacts by repo root", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  const resolvedConsumer = realpathSync.native(consumer);
+  try {
+    const runResult = runCli(repo, ["run", join(consumer, ".evals", "suite.json"), "--json"]);
+    assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
+    const output = parseJson(runResult.stdout);
+    const caseOutput = output.case_results[0];
+    const latestPath = join(consumer, ".harness", "evals", "runs", "latest.json");
+    const latest = JSON.parse(readFileSync(latestPath, "utf8"));
+    assert.equal(latest.producer.evaluated_repo_root, consumer);
+    assert.equal(latest.producer.artifact_root_prefix, ".harness/evals/runs");
+    assert.equal(latest.producer.case_path, ".evals/cases/pr-closeout.case.json");
+    assert.equal(latest.producer.suite_path, ".evals/suite.json");
+    assert.match(latest.producer.command, /pnpm evals run /);
+
+    const checkResult = runCli(repo, ["check", "--repo-root", consumer, "--json"]);
+    assert.equal(checkResult.status, 1, checkResult.stderr || checkResult.stdout);
+    const validation = parseJson(checkResult.stdout);
+    assert.deepEqual(schemaCheckFromObject("validationResult", validation, "pnpm evals check --repo-root <path> --json").errors, []);
+    assert.equal(validation.status, "failed");
+    assert.equal(validation.check_mode, "observed-latest");
+    assert.equal(validation.artifact_repo_root, resolvedConsumer);
+    assert.equal(validation.latest_path, ".harness/evals/runs/latest.json");
+    assert.equal(validation.run_id, caseOutput.run_id);
+    assert.equal(validation.strict_smoke_command, null);
+    assert.equal(validation.shared_contract_status, "artifact_consistency_checked");
+    assert.equal(validation.local_project_truth_status, "not_evaluated");
+    assert.ok(validation.adopted_contracts.includes("evidence.no-fake-ci-pass.v1"));
+    assert.ok(validation.does_not_prove.includes("the consumer project product behavior is correct"));
+    assert.equal(validation.runtime_evidence.policy_coverage.status, "not_configured");
+    assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
+    assert.ok(validation.checks.some((check) => check.label === "artifact manifest" && check.status === "pass"));
+    assert.ok(validation.checks.some((check) => (
+      check.label === "runtime evidence policy coverage" &&
+      check.status === "fail" &&
+      check.policy_coverage.status === "not_configured"
+    )));
+
+    const stateResult = runCli(repo, ["state", "--repo-root", consumer, "--json"]);
+    assert.equal(stateResult.status, 0, stateResult.stderr || stateResult.stdout);
+    const state = parseJson(stateResult.stdout);
+    assert.equal(state.status, "ready");
+    assert.equal(state.latest.run_id, caseOutput.run_id);
+    assert.equal(state.latest_path, ".harness/evals/runs/latest.json");
+    assert.equal(state.shared_contract_status, "artifact_consistency_checked");
+    assert.equal(state.local_project_truth_status, "not_evaluated");
+    assert.ok(state.does_not_prove.includes("the consumer project product behavior is correct"));
+    assert.equal(state.contract_health.runtime_evidence.status, "not_configured");
+    assert.equal(state.contract_health.runtime_evidence.policy_coverage_status, "not_configured");
+    assert.equal(state.evidence_packet.repo.root, resolvedConsumer);
+    assert.match(state.evidence_packet.repo.name, /^evals-consumer-suite-/);
+    assert.equal(state.evidence_packet.runtime_evidence_contract_health.status, "not_configured");
+    assert.equal(state.evidence_packet.missing_evidence_scorer.status, "pass");
+    assert.equal(state.evidence_packet.readiness_verdict.status, "fail");
+    assert.match(state.evidence_packet.readiness_verdict.reason, /artifact consistency is advisory only/);
+    assert.deepEqual(state.evidence_packet.readiness_verdict.blocking_fields, ["runtime_evidence_contract_health.status"]);
+    assert.ok(state.recommended_commands.includes("pnpm evals check --repo-root " + resolvedConsumer + " --json"));
+    assert.deepEqual(schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json").errors, []);
+    assert.deepEqual(schemaCheckFromObject("runtimeEvidencePacket", state.evidence_packet, ".harness/evals/runs/latest.json").errors, []);
+
+    const smokeWithRepoRoot = runCli(repo, ["check", "--smoke", "--repo-root", consumer, "--json"]);
+    assert.equal(smokeWithRepoRoot.status, 1);
+    assert.match(parseJson(smokeWithRepoRoot.stdout).errors.join("\n"), /--smoke cannot be combined with --repo-root/);
+
+    delete latest.producer;
+    writeFileSync(latestPath, JSON.stringify(latest, null, 2) + "\n", "utf8");
+    const missingProducer = runCli(repo, ["check", "--repo-root", consumer, "--json"]);
+    assert.equal(missingProducer.status, 1);
+    assert.match(parseJson(missingProducer.stdout).errors.join("\n"), /external repo-root packets must include producer provenance/);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("validate-contracts validates the shared contract catalog", () => {
+  const repo = makeRepo();
+  try {
+    const result = runCli(repo, ["validate-contracts", "--json"]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const validation = parseJson(result.stdout);
+    assert.deepEqual(schemaCheckFromObject("validationResult", validation, "pnpm evals validate-contracts --json").errors, []);
+    assert.equal(validation.status, "passed");
+    assert.equal(validation.shared_contract_status, "contract_catalog_validated");
+    assert.equal(validation.local_project_truth_status, "not_evaluated");
+    assert.equal(validation.contracts_checked, 3);
+    assert.deepEqual(validation.checks.map((check) => check.status), ["pass", "pass", "pass"]);
+    assertEveryContractExercisedGoodAndBadFixtures(validation);
+    assert.ok(validation.adopted_contracts.includes("output.strict-json-when-requested.v1"));
+    assert.ok(validation.does_not_prove.includes("the consumer project product behavior is correct"));
+  } finally {
+    cleanup(repo);
   }
 });
 
@@ -586,10 +721,10 @@ test("state reports ready runtime packet for the latest proof bundle", () => {
     assert.equal(state.latest.status, "present");
     assert.equal(state.latest.run_id, output.run_id);
     assert.equal(state.validation.status, "passed");
-    assert.equal(state.schema_version, 2);
+    assert.equal(state.schema_version, 3);
     assert.equal(state.contract_health.runtime_evidence.status, "ready");
     assert.equal(state.contract_health.runtime_evidence.policy_coverage_status, "pass");
-    assert.equal(state.evidence_packet.schema_version, 1);
+    assert.equal(state.evidence_packet.schema_version, 2);
     assert.equal(state.evidence_packet.repo.name, "evals");
     assert.equal(state.evidence_packet.runtime_state.status, "ready");
     assert.equal(state.evidence_packet.runtime_evidence_contract_health.status, "ready");
@@ -1804,6 +1939,79 @@ test("validate-schema exposes proof contract schema and semantic checks", () => 
   }
 });
 
+test("validate-schema can inspect proof contracts under an external repo root", () => {
+  const repo = makeRepo();
+  const consumer = mkdtempSync(join(tmpdir(), "evals-consumer-schema-"));
+  try {
+    mkdirSync(join(consumer, ".evals", "proof-contracts"), { recursive: true });
+    writeFileSync(
+      join(consumer, ".evals", "proof-contracts", "score-vector.json"),
+      JSON.stringify(
+        {
+          schema_version: 1,
+          score_vector_id: "score:consumer-readiness",
+          suite_id: "consumer:suite",
+          coverage: {
+            tested_claims: 1,
+            total_claims: 1,
+            coverage_status: "complete"
+          },
+          dimensions: [
+            {
+              dimension_id: "evidence",
+              score: 1,
+              weight: 1,
+              gate: true,
+              evidence_refs: [".harness/evals/runs/latest.json"]
+            }
+          ],
+          gates: [
+            {
+              gate_id: "evidence-present",
+              status: "pass",
+              severity: "high",
+              evidence_refs: [".harness/evals/runs/latest.json"]
+            }
+          ],
+          readiness: {
+            status: "strong",
+            raw_score: 1,
+            capped_by_gate: false,
+            cap_reason: null,
+            blocking_gates: []
+          }
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    const result = runCli(repo, [
+      "validate-schema",
+      "score-vector",
+      ".evals/proof-contracts/score-vector.json",
+      "--repo-root",
+      consumer,
+      "--json"
+    ]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const validation = parseJson(result.stdout);
+    assert.equal(validation.status, "passed");
+    assert.equal(validation.artifact_repo_root, realpathSync.native(consumer));
+    assert.equal(validation.target_path, ".evals/proof-contracts/score-vector.json");
+    assert.equal(validation.shared_contract_status, "artifact_consistency_checked");
+    assert.equal(validation.local_project_truth_status, "not_evaluated");
+
+    const traversal = runCli(repo, ["validate-schema", "score-vector", "../outside.json", "--repo-root", consumer, "--json"]);
+    assert.equal(traversal.status, 1);
+    assert.match(parseJson(traversal.stdout).errors.join("\n"), /inside the artifact repository/);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
 test("validate-schema rejects unknown proof contract schemas", () => {
   const repo = makeRepo();
   try {
@@ -1852,14 +2060,14 @@ test("validate enforces the same phase-one policy contract as run", () => {
     const validation = parseJson(validateResult.stdout);
     assert.deepEqual(schemaCheckFromObject("validationResult", validation, "pnpm evals validate fixtures/smoke/policy-invalid.case.json --json").errors, []);
     assert.equal(validation.status, "failed");
-    assert.match(validation.errors.join("\n"), /synthetic fixtures must use input.command simulate-pr-closeout/);
+    assert.match(validation.errors.join("\n"), /expected one of simulate-pr-closeout|synthetic fixtures must use input.command simulate-pr-closeout/);
 
     const runResult = runCli(repo, ["run", "fixtures/smoke/policy-invalid.case.json", "--json"]);
     assert.equal(runResult.status, 1);
     const failure = parseJson(runResult.stdout);
     assert.equal(failure.status, "failed");
     assert.equal(failure.requirement, "case validation");
-    assert.match(failure.errors.join("\n"), /synthetic fixtures must use input.command simulate-pr-closeout/);
+    assert.match(failure.errors.join("\n"), /expected one of simulate-pr-closeout|synthetic fixtures must use input.command simulate-pr-closeout/);
   } finally {
     cleanup(repo);
   }
@@ -2600,6 +2808,14 @@ test("required-output scorer fails malformed JSON stdout when output format is j
   assert.equal(results[0].scorer_id, "required-output");
   assert.equal(results[0].status, "fail");
   assert.match(results[0].evidence, /JSON parse failed/);
+  assert.equal(results[0].assertions.length, 1);
+  assert.equal(results[0].assertions[0].assertion_id, "required-output.contains-fragments");
+  assert.equal(results[0].assertions[0].given, "declared JSON stdout");
+  assert.equal(results[0].assertions[0].should, "parse and contain required output fragments");
+  assert.match(results[0].assertions[0].actual, /JSON parse failed/);
+  assert.equal(results[0].assertions[0].expected, "[\"artifact bundle\"]");
+  assert.equal(results[0].assertions[0].status, "fail");
+  assert.equal(results[0].assertions[0].reproduce_command, "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
 });
 
 // --- Unit tests for schemaCheck("latest", ...) and the latest-run.schema.json contract ---

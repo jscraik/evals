@@ -8,7 +8,7 @@
   "properties": {
     "schema_version": { "type": "integer", "const": 1 },
     "case_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-    "suite_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "suite_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$" },
     "owner": {
       "type": "object",
       "additionalProperties": false,
@@ -52,7 +52,7 @@
       "additionalProperties": false,
       "required": ["command", "payload"],
       "properties": {
-        "command": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "enum": ["simulate-pr-closeout"] },
         "payload": { "type": "object" }
       }
     },
@@ -88,6 +88,63 @@
           "type": "array",
           "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
           "uniqueItems": true
+        }
+      }
+    },
+    "scenario_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_actor",
+        "goal",
+        "stakeholder_interests",
+        "preconditions",
+        "success_end_condition",
+        "failure_modes",
+        "acceptance_paths"
+      ],
+      "properties": {
+        "primary_actor": { "type": "string", "minLength": 1 },
+        "goal": { "type": "string", "minLength": 1 },
+        "stakeholder_interests": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "preconditions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "success_end_condition": { "type": "string", "minLength": 1 },
+        "failure_modes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "acceptance_paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["given", "should", "evidence_refs", "scorers"],
+            "properties": {
+              "given": { "type": "string", "minLength": 1 },
+              "should": { "type": "string", "minLength": 1 },
+              "evidence_refs": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1
+              },
+              "scorers": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["exit-code", "artifact-completeness", "required-output", "baseline-presence"] },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            }
+          },
+          "minItems": 1
         }
       }
     },
