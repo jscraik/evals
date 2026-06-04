@@ -45,10 +45,11 @@ Excluded:
 
 - CodeRabbit: live PR check failed due insufficient review credits; not fixable
   from code.
-- Snyk: live PR check failed due private-test limit; not fixable from code.
-- Socket Security: pending at triage time.
-- deterministic-gates: pending at triage time.
-- semgrep-cloud-platform/scan: pending at triage time.
+- Snyk: pending after the latest push.
+- Socket Security: Project Report pending after the latest push.
+- Socket Security: Pull Request Alerts pending after the latest push.
+- deterministic-gates: pending after the latest push.
+- semgrep-cloud-platform/scan: pending after the latest push.
 - Architecture/simplify/testing/ubiquitous-language: completed through
   per-slice review artifacts and final PU-005 review.
 
@@ -65,8 +66,9 @@ Excluded:
 ## Action Queue
 
 - blocked_external_ci: CodeRabbit insufficient review credits.
-- blocked_external_ci: Snyk private-test limit used.
-- blocked_external_ci: Socket Security pending.
+- blocked_external_ci: Snyk pending.
+- blocked_external_ci: Socket Security Project Report pending.
+- blocked_external_ci: Socket Security Pull Request Alerts pending.
 - blocked_external_ci: deterministic-gates pending.
 - blocked_external_ci: semgrep-cloud-platform/scan pending.
 - cleanup_only: none. No merge proof, so no branch or worktree cleanup.

@@ -22,9 +22,9 @@ green or merge-ready because external checks are failed or pending.
   latest pointer restored.
 - Remote PR state: PR #31 open, branch codex/external-evals-suite-authority,
   base main, mergeable MERGEABLE at live check.
-- CI/check state: CodeRabbit failed from insufficient review credits; Snyk
-  failed from private-test limit; Socket, deterministic-gates, and Semgrep were
-  pending at triage time.
+- CI/check state: CodeRabbit failed from insufficient review credits; Snyk,
+  Socket Project Report, Socket Pull Request Alerts, deterministic-gates, and
+  Semgrep were pending after the latest push.
 - Review-thread state: no resolved-review claim made; reviewDecision was empty.
 - Tracker state: confirmation_required; no Linear mutation performed.
 - Merge readiness: not claimed.
@@ -41,7 +41,7 @@ Completed:
 
 Blocked outside local implementation:
 
-- External service/account limits for CodeRabbit and Snyk.
+- External service/account limit for CodeRabbit.
 - Pending remote checks at the closeout window.
 
 ## Commands
