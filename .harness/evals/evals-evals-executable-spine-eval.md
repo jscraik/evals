@@ -479,3 +479,46 @@ Current authority for parent closeout is:
 
 The superseded states are intentionally not repeated as current blocker tables
 because doing so would create false closeout evidence after the final merge.
+
+## 2026-05-26 Riteway Prior-Art Gap Audit Addendum
+
+This addendum records the local implementation response to
+'.harness/research/audits/2026-05-26-riteway-prior-art-gap-audit.md'. It is
+local worktree evidence only; it does not claim commit, push, PR, hosted CI,
+review-thread, or live tracker completion.
+
+### Gap Closeout
+
+| Gap | Status | Evidence |
+| --- | --- | --- |
+| GAP-RW-001 | fixed locally | 'schemas/assertion-result.schema.json'; 'src/lib/assertion-results.js'; 'schemas/scorer-result.schema.json' assertion records |
+| GAP-RW-002 | fixed locally | generated 'report.md' includes '## Deterministic Assertions' |
+| GAP-RW-003 | fixed locally | 'src/lib/contract-catalog.js' emits normalized contract assertion diagnostics |
+| GAP-RW-004 | guardrail closed | '.sudo' authoring remains deferred; no canonical prompt-suite input was added |
+| GAP-RW-005 | guardrail closed | external producer work remains read-only artifact inspection through existing producer provenance |
+| GAP-RW-006 | fixed locally | generated 'result.json' includes 'failed_assertions'; scorer results carry assertion rows |
+| GAP-RW-007 | guardrail closed | 'scripts/validate-architecture.js' rejects Riteway and required LLM judge runtime dependencies |
+
+Deep module packet:
+'.harness/refactors/2026-05-26-riteway-assertion-result-fix.md'.
+
+### Validation Evidence
+
+| Command / Check | Status | Evidence |
+| --- | --- | --- |
+| pnpm test | pass | 164 tests passed |
+| pnpm evals run fixtures/smoke/pr-closeout.case.json --json | pass | wrote run id '20260526T163016Z-pr-closeout-4df36134' during direct smoke validation |
+| pnpm evals check --json | pass | observed-latest validation passed for run id '20260526T163016Z-pr-closeout-4df36134' |
+| pnpm evals check --smoke --json | pass | smoke-context validation passed for run id '20260526T163016Z-pr-closeout-4df36134' |
+| pnpm verify | pass | aggregate gate passed and wrote latest proof bundle '20260526T163050Z-pr-closeout-4df36134' |
+
+### Latest Artifact Packet
+
+| Field | Value |
+| --- | --- |
+| run_id | '20260526T163050Z-pr-closeout-4df36134' |
+| result_path | '.harness/evals/runs/20260526T163050Z-pr-closeout-4df36134/result.json' |
+| manifest_path | '.harness/evals/runs/20260526T163050Z-pr-closeout-4df36134/manifest.json' |
+| trace_events_path | '.harness/evals/runs/20260526T163050Z-pr-closeout-4df36134/trace-events.jsonl' |
+| baseline_result_path | '.harness/evals/runs/20260526T163050Z-pr-closeout-4df36134/baseline-result.json' |
+| scorer_results_path | '.harness/evals/runs/20260526T163050Z-pr-closeout-4df36134/scorer-results.json' |

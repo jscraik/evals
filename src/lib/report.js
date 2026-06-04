@@ -22,7 +22,7 @@
  * @param {string[]} params.paths - Array of artifact file paths to list under "Artifacts".
  * @returns {string} A Markdown-formatted report string containing the run table, output block, artifacts list and judge policy.
  */
-export function buildReport({ runId, testCase, status, deterministicVerdict, baseline, execution, paths }) {
+export function buildReport({ runId, testCase, status, deterministicVerdict, baseline, execution, scorerResults, paths }) {
   return "# Evals Smoke Run\n\n" +
     "| Field | Value |\n| --- | --- |\n" +
     "| Run ID | " + runId + " |\n" +
@@ -35,7 +35,31 @@ export function buildReport({ runId, testCase, status, deterministicVerdict, bas
     "| Baseline comparison_status | " + baseline.comparison_status + " |\n" +
     "| Baseline promotion_status | " + baseline.promotion_status + " |\n\n" +
     "## Output\n\n~~~text\n" + execution.stdout + "\n~~~\n\n" +
+    "## Deterministic Assertions\n\n" +
+    renderAssertions(scorerResults) + "\n\n" +
     "## Artifacts\n\n" +
     paths.map((path) => "- " + path).join("\n") + "\n\n" +
     "## Judge Policy\n\nNo LLM judge output participates in pass, fail, block, promote, or closure decisions for this smoke run.\n";
+}
+
+function renderAssertions(scorerResults = []) {
+  const assertions = scorerResults.flatMap((result) => result.assertions ?? []);
+  if (assertions.length === 0) {
+    return "No deterministic assertion records were emitted.";
+  }
+
+  return "| Status | Assertion | Actual | Expected | Evidence |\n| --- | --- | --- | --- | --- |\n" +
+    assertions.map((assertion) =>
+      "| " + [
+        assertion.status,
+        "Given " + assertion.given + ": should " + assertion.should,
+        assertion.actual,
+        assertion.expected,
+        assertion.evidence_refs.join(", ")
+      ].map(formatCell).join(" | ") + " |"
+    ).join("\n");
+}
+
+function formatCell(value) {
+  return String(value).replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>");
 }

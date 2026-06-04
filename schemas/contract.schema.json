@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brainwav.dev/schemas/eval-contract.schema.json",
+  "title": "Shared Eval Contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "scope",
+    "owner",
+    "category",
+    "severity",
+    "summary",
+    "applies_to",
+    "proves",
+    "does_not_prove",
+    "fixtures",
+    "assertions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["shared-contract"]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": ["evidence", "output", "telemetry", "tool-use", "a11y", "repo-hygiene", "docs"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applies_to": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "proves": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "does_not_prove": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "fixtures": {
+      "type": "object",
+      "required": ["good", "bad"],
+      "additionalProperties": false,
+      "properties": {
+        "good": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "bad": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "assertions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["forbidden_claim_without_evidence", "readiness_boundary", "strict_json"]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "given": {
+            "type": "string",
+            "minLength": 1
+          },
+          "should": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_required": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

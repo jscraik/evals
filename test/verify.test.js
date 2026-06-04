@@ -13,6 +13,7 @@ import {
   preMutationLatestIntegrityCheck,
   scanCredentialPatterns
 } from "../scripts/verify.js";
+import { validateArchitectureBoundaries } from "../scripts/validate-architecture.js";
 
 function withTempRepo(callback) {
   const repo = mkdtempSync(join(tmpdir(), "evals-verify-"));
@@ -53,15 +54,16 @@ test("pre-mutation latest integrity check runs before smoke mutation commands", 
   assert.ok(preMutationIndex < firstSmokeMutationIndex);
 });
 
-test("verify gate uses strict smoke-context check after smoke latest mutation", () => {
+test("verify gate checks observed latest before strict smoke context", () => {
   const smokeJsonRunIndex = checks.findIndex((check) => check.command === "pnpm evals run fixtures/smoke/pr-closeout.case.json --json");
+  const observedCheckIndex = checks.findIndex((check) => check.command === "pnpm evals check --json");
   const smokeCheckIndex = checks.findIndex((check) => check.command === "pnpm evals check --smoke --json");
-  const permissiveCheckIndex = checks.findIndex((check) => check.command === "pnpm evals check --json");
 
   assert.notEqual(smokeJsonRunIndex, -1);
+  assert.notEqual(observedCheckIndex, -1);
   assert.notEqual(smokeCheckIndex, -1);
-  assert.equal(permissiveCheckIndex, -1);
-  assert.ok(smokeJsonRunIndex < smokeCheckIndex);
+  assert.ok(smokeJsonRunIndex < observedCheckIndex);
+  assert.ok(observedCheckIndex < smokeCheckIndex);
 });
 
 test("pre-mutation latest integrity check fails corrupt latest before smoke can overwrite it", () => {
@@ -181,5 +183,22 @@ test("rg credential scan falls back to Node scanner when rg is unavailable", () 
     assert.equal(leakResult.status, "fail");
     assert.match(leakResult.output, /credential-like pattern redacted/);
     assert.doesNotMatch(leakResult.output, new RegExp(value));
+  });
+});
+
+test("architecture guard treats Riteway and LLM judges as prior-art only", () => {
+  withTempRepo((repo) => {
+    writeNested(repo, "package.json", JSON.stringify({
+      dependencies: {
+        riteway: "7.0.0",
+        "llm-judge": "1.0.0"
+      }
+    }, null, 2) + "\n");
+
+    const result = validateArchitectureBoundaries({ root: repo, files: [] });
+
+    assert.equal(result.status, "fail");
+    assert.match(result.errors.join("\n"), /Riteway is prior art only/);
+    assert.match(result.errors.join("\n"), /required LLM judge gates are phase-one blocked/);
   });
 });

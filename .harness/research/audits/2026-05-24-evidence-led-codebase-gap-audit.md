@@ -761,7 +761,7 @@ Highest-leverage next fixes:
 - Actual implementation: The runner always calls `syntheticExecution`.
 - Evidence: `src/commands/run.js`; latest-run schema tests.
 - Severity: Low.
-- Operational impact: Consumers may infer capability that is not implemented.
+- Operational impact: Consumers may infer runtime capability from a schema value that is only reserved today.
 - Recommended fix: Mark `real` as reserved or add a bounded real execution interface after a design decision.
 
 ## 6. Missing Features
@@ -1104,4 +1104,3 @@ Best validation command to add first:
 Broader Codex autonomy readiness:
 
 - Not yet. The project is ready for local deterministic proof workflows, but not for broader Codex autonomy across `coding-harness`, `agent-skills`, and `diagram-cli/archscope` until suite contracts, runtime evidence packets, runtime cards, and claim-vs-evidence verification are implemented and enforced.
-

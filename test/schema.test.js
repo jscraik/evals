@@ -253,15 +253,20 @@ test("eval case metadata classifies scenario buckets without making old cases in
   const baseCase = JSON.parse(readFileSync(join(sourceRoot, "fixtures", "smoke", "pr-closeout.case.json"), "utf8"));
 
   assert.deepEqual(validateWithSchema(baseCase, caseSchema), []);
+  assert.equal(baseCase.scenario_contract.primary_actor, "future implementation agent");
+  assert.equal(baseCase.scenario_contract.acceptance_paths[0].scorers.includes("required-output"), true);
   assert.deepEqual(
     validateWithSchema(
-      {
-        ...baseCase,
-        metadata: {
-          scenario_bucket: "adversarial",
-          claim_ids: ["claim:missing-evidence"]
-        }
-      },
+      (() => {
+        const { scenario_contract: _scenarioContract, ...caseWithoutScenarioContract } = baseCase;
+        return {
+          ...caseWithoutScenarioContract,
+          metadata: {
+            scenario_bucket: "adversarial",
+            claim_ids: ["claim:missing-evidence"]
+          }
+        };
+      })(),
       caseSchema
     ),
     []
@@ -277,6 +282,37 @@ test("eval case metadata classifies scenario buckets without making old cases in
       caseSchema
     ).join("\n"),
     /expected one of/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...baseCase,
+        scenario_contract: {
+          ...baseCase.scenario_contract,
+          primary_actor: ""
+        }
+      },
+      caseSchema
+    ).join("\n"),
+    /\.scenario_contract\.primary_actor: must have length >= 1/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...baseCase,
+        scenario_contract: {
+          ...baseCase.scenario_contract,
+          acceptance_paths: [
+            {
+              ...baseCase.scenario_contract.acceptance_paths[0],
+              scorers: ["llm-judge"]
+            }
+          ]
+        }
+      },
+      caseSchema
+    ).join("\n"),
+    /expected one of exit-code/
   );
 });
 

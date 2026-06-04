@@ -98,7 +98,7 @@ From an operator perspective, the unsafe state is simple: an agent can see a pas
 
 For Jamie and downstream repo maintainers, evals will provide a local CLI proof spine whose output can be trusted without reading agent prose. The next accepted work must first make current proof impossible to overstate: latest evidence must match the checked case or suite, concurrent runs must write isolated bundles, and latest publication must happen only after the bundle validates. That gives operators a practical safety property: a green check means the named artifact bundle is the one being judged.
 
-After that, evals may add a domain-neutral suite file shape so consumer repos can run their local suites through the shared runner while keeping their own truth. Finally, evals may add claim/evidence and Codex runtime evidence packet schemas so agent claims can be checked against local artifacts and validation commands instead of trusted as prose.
+After that, evals may add a domain-neutral suite file shape so consumer repos can run their local suites through the shared runner while keeping their own truth. The shared suite is a contract verifier, not a behavior oracle: it proves reusable promises, while project-local tests and evals prove project-specific behavior. Finally, evals may add claim/evidence and Codex runtime evidence packet schemas so agent claims can be checked against local artifacts and validation commands instead of trusted as prose.
 
 ### Do
 
@@ -106,6 +106,7 @@ After that, evals may add a domain-neutral suite file shape so consumer repos ca
 - Do use local schemas and deterministic validation as authority.
 - Do keep suite paths relative to the suite root.
 - Do write run artifacts into the evaluated repo for repo-local suites.
+- Do allow check/state to inspect an already-written consumer artifact bundle by explicit repo root.
 - Do fail unsupported success claims.
 - Do preserve existing smoke command compatibility.
 
@@ -116,6 +117,7 @@ After that, evals may add a domain-neutral suite file shape so consumer repos ca
 - Do not treat telemetry, Linear status, PR comments, or model summaries as verdict authority.
 - Do not let suite paths escape the suite root or artifact root.
 - Do not require consumer repos as runtime imports.
+- Do not treat external repo-root artifact validation as proof of consumer domain behavior, CI/PR readiness, or baseline promotion.
 
 ## Requirements
 
@@ -139,6 +141,8 @@ After that, evals may add a domain-neutral suite file shape so consumer repos ca
 | FR-014 | Phase-one suite execution MUST fail closed when artifact_policy.allow_network is true unless a later ADR/spec explicitly opens networked suite execution. | SA-017 |
 | FR-015 | Phase-one suite scorer references MUST be built-in scorer IDs or schema-validated JSON config only; executable repo-local scorer hooks are out of scope until a later plugin/adapter decision. | SA-018 |
 | FR-016 | pnpm evals check --json MUST surface the expected proof context, observed latest context, context_match status, and mismatch reason when checking latest provenance. | SA-021 |
+| FR-017 | pnpm evals check --repo-root <path> --json MUST validate the target repo's .harness/evals/runs/latest.json and repo-relative artifacts without executing consumer behavior. | SA-022 |
+| FR-018 | pnpm evals state --repo-root <path> --json MUST emit target artifact runtime state and classify evals-local runtime-evidence fixture health as not_configured for external roots. | SA-023 |
 
 ### Non-Functional Requirements
 
@@ -154,6 +158,7 @@ After that, evals may add a domain-neutral suite file shape so consumer repos ca
 | NFR-008 | Public JSON output changes MUST be additive unless the implementation records an explicit compatibility decision and migration note. | SA-019 |
 | NFR-009 | Check and state commands MUST classify scaffolded runtime-evidence families distinctly from implemented/enforced families. | SA-011 |
 | NFR-010 | Agent-facing JSON proof-context fields MUST be stable enough for future agents to cite the expected case or suite, observed latest case or suite, and recovery command without parsing prose. | SA-021 |
+| NFR-011 | External repo-root inspection MUST be additive, read-side only, and incompatible with the evals-owned --smoke proof-context check. | SA-022, SA-023 |
 
 ## Interfaces
 
@@ -168,6 +173,16 @@ Additive suite interface for JSC-371:
 
     pnpm evals run path/to/.evals/suite.json --json
 
+Additive external artifact inspection interface:
+
+    pnpm evals check --repo-root path/to/consumer-repo --json
+    pnpm evals state --repo-root path/to/consumer-repo --json
+
+These commands inspect the target repo's latest packet and artifact bundle only.
+They MUST NOT run consumer commands, certify consumer domain behavior, certify
+CI/PR readiness, or promote a baseline. The --smoke proof-context check remains
+evals-owned and MUST fail when combined with an external --repo-root.
+
 The suite interface is additive. It MUST NOT remove or rename the smoke case interface.
 
 For JSC-370, check context becomes explicit even before suite execution exists. The first implementation may hard-code the expected smoke case for pnpm evals check --json, but the owning validation module MUST expose one internal comparison point so JSC-371 can later pass expected suite context without reworking artifact validation.
@@ -181,6 +196,7 @@ The JSON output for pnpm evals check --json MUST expose additive proof-context f
 | context_match | yes | Boolean or enum status showing whether expected_context and observed_latest_context match. |
 | context_mismatch_reason | yes on mismatch | Machine-readable reason suitable for agent closeout and recovery guidance. |
 | recovery_command | yes on failure | Command an operator or agent can run next without parsing prose. |
+| artifact_repo_root | yes for external check, null for default root | Absolute path selected for artifact inspection; it is not execution authority. |
 
 Current artifact bundle shape remains:
 
@@ -359,6 +375,8 @@ Spec validation commands:
 | SA-019 | Any public JSON output change is additive or has an explicit compatibility decision and migration note. | JSC-369 |
 | SA-020 | Existing runtime-evidence contract families remain compatible or are version-gated; scaffolded families are not reported as enforced. | JSC-372 |
 | SA-021 | check --json exposes expected_context, observed_latest_context, context_match, and mismatch recovery fields through schema-backed or golden-output coverage. | JSC-370 |
+| SA-022 | check --repo-root validates a consumer repo's latest pointer and artifact manifest hashes without executing consumer behavior. | JSC-371 |
+| SA-023 | state --repo-root emits consumer artifact state and reports evals-local runtime-evidence health as not_configured for external roots. | JSC-372 |
 
 ## Visual References / Diagrams
 
@@ -472,8 +490,8 @@ confidence:
 | --- | --- |
 | JSC-369: [evals] Close 2026-05-24 proof-spine and suite-contract gaps | SA-013, SA-014, SA-015, SA-016, SA-019 |
 | JSC-370: [evals] Close current proof-spine false-success bugs | SA-001, SA-002, SA-003, SA-004, SA-005, SA-021 |
-| JSC-371: [evals] Add repo-local suite contract without plugin complexity | SA-006, SA-007, SA-008, SA-017, SA-018 |
-| JSC-372: [evals] Add claim/evidence and Codex runtime evidence packet v1 | SA-009, SA-010, SA-011, SA-012, SA-020 |
+| JSC-371: [evals] Add repo-local suite contract without plugin complexity | SA-006, SA-007, SA-008, SA-017, SA-018, SA-022 |
+| JSC-372: [evals] Add claim/evidence and Codex runtime evidence packet v1 | SA-009, SA-010, SA-011, SA-012, SA-020, SA-023 |
 
 ## Appendix B. Review Outcomes
 

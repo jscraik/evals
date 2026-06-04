@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "output.strict-json-when-requested.v1",
+  "version": 1,
+  "scope": "shared-contract",
+  "owner": "brainwav-evals",
+  "category": "output",
+  "severity": "medium",
+  "summary": "When strict JSON is requested, the response must be valid JSON with no prose wrapper.",
+  "applies_to": ["cli", "agent-runtime", "mcp-server", "docs-repo"],
+  "proves": [
+    "Strict machine-readable output requests preserve JSON shape."
+  ],
+  "does_not_prove": [
+    "The JSON payload is semantically complete.",
+    "The project-local behavior is correct."
+  ],
+  "fixtures": {
+    "good": ["fixtures/contracts/good/strict-json-output.json"],
+    "bad": ["fixtures/contracts/bad/strict-json-with-prose.md"]
+  },
+  "assertions": [
+    {
+      "type": "strict_json",
+      "description": "The whole output must parse as JSON and match the requested schema when one is supplied.",
+      "given": "a strict JSON output request",
+      "should": "return parseable JSON without prose wrappers"
+    }
+  ]
+}

@@ -19,7 +19,9 @@ const blockedSpecifierPatterns = [
   { pattern: /(^|[/@])cloud-runner($|[/@])|cloudrunner/i, reason: "cloud runners are phase-one blocked" },
   { pattern: /(^|[/@])plugin(s)?-runtime($|[/@])|plugin-system/i, reason: "plugin systems are phase-one blocked" },
   { pattern: /dashboard/i, reason: "dashboards are phase-one blocked" },
-  { pattern: /external-adapter|adapter-root/i, reason: "external adapter roots are phase-one blocked" }
+  { pattern: /external-adapter|adapter-root/i, reason: "external adapter roots are phase-one blocked" },
+  { pattern: /riteway/i, reason: "Riteway is prior art only; runtime dependency is phase-one blocked" },
+  { pattern: /(^|[/@])(llm-judge|ai-judge|judge-runner)($|[/@])/i, reason: "required LLM judge gates are phase-one blocked" }
 ];
 
 const importPatterns = [

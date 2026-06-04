@@ -5,6 +5,7 @@ import { validateCaseFileContract } from "./case-contract.js";
 import { sha256File } from "./hash.js";
 import { readJson } from "./json.js";
 import { insideRoot, relFrom, repoRoot, rootRelativePath } from "./paths.js";
+import { isDefaultRepoRoot } from "./repo-root-option.js";
 import { schemaCheck, schemaCheckFromObject } from "./schema.js";
 import { validateTraceEventsFile } from "./trace-events.js";
 
@@ -63,6 +64,9 @@ export function validateLatestRun(latestPath, options = {}) {
 
   const checks = [schemaCheckFromObject("latest", latest, absoluteLatestPath)];
   for (const check of checks) errors.push(...check.errors.map((error) => check.label + " " + error));
+  if (!isDefaultRepoRoot(artifactRepoRoot) && !latest.producer) {
+    errors.push("latest.producer: external repo-root packets must include producer provenance");
+  }
 
   const observedContext = observedProofContextFromLatest(latest);
   const proofComparison = options.expectedContext
@@ -269,6 +273,9 @@ function latestConsistencyErrors(latest, manifest, result, baseline, options = {
   if (latest.artifact_root !== expectedArtifactRoot) {
     errors.push("latest.artifact_root: expected " + expectedArtifactRoot + " for run_id " + latest.run_id + ", got " + latest.artifact_root);
   }
+  if (latest.producer) {
+    errors.push(...producerConsistencyErrors(latest.producer, { artifactRootPrefix, artifactRelativePath }));
+  }
 
   if (result) {
     if (result.run_id !== latest.run_id) errors.push("result.run_id: expected " + latest.run_id + ", got " + result.run_id);
@@ -341,6 +348,36 @@ function latestConsistencyErrors(latest, manifest, result, baseline, options = {
   }
 
   return errors;
+}
+
+function producerConsistencyErrors(producer, options) {
+  const errors = [];
+  if (producer.artifact_root_prefix !== options.artifactRootPrefix) {
+    errors.push("latest.producer.artifact_root_prefix: expected " + options.artifactRootPrefix + ", got " + producer.artifact_root_prefix);
+  }
+  if (!producer.command.startsWith("pnpm evals run ")) {
+    errors.push("latest.producer.command: expected command to start with pnpm evals run");
+  }
+  verifyProducerHash("case", producer.case_path, producer.case_sha256, options.artifactRelativePath, errors);
+  if (producer.suite_path || producer.suite_sha256) {
+    verifyProducerHash("suite", producer.suite_path, producer.suite_sha256, options.artifactRelativePath, errors);
+  }
+  return errors;
+}
+
+function verifyProducerHash(label, path, expectedSha256, artifactRelativePath, errors) {
+  const pathErrors = [];
+  const absolutePath = artifactRelativePath(path, "latest.producer." + label + "_path", pathErrors);
+  errors.push(...pathErrors);
+  if (!absolutePath) return;
+  if (!existsSync(absolutePath)) {
+    errors.push("latest.producer." + label + "_path: path does not exist: " + path);
+    return;
+  }
+  const actual = safeSha256File(absolutePath, "latest.producer." + label + "_path", path, errors);
+  if (actual && actual !== expectedSha256) {
+    errors.push("latest.producer." + label + "_sha256: expected " + actual + ", got " + expectedSha256);
+  }
 }
 
 function safeSha256File(path, label, displayPath, errors) {

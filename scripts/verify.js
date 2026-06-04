@@ -69,6 +69,10 @@ export const checks = [
     run: () => runCommand("node", ["scripts/validate-architecture.js"])
   },
   {
+    command: "node scripts/validate-contracts.js",
+    run: () => runCommand("node", ["scripts/validate-contracts.js"])
+  },
+  {
     command: "pnpm test",
     run: () => runCommand("pnpm", ["test"])
   },
@@ -83,6 +87,10 @@ export const checks = [
   {
     command: "pnpm evals state --json",
     run: () => runCommand("pnpm", ["evals", "state", "--json"])
+  },
+  {
+    command: "pnpm evals check --json",
+    run: () => runCommand("pnpm", ["evals", "check", "--json"])
   },
   {
     command: "pnpm evals check --smoke --json",

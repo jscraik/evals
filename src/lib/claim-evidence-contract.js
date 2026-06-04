@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
-import { repoRelativePath, repoRoot } from "./paths.js";
+import { rootRelativePath, repoRoot } from "./paths.js";
+import { proofBoundary, validationCommandForArtifactRoot } from "./proof-boundary.js";
 
 const usefulEvidenceStatuses = new Set(["pass", "present", "verified"]);
 
@@ -47,15 +48,16 @@ export function scoreMissingEvidence(claims, evidence) {
 }
 
 /**
- * Build the runtime evidence packet v1 from local runtime state facts.
+ * Build the runtime evidence packet v2 from local runtime state facts.
  * @param {object} context Runtime-state context.
  * @returns {object} Domain-neutral runtime evidence packet.
  */
 export function buildRuntimeEvidencePacket(context) {
+  const artifactRepoRoot = context.artifactRepoRoot || repoRoot;
   const generatedAt = context.generatedAt;
   const evidence = [];
   const claims = [];
-  const manifestEvidence = manifestEvidenceByPath(context.latest);
+  const manifestEvidence = manifestEvidenceByPath(context.latest, artifactRepoRoot);
 
   evidence.push({
     schema_version: 1,
@@ -86,7 +88,7 @@ export function buildRuntimeEvidencePacket(context) {
       status: "pass",
       observed_at: generatedAt,
       path: context.latestPath,
-      command: "pnpm evals check --json",
+      command: validationCommandForArtifactRoot(artifactRepoRoot),
       sha256: null,
       manifest_path: null,
       detail: "latest validation passed"
@@ -147,13 +149,14 @@ export function buildRuntimeEvidencePacket(context) {
     reason: blockerReason(context)
   }];
   const packet = {
-    schema_version: 1,
+    schema_version: 2,
     generated_at: generatedAt,
+    ...proofBoundary({ artifactRepoRoot }),
     repo: {
-      root: ".",
-      name: repoName()
+      root: artifactRepoRoot === repoRoot ? "." : artifactRepoRoot,
+      name: repoName(artifactRepoRoot)
     },
-    git_state: collectGitState(),
+    git_state: collectGitState(artifactRepoRoot),
     runtime_state: {
       status: context.status,
       latest_path: context.latestPath,
@@ -197,6 +200,13 @@ function readinessVerdict(packet, missingEvidenceScorer) {
       blocking_fields: ["missing_evidence_scorer.status"]
     };
   }
+  if (packet.runtime_evidence_contract_health.status === "not_configured") {
+    return {
+      status: "fail",
+      reason: "runtime evidence policy is not configured for this artifact root; artifact consistency is advisory only",
+      blocking_fields: ["runtime_evidence_contract_health.status"]
+    };
+  }
   return {
     status: "pass",
     reason: "runtime state is ready and all claims have required evidence",
@@ -212,11 +222,11 @@ function blockerReason(context) {
   return "runtime state is " + context.status;
 }
 
-function manifestEvidenceByPath(latest) {
+function manifestEvidenceByPath(latest, artifactRepoRoot) {
   const entries = new Map();
   if (!latest?.manifest_path) return entries;
   const errors = [];
-  const manifestPath = repoRelativePath(latest.manifest_path, "latest.manifest_path", errors);
+  const manifestPath = rootRelativePath(artifactRepoRoot, latest.manifest_path, "latest.manifest_path", errors);
   if (!manifestPath) return entries;
   if (!existsSync(manifestPath)) return entries;
   let manifest;
@@ -231,10 +241,10 @@ function manifestEvidenceByPath(latest) {
   return entries;
 }
 
-function collectGitState() {
-  const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"]);
-  const commit = runGit(["rev-parse", "HEAD"]);
-  const status = runGit(["status", "--porcelain"]);
+function collectGitState(artifactRepoRoot) {
+  const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"], artifactRepoRoot);
+  const commit = runGit(["rev-parse", "HEAD"], artifactRepoRoot);
+  const status = runGit(["status", "--porcelain"], artifactRepoRoot);
   if (!branch.ok || !commit.ok || !status.ok) {
     return {
       status: "unavailable",
@@ -253,18 +263,22 @@ function collectGitState() {
   };
 }
 
-function runGit(args) {
-  const result = spawnSync("git", args, { cwd: repoRoot, encoding: "utf8", timeout: 5000 });
+function runGit(args, artifactRepoRoot) {
+  const result = spawnSync("git", args, { cwd: artifactRepoRoot, encoding: "utf8", timeout: 5000 });
   if (result.status !== 0) return { ok: false, error: (result.stderr || result.stdout || "git command failed").trim() };
   return { ok: true, stdout: result.stdout.trim() };
 }
 
-function repoName() {
+function repoName(artifactRepoRoot = repoRoot) {
   try {
-    const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
+    const packageJson = JSON.parse(readFileSync(join(artifactRepoRoot, "package.json"), "utf8"));
     if (typeof packageJson.name === "string" && packageJson.name.length > 0) return packageJson.name;
   } catch {
-    return "evals";
+    return fallbackRepoName(artifactRepoRoot);
   }
-  return "evals";
+  return fallbackRepoName(artifactRepoRoot);
+}
+
+function fallbackRepoName(artifactRepoRoot) {
+  return artifactRepoRoot === repoRoot ? "evals" : basename(artifactRepoRoot) || "artifact-repo";
 }

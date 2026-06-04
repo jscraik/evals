@@ -25,6 +25,34 @@
     "suite_id": { "type": "string", "minLength": 1 },
     "execution_mode": { "type": "string", "enum": ["synthetic", "real"] },
     "generated_at": { "type": "string", "format": "date-time" },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package_name",
+        "package_version",
+        "command",
+        "generated_at",
+        "evaluated_repo_root",
+        "artifact_root_prefix",
+        "case_path",
+        "case_sha256",
+        "suite_path",
+        "suite_sha256"
+      ],
+      "properties": {
+        "package_name": { "type": "string", "minLength": 1 },
+        "package_version": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "evaluated_repo_root": { "type": "string", "minLength": 1 },
+        "artifact_root_prefix": { "type": "string", "minLength": 1 },
+        "case_path": { "type": "string", "minLength": 1 },
+        "case_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "suite_path": { "type": ["string", "null"], "minLength": 1 },
+        "suite_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
     "artifact_root": { "type": "string", "minLength": 1 },
     "manifest_path": { "type": "string", "minLength": 1 },
     "result_path": { "type": "string", "minLength": 1 },

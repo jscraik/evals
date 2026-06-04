@@ -35,6 +35,19 @@ own work first. This repository should prove that reusable evidence contracts,
 schemas, scorers, artifact bundles, and failure classifications catch real
 success and failure patterns across projects.
 
+The operating boundary is intentionally blunt:
+
+```text
+Shared external eval suite = proves every project satisfies common promises.
+Project-local tests/evals = prove this specific project behaves correctly.
+```
+
+That means evals is a contract verifier, not a behavior oracle. It can say
+whether a repo-local artifact bundle satisfies a shared proof contract. It must
+not infer that a consumer project is correct, merge-ready, CI-green, or
+domain-complete unless the consumer repo supplied current evidence for that
+claim and the shared contract explicitly covers that evidence shape.
+
 For example, `agent-skills` owns whether a specific skill behaves correctly.
 `plugin-eval` owns skill/plugin quality analysis such as discoverability,
 context budget, benchmark readiness, and package ergonomics. A local external
@@ -60,7 +73,7 @@ The durable boundary is:
 | Project-local evals | Project-specific behavior and realistic prompts/traces. | Shared scorer semantics for every repo. |
 | Plugin Eval / specialist evaluator | Package quality, benchmark setup, budget, and usability analysis. | Final runtime truth for project behavior. |
 | Local external validation | Independent local review signal and calibration feedback. | Cloud authority, registry publication, or hidden lifecycle control. |
-| `evals` | Portable evidence contracts, deterministic scorer checks, artifact validation, and reusable failure classes. | Ownership of another repo's domain behavior. |
+| `evals` | Portable evidence contracts, deterministic scorer checks, artifact validation, and reusable failure classes. | Ownership of another repo's domain behavior or final readiness. |
 
 Therefore, the best cross-project flow is:
 
