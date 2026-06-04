@@ -2,7 +2,9 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { latestArtifactContracts } from "./artifact-bundle.js";
+import { classifyAuthority } from "./authority-classifier.js";
 import { buildRuntimeEvidencePacket } from "./claim-evidence-contract.js";
+import { loadExternalProjectManifestState } from "./external-project-manifest.js";
 import { readJson } from "./json.js";
 import { validateLatestRun } from "./latest-run.js";
 import { relFrom, rootRelativePath, repoRoot } from "./paths.js";
@@ -33,6 +35,7 @@ export function buildRuntimeState(now = new Date(), options = {}) {
   const latestPath = join(artifactRepoRoot, canonicalLatestPath);
   const latestDisplayPath = defaultRepoRoot ? canonicalLatestPath : relFrom(artifactRepoRoot, latestPath);
   const runtimeEvidenceHealth = runtimeEvidenceContractHealth({ enabled: defaultRepoRoot });
+  const manifestState = defaultRepoRoot ? null : loadExternalProjectManifestState(artifactRepoRoot);
   const missingCommands = defaultRepoRoot
     ? [
         "pnpm evals run fixtures/smoke/pr-closeout.case.json --json",
@@ -71,6 +74,17 @@ export function buildRuntimeState(now = new Date(), options = {}) {
     contract_health: {
       runtime_evidence: runtimeEvidenceHealth
     },
+    ...(defaultRepoRoot ? {} : {
+      authority_classification: classifyAuthority({
+        manifestState,
+        runtimeEvidence: {
+          status: runtimeEvidenceHealth.status,
+          policy_status: runtimeEvidenceHealth.policy_coverage_status,
+          required: manifestState?.manifest?.runtime_evidence_policy?.required === true
+        },
+        latestValidation: { status: "not_run", errors: [] }
+      })
+    }),
     non_ready_reason_code: runtimeEvidenceBlocks(runtimeEvidenceHealth) ? "runtime_evidence_failed" : "latest_missing",
     recommended_commands: missingCommands
   };
@@ -150,6 +164,17 @@ export function buildRuntimeState(now = new Date(), options = {}) {
     },
     artifacts,
     validation: runtimeEvidenceValidationState(validation, runtimeEvidenceHealth),
+    ...(defaultRepoRoot ? {} : {
+      authority_classification: classifyAuthority({
+        manifestState,
+        runtimeEvidence: {
+          status: runtimeEvidenceHealth.status,
+          policy_status: runtimeEvidenceHealth.policy_coverage_status,
+          required: manifestState?.manifest?.runtime_evidence_policy?.required === true
+        },
+        latestValidation: validation
+      })
+    }),
     non_ready_reason_code: nonReadyReasonCode,
     recommended_commands: status === "ready" ? readyCommands : missingCommands
   }, latest, runtimeEvidenceHealth, artifactRepoRoot);

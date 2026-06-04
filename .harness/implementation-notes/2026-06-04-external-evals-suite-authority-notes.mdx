@@ -1,0 +1,103 @@
+---
+schema_version: 1
+goal_slug: external-evals-suite-authority
+source_plan: .harness/plan/2026-06-04-external-evals-suite-authority-plan.md
+status: implementation_validated
+---
+
+# External Evals Suite Authority Implementation Notes
+
+These notes track the governed PU-001 through PU-005 implementation. The
+browser-readable companion is
+.harness/implementation-notes/implementation-notes.html.
+
+## Deep Module Topology
+
+<DeepModuleMap>
+  <Owner name="external project manifest owner" status="implemented" paths="schemas/external-project-manifest.schema.json, src/lib/external-project-manifest.js" />
+  <Owner name="authority classifier owner" status="implemented" paths="schemas/authority-classification.schema.json, src/lib/authority-classifier.js" />
+  <Caller name="check command external repo-root output" status="implemented" paths="src/commands/validation.js" />
+  <Caller name="state command external repo-root output" status="implemented" paths="src/lib/runtime-state.js" />
+</DeepModuleMap>
+
+The manifest owner validates target-owned suite evidence and manifest path
+containment. The authority classifier owns authority_mode, proof_context,
+non_proof_claims, recovery guidance, runtime evidence status, privacy approval
+status interpretation, and action partitions. Command callers expose read-side
+artifact-only output without executing target project behavior.
+
+## Current Slice Insertion Map
+
+<InsertionPoint active="T011 PU-005 review">
+  <Slice id="PU-001" status="done" />
+  <Slice id="PU-002" status="done" />
+  <Slice id="PU-003" status="done" />
+  <Slice id="PU-004" status="done" />
+  <Slice id="PU-005" status="implemented" />
+</InsertionPoint>
+
+PU-001 established the external project manifest contract and manifest-path
+decision. PU-002 centralized authority classification. PU-003 wired external
+check/state output. PU-004 added privacy approval evidence shape. PU-005 records
+accepted vocabulary, architecture map entries, validation, and closeout proof.
+
+## Runtime Truth Surface
+
+<RuntimeCardState>
+  <Lane name="local_validation" status="pass" />
+  <Lane name="generated_artifacts" status="local_only" />
+  <Lane name="remote_pr_checks" status="not_started" />
+  <Lane name="review_threads" status="not_started" />
+  <Lane name="tracker_state" status="confirmation_required" />
+  <Lane name="merge_readiness" status="not_started" />
+</RuntimeCardState>
+
+The source plan forbids treating local artifact consistency as target behavior,
+CI, PR, review, tracker, or merge proof. Those lanes remain separate until PR
+green-sweep triage checks them.
+
+## Blast Radius View
+
+<BlastRadiusMap>
+  <Allowed path="schemas/**" />
+  <Allowed path="src/lib/**" />
+  <Allowed path="src/commands/validation.js" />
+  <Allowed path="src/lib/runtime-state.js" />
+  <Allowed path="fixtures/**" />
+  <Allowed path="test/**" />
+  <Allowed path="UBIQUITOUS_LANGUAGE.md" condition="accepted terms only" />
+  <Allowed path="ARCHITECTURE.md" condition="stable owner modules only" />
+  <Allowed path=".harness/evals/**" condition="closeout evidence only" />
+  <Forbidden capability="black-box target command execution" />
+  <Forbidden capability="required judge authority" />
+  <Forbidden capability="hosted telemetry authority" />
+  <Forbidden capability="plugin system or external adapter root" />
+</BlastRadiusMap>
+
+The implemented blast radius stayed inside the plan's first-slice scope.
+
+## Decisions And Tradeoffs
+
+<DecisionLog>
+  <Decision status="recorded" name="manifest path" value=".evals/project.json" evidence=".harness/decisions/2026-06-04-external-project-manifest-path.md" />
+  <Decision status="implemented" name="black-box execution" value="schema vocabulary only; first-slice output blocks or requires human approval" />
+  <Decision status="implemented" name="privacy approval" value="target-owned manifest evidence; evals validates shape and partitions actions, but does not decide approval" />
+  <Decision status="blocked" name="Browser live view" value="Browser plugin requested but no Node REPL browser-control tool is exposed in this session" />
+</DecisionLog>
+
+## Validation Coverage
+
+<ValidatorCoverage>
+  <Gate command="pnpm test test/external-project-manifest.test.js test/authority-classifier.test.js" status="passed" />
+  <Gate command="pnpm test test/cli.test.js" status="passed" />
+  <Gate command="pnpm test" status="passed" />
+  <Gate command="pnpm evals run fixtures/smoke/pr-closeout.case.json --json" status="passed" />
+  <Gate command="pnpm evals check --json" status="passed" />
+  <Gate command="pnpm evals check --smoke --json" status="passed" />
+  <Gate command="pnpm evals state --json" status="passed" />
+  <Gate command="pnpm verify" status="passed" />
+</ValidatorCoverage>
+
+Each implementation slice has a review artifact under
+.harness/review/external-evals-suite-authority. After PU-005, final review and
+PR green-sweep triage remain.

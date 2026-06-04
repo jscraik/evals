@@ -124,6 +124,9 @@
         }
       }
     },
+    "authority_classification": {
+      "type": "object"
+    },
     "evidence_packet": {
       "type": "object",
       "additionalProperties": false,

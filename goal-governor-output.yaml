@@ -1,60 +1,69 @@
 schema_version: 1
-mode: continue
-goal_path: docs/goals/2026-05-26-evals-evidence-led-gap-audit/goal.md
-native_goal_status: complete
-board_status: valid
-next_action: separate_branch_cleanup_if_desired
-continuation_markers:
-  - "read goal.md and state.yaml first"
-  - "receipts.jsonl"
+mode: create
+goal_path: docs/goals/external-evals-suite-authority/goal.md
+native_goal_status: active
+board_status: complete
+next_action: report
 truth_lanes:
   local_validation:
     status: pass
     evidence:
-      - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit -> pass"
-      - "pnpm test test/architecture-boundaries.test.js && node scripts/validate-architecture.js -> pass"
-      - "pnpm verify -> pass"
+      - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/external-evals-suite-authority -> pass"
   generated_artifacts:
-    status: pass
+    status: local_ignored_runs_validated
     evidence:
-      - "artifacts/pr-green-sweep/evals-evidence-gap-audit-pr26-triage.md"
-      - ".harness/evals/runs/latest.json -> 20260526T020523Z-pr-closeout-4df36134-01"
+      - "docs/goals/external-evals-suite-authority/goal.md"
+      - "docs/goals/external-evals-suite-authority/state.yaml"
+      - "docs/goals/external-evals-suite-authority/receipts.jsonl"
+      - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - ".harness/evals/2026-06-04-external-evals-suite-authority-eval.md"
   remote_pr_checks:
-    status: pass
+    status: blocked_or_pending
     evidence:
-      - "PR #26 is merged at head eedcfabc8fa8948b22871d712fa1ddeb6b6e1600."
-      - "deterministic-gates -> success; semgrep-cloud-platform/scan -> success; Socket checks -> success; Snyk license/security contexts -> success."
-      - "CodeRabbit status context remains FAILURE, but the PR is merged and no unresolved actionable review thread remains."
+      - "PR #31 CodeRabbit failed: insufficient review credits."
+      - "PR #31 Snyk pending after the latest push."
+      - "Socket Project Report, Socket Pull Request Alerts, deterministic-gates, and Semgrep pending after the latest push."
   review_threads:
-    status: pass
+    status: empty_review_decision
     evidence:
-      - "PRRT_kwDOShQiR86EqNlg is_resolved=true and is_outdated=true after remediation."
+      - "gh pr view 31 reviewDecision was empty at triage time."
   tracker_state:
-    status: not_applicable
+    status: confirmation_required
     evidence:
-      - "This turn did not mutate Linear."
+      - "Tracker mutation requires separate explicit decision."
   merge_readiness:
-    status: pass
+    status: not_ready
     evidence:
-      - "PR #26 state is MERGED."
+      - "Remote checks are failed/pending; merge readiness is not claimed."
 continuation_gate:
   queued_user_input: absent
-  pending_work: absent
-  decision: close
+  pending_work: absent_for_local_implementation
+  decision: close_local_goal
+  reason: "Implementation, validation, review, branch, commit, push, PR creation, and PR triage are complete; remote check blockers are recorded separately."
 native_blocker_audit:
+  observed_repeated_turns: 0
+  required_repeated_turns: 3
   gate_met: false
-  worker_must_pause: false
-  work_should_pause: false
+worker_must_pause: true
+work_should_pause: true
 validation_evidence:
   outcome: pass
   commands:
-    - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/2026-05-26-evals-evidence-led-gap-audit -> pass"
-    - "git diff --check -> pass"
-    - "draft-marker scan -> pass (no matches)"
-    - "pnpm test test/architecture-boundaries.test.js && node scripts/validate-architecture.js -> pass"
-    - "pnpm verify -> pass"
+    - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/external-evals-suite-authority -> pass"
 risks:
-  - "CodeRabbit still reports a failure status context even though the PR is merged and the actionable review thread is resolved."
-  - "The current worktree remains on the merged PR branch until an explicit branch-cleanup step checks out main and prunes branches."
+  - "Tracker mutation remains confirmation_required; no Linear mutation was performed."
+  - "PR #31 is not green: CodeRabbit is blocked by insufficient review credits, and other checks were pending after the latest push."
+  - "Merge readiness is not claimed."
 remaining_uncertainty:
-  - "Whether the external CodeRabbit failure context will remain visible on the historical merged PR."
+  - "Remote checks may change after the final triage window."
+  - "Review decision may change after reviewers or bots run."
+markers:
+  - "/goal Follow docs/goals/external-evals-suite-authority/goal.md is a prompt convention"
+  - "repo-canonical validation command"
+  - "completion_contract"
+  - "outcome"
+  - "verification_surface"
+  - "constraints"
+  - "boundaries"
+  - "iteration_policy"
+  - "blocked_stop_condition"

@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.github.io/evals/schemas/authority-classification.schema.json",
+  "title": "Authority Classification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "authority_mode",
+    "requested_mode",
+    "manifest_status",
+    "proof_context",
+    "non_proof_claims",
+    "recovery_guidance",
+    "agent_next_actions",
+    "human_approval_required_actions",
+    "blocked_actions",
+    "evaluator_axis"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "authority_mode": {
+      "type": "string",
+      "enum": [
+        "artifact_only",
+        "not_configured",
+        "blocked"
+      ]
+    },
+    "requested_mode": {
+      "type": "string",
+      "enum": [
+        "artifact_only",
+        "black_box_execution"
+      ]
+    },
+    "manifest_status": {
+      "type": "string",
+      "enum": [
+        "valid",
+        "missing",
+        "invalid"
+      ]
+    },
+    "proof_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_only_inspection",
+        "target_behavior_execution",
+        "latest_validation_status",
+        "runtime_evidence_status",
+        "black_box_execution_status"
+      ],
+      "properties": {
+        "artifact_only_inspection": {
+          "type": "boolean"
+        },
+        "target_behavior_execution": {
+          "type": "boolean",
+          "const": false
+        },
+        "latest_validation_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_evidence_status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "not_configured",
+            "unavailable",
+            "failing",
+            "blocked"
+          ]
+        },
+        "black_box_execution_status": {
+          "type": "string",
+          "enum": [
+            "blocked"
+          ]
+        }
+      }
+    },
+    "non_proof_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "recovery_guidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "commands",
+        "notes"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "available",
+            "human_required",
+            "blocked"
+          ]
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "agent_next_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "human_approval_required_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "evaluator_axis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "judge_status",
+        "judge_status_is_authority"
+      ],
+      "properties": {
+        "judge_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "advisory",
+            "blocked"
+          ]
+        },
+        "judge_status_is_authority": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "errors"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

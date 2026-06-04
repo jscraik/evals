@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.github.io/evals/schemas/external-project-manifest.schema.json",
+  "title": "External Project Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_version",
+    "project",
+    "suite_roots",
+    "authority",
+    "runtime_evidence_policy",
+    "privacy",
+    "artifact_policy",
+    "baseline_authority",
+    "execution_policy",
+    "unknown_field_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "manifest_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "owner_repo"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "owner_repo": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "suite_roots": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported_modes",
+        "default_mode"
+      ],
+      "properties": {
+        "supported_modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "artifact_only",
+              "black_box_execution"
+            ]
+          }
+        },
+        "default_mode": {
+          "type": "string",
+          "enum": [
+            "artifact_only",
+            "black_box_execution"
+          ]
+        }
+      }
+    },
+    "runtime_evidence_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "missing_status"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "missing_status": {
+          "type": "string",
+          "enum": [
+            "not_configured",
+            "blocked"
+          ]
+        },
+        "evidence_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "privacy_class",
+        "approval_status",
+        "scope",
+        "data_classes"
+      ],
+      "properties": {
+        "privacy_class": {
+          "type": "string",
+          "enum": [
+            "synthetic",
+            "public",
+            "internal",
+            "restricted"
+          ]
+        },
+        "approval_status": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "blocked",
+            "expired",
+            "not_required",
+            "pending"
+          ]
+        },
+        "approved_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "retention_policy_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "redaction_policy_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "review_due_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "artifact_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_roots",
+        "allow_absolute_paths",
+        "allow_parent_traversal"
+      ],
+      "properties": {
+        "artifact_roots": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allow_absolute_paths": {
+          "type": "boolean",
+          "const": false
+        },
+        "allow_parent_traversal": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "baseline_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "promotion_status"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "enum": [
+            "target_project"
+          ]
+        },
+        "promotion_status": {
+          "type": "string",
+          "enum": [
+            "target_owned",
+            "not_configured"
+          ]
+        },
+        "baseline_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "execution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allow_target_execution",
+        "black_box_execution_status"
+      ],
+      "properties": {
+        "allow_target_execution": {
+          "type": "boolean",
+          "const": false
+        },
+        "black_box_execution_status": {
+          "type": "string",
+          "enum": [
+            "blocked"
+          ]
+        }
+      }
+    },
+    "unknown_field_policy": {
+      "type": "string",
+      "const": "reject"
+    }
+  }
+}

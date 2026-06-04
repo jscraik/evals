@@ -1,0 +1,348 @@
+version: 2
+goal:
+  slug: external-evals-suite-authority
+  status: done
+  objective: "Implement the external evals suite authority plan as a governed PU-001 through PU-005 program with review after each slice and PR green-sweep triage after review."
+  native_goal_id: "019e8f38-ea5d-7853-a82f-a25d4a5ad298"
+  native_objective: "Implement /Users/jamiecraik/dev/evals/.harness/plan/2026-06-04-external-evals-suite-authority-plan.md as a governed Goal Governor program. Follow docs/goals/external-evals-suite-authority/goal.md, execute PU-001 through PU-005 without opening forbidden black-box/judge/external-runner scope, review after each implementation slice with simplify, improve-codebase-architecture, testing, and ubiquitous-language, then triage the completed review/PR lane with pr-green-sweep."
+  native_status: active
+  token_budget: null
+  tokens_used: 0
+  time_used_seconds: 0
+  native_created_at: "2026-06-04T12:35:27Z"
+  native_updated_at: "2026-06-04T12:35:27Z"
+rules:
+  one_active_task: true
+  require_fresh_verification: true
+  require_final_audit: true
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    command: "gh pr view 31 --repo jscraik/evals --json number,url,title,state,headRefName,baseRefName,mergeable,reviewDecision,headRefOid; gh pr checks 31 --repo jscraik/evals --watch=false"
+    outcome: pass
+    checked_at: "2026-06-04T16:08:00Z"
+completion_contract:
+  outcome: "Implement the first executable authority-boundary increment from the source plan: external project manifest contract, authority classifier owner, artifact-only external inspection output, privacy approval evidence shape, and closeout vocabulary/architecture evidence where accepted."
+  verification_surface:
+    - "pnpm test"
+    - "pnpm evals run fixtures/smoke/pr-closeout.case.json --json"
+    - "pnpm evals check --json"
+    - "pnpm evals check --smoke --json"
+    - "pnpm evals state --json"
+    - "pnpm verify"
+    - "Focused manifest, authority classifier, artifact-only, next-action partition, privacy evidence, and path-boundary tests."
+  constraints:
+    - "After each implementation slice, review with $simplify, $improve-codebase-architecture, $testing, and $ubiquitous-language before the next Worker slice starts."
+    - "Each review must leave a receipt or durable artifact that classifies findings, fixes, skipped items, and validation."
+    - "Keep local validation, generated artifacts, remote PR checks, review threads, tracker state, and merge readiness separate."
+  boundaries:
+    - "Allowed scope is PU-001 through PU-005 from the plan."
+    - "Forbidden scope includes black-box target command execution, networked execution, hosted telemetry authority, dashboards, cloud runners, plugin systems, source-mining automation, external adapter roots, required LLM judge gates, sibling runtime dependencies, baseline promotion automation, package installs without approval, merge/admin actions, and branch deletion."
+    - "Tracker mutation requires a separate explicit decision."
+  iteration_policy: "Execute in ordered slices: Scout refresh, PU-001, review, PU-002, review, PU-003, review, PU-004, review, PU-005, review, PR/git triage using $pr-green-sweep, final Judge or PM audit."
+  blocked_stop_condition: "Stop when a public contract decision is not covered by durable evidence, validation fails from introduced behavior and the smallest repair is unclear, a required reviewer skill cannot run or leave evidence, tracker mutation is required but not approved, or any work would cross into blocked black-box execution or judge authority."
+artifacts:
+  implementation_notes:
+    path: ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+    format: mdx
+    status: present
+    browser_preview:
+      surface: localhost
+      status: blocked
+      blocker: "No localhost MDX renderer has been started for this governance setup."
+      live_update:
+        status: blocked
+        blocker: "No localhost MDX renderer or watch command is available for this fixture yet."
+  implementation_notes_html:
+    path: ".harness/implementation-notes/implementation-notes.html"
+    format: html
+    status: present
+    browser_preview:
+      surface: file_url
+      status: blocked
+      blocker: "The Browser plugin was requested, but no Browser navigation tool is exposed in this session tool list."
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: "Refresh repo state, instructions, source plan, architecture, glossary, tests, and validation commands before Worker implementation starts."
+    inputs:
+      - ".harness/plan/2026-06-04-external-evals-suite-authority-plan.md"
+      - "AGENTS.md"
+      - ".harness/core/2026-05-18-evals-core.md"
+      - "UBIQUITOUS_LANGUAGE.md"
+      - "ARCHITECTURE.md"
+      - "package.json"
+    constraints:
+      - "Read-only."
+      - "Record current branch, dirty status, and validation command choices."
+      - "Do not implement runtime changes."
+    expected_output: "Scout receipt with current repo state, command contract, and first Worker readiness."
+    allowed_files: []
+    verify:
+      - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/external-evals-suite-authority"
+    stop_if:
+      - "Instructions conflict."
+      - "Board validation fails."
+      - "Implementation approval is missing or scope is unclear."
+    receipt_id: R001
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    objective: "Implement PU-001 external project manifest contract and manifest-path decision artifact."
+    inputs:
+      - ".harness/plan/2026-06-04-external-evals-suite-authority-plan.md#PU-001"
+    constraints:
+      - "No target command execution."
+      - "No dependency installs."
+      - "Decision artifact must exist before schema registration."
+    expected_output: "PU-001 implementation receipt with changed files and focused validation."
+    allowed_files:
+      - ".harness/decisions/2026-06-04-external-project-manifest-path.md"
+      - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - "schemas/**"
+      - "src/lib/schema.js"
+      - "src/lib/**"
+      - "fixtures/**"
+      - "test/**"
+      - "tests/**"
+      - "UBIQUITOUS_LANGUAGE.md"
+    verify:
+      - "pnpm test"
+      - "pnpm evals check --smoke --json"
+    stop_if:
+      - "Manifest naming or enum choices create a breaking public contract without decision evidence."
+      - "Any change attempts target behavior execution."
+    receipt_id: R002
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    objective: "Review PU-001 with $simplify, $improve-codebase-architecture, $testing, and $ubiquitous-language before PU-002 starts."
+    inputs:
+      - "T002 receipt and diff"
+    constraints:
+      - "Classify findings by severity and fixability."
+      - "Do not advance Worker work until actionable findings are fixed or explicitly waived."
+    expected_output: "PU-001 review receipt and/or artifacts covering simplify, architecture, testing, and ubiquitous language."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Required review skill cannot run or cannot leave evidence."
+      - "Active finding remains unresolved."
+    receipt_id: R003
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    objective: "Implement PU-002 authority classifier owner and machine-readable action partitions."
+    inputs:
+      - ".harness/plan/2026-06-04-external-evals-suite-authority-plan.md#PU-002"
+      - "T003 review receipt"
+    constraints:
+      - "One src/lib owner must own authority classification."
+      - "Judge output must not become authority_mode."
+      - "Missing runtime evidence must not be success."
+    expected_output: "PU-002 implementation receipt with classifier tests and action partition evidence."
+    allowed_files:
+      - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - "src/lib/**"
+      - "src/lib/runtime-state.js"
+      - "src/lib/latest-run.js"
+      - "schemas/**"
+      - "fixtures/**"
+      - "test/**"
+      - "tests/**"
+    verify:
+      - "pnpm test"
+      - "pnpm evals check --smoke --json"
+    stop_if:
+      - "Callers must duplicate classifier logic."
+      - "A target command execution path is introduced."
+    receipt_id: R004
+  - id: T005
+    type: judge
+    assignee: Judge
+    status: done
+    objective: "Review PU-002 with $simplify, $improve-codebase-architecture, $testing, and $ubiquitous-language before PU-003 starts."
+    inputs:
+      - "T004 receipt and diff"
+    constraints:
+      - "Classify findings by severity and fixability."
+    expected_output: "PU-002 review receipt and/or artifacts."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Required review skill cannot run or cannot leave evidence."
+      - "Active finding remains unresolved."
+    receipt_id: R005
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    objective: "Implement PU-003 artifact-only external inspection output for check/state --repo-root paths."
+    inputs:
+      - ".harness/plan/2026-06-04-external-evals-suite-authority-plan.md#PU-003"
+      - "T005 review receipt"
+    constraints:
+      - "Read-side only."
+      - "Do not certify CI, PR, review, tracker, baseline promotion, or production readiness."
+    expected_output: "PU-003 implementation receipt with artifact-only and read-side sentinel evidence."
+    allowed_files:
+      - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - "src/commands/validation.js"
+      - "src/commands/state.js"
+      - "src/lib/repo-root-option.js"
+      - "src/lib/runtime-state.js"
+      - "src/lib/latest-run.js"
+      - "src/lib/**"
+      - "schemas/**"
+      - "fixtures/**"
+      - "test/**"
+      - "tests/**"
+    verify:
+      - "pnpm test"
+      - "pnpm evals check --json"
+      - "pnpm evals state --json"
+    stop_if:
+      - "Output requires target source reads or command execution."
+    receipt_id: R006
+  - id: T007
+    type: judge
+    assignee: Judge
+    status: done
+    objective: "Review PU-003 with $simplify, $improve-codebase-architecture, $testing, and $ubiquitous-language before PU-004 starts."
+    inputs:
+      - "T006 receipt and diff"
+    constraints:
+      - "Classify findings by severity and fixability."
+    expected_output: "PU-003 review receipt and/or artifacts."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Required review skill cannot run or cannot leave evidence."
+      - "Active finding remains unresolved."
+    receipt_id: R007
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: done
+    objective: "Implement PU-004 privacy approval evidence shape and not_required handling."
+    inputs:
+      - ".harness/plan/2026-06-04-external-evals-suite-authority-plan.md#PU-004"
+      - "T007 review receipt"
+    constraints:
+      - "Do not make evals own target repo privacy decisions."
+      - "Do not scan private target data beyond declared manifest fixtures."
+    expected_output: "PU-004 implementation receipt with privacy approval evidence fixtures and blocked-action behavior."
+    allowed_files:
+      - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - "schemas/**"
+      - "src/lib/**"
+      - "fixtures/**"
+      - "test/**"
+      - "tests/**"
+    verify:
+      - "pnpm test"
+      - "pnpm evals check --smoke --json"
+    stop_if:
+      - "Privacy policy requires evals to decide target-owned approval outside manifest evidence."
+    receipt_id: R008
+  - id: T009
+    type: judge
+    assignee: Judge
+    status: done
+    objective: "Review PU-004 with $simplify, $improve-codebase-architecture, $testing, and $ubiquitous-language before PU-005 starts."
+    inputs:
+      - "T008 receipt and diff"
+    constraints:
+      - "Classify findings by severity and fixability."
+    expected_output: "PU-004 review receipt and/or artifacts."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Required review skill cannot run or cannot leave evidence."
+      - "Active finding remains unresolved."
+    receipt_id: R009
+  - id: T010
+    type: worker
+    assignee: Worker
+    status: done
+    objective: "Implement PU-005 validation, accepted vocabulary, architecture, and closeout evidence."
+    inputs:
+      - ".harness/plan/2026-06-04-external-evals-suite-authority-plan.md#PU-005"
+      - "T009 review receipt"
+    constraints:
+      - "Update vocabulary and architecture only for accepted durable terms or owner modules."
+      - "Do not claim CI, PR, review, tracker, or merge readiness without fresh lane evidence."
+    expected_output: "PU-005 implementation receipt with full validation and hard-block evidence."
+    allowed_files:
+      - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - "UBIQUITOUS_LANGUAGE.md"
+      - "ARCHITECTURE.md"
+      - ".harness/evals/**"
+      - ".harness/memory/LEARNINGS.md"
+      - "test/**"
+      - "tests/**"
+      - "fixtures/**"
+    verify:
+      - "pnpm test"
+      - "pnpm evals run fixtures/smoke/pr-closeout.case.json --json"
+      - "pnpm evals check --json"
+      - "pnpm evals check --smoke --json"
+      - "pnpm evals state --json"
+      - "pnpm verify"
+    stop_if:
+      - "Validation fails due to introduced behavior."
+      - "A phase-one hard block is violated."
+    receipt_id: R010
+  - id: T011
+    type: judge
+    assignee: Judge
+    status: done
+    objective: "Review PU-005 and the full implementation with $simplify, $improve-codebase-architecture, $testing, and $ubiquitous-language."
+    inputs:
+      - "T010 receipt and full diff"
+    constraints:
+      - "Review findings must be fixed, explicitly waived by owner, or recorded as non-blocking with evidence."
+    expected_output: "Final slice review receipt and/or artifacts."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Required review skill cannot run or cannot leave evidence."
+      - "Active finding remains unresolved."
+    receipt_id: R011
+  - id: T012
+    type: pm
+    assignee: PM
+    status: done
+    objective: "Run $pr-green-sweep git and PR triage after all implementation and review tasks are complete."
+    inputs:
+      - "T011 review receipt"
+    constraints:
+      - "Keep local validation, PR checks, review threads, tracker state, and merge readiness separate."
+      - "Do not merge, admin-merge, force-push, or delete branches without explicit approval."
+    expected_output: "PR green-sweep triage receipt with action queue and truth lanes."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Worktree is dirty with unclassified changes."
+      - "PR state cannot be checked."
+    receipt_id: R012
+  - id: T013
+    type: judge
+    assignee: Judge
+    status: done
+    objective: "Perform final completion audit after PR green-sweep triage."
+    inputs:
+      - "T012 PR triage receipt"
+    constraints:
+      - "Do not mark complete unless all truth lanes are reconciled and completion evidence is fresh."
+    expected_output: "Final Judge or PM receipt with decision complete or blocked."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Any required truth lane remains unknown or blocked without owner waiver."
+    receipt_id: R013

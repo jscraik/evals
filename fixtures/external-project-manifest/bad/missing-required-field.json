@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "manifest_version": "2026-06-04",
+  "suite_roots": [
+    "evals"
+  ],
+  "authority": {
+    "supported_modes": [
+      "artifact_only"
+    ],
+    "default_mode": "artifact_only"
+  },
+  "runtime_evidence_policy": {
+    "required": true,
+    "missing_status": "blocked"
+  },
+  "privacy": {
+    "privacy_class": "synthetic"
+  },
+  "artifact_policy": {
+    "artifact_roots": [
+      ".harness/evals/runs"
+    ],
+    "allow_absolute_paths": false,
+    "allow_parent_traversal": false
+  },
+  "baseline_authority": {
+    "owner": "target_project",
+    "promotion_status": "not_configured"
+  },
+  "execution_policy": {
+    "allow_target_execution": false,
+    "black_box_execution_status": "blocked"
+  },
+  "unknown_field_policy": "reject"
+}
