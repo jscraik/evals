@@ -380,6 +380,17 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     assert.ok(validation.adopted_contracts.includes("evidence.no-fake-ci-pass.v1"));
     assert.ok(validation.does_not_prove.includes("the consumer project product behavior is correct"));
     assert.equal(validation.runtime_evidence.policy_coverage.status, "not_configured");
+    assert.equal(validation.authority_classification.authority_mode, "not_configured");
+    assert.equal(validation.authority_classification.proof_context.target_behavior_execution, false);
+    assert.equal(validation.authority_classification.proof_context.runtime_evidence_status, "not_configured");
+    assert.match(validation.authority_classification.non_proof_claims.join("\n"), /does not prove target project product behavior/);
+    assert.equal(validation.authority_classification.human_approval_required_actions.length, 1);
+    assert.equal(validation.authority_classification.human_approval_required_actions[0].artifact_path, ".evals/project.json");
+    assert.deepEqual(validation.authority_classification.blocked_actions, []);
+    assert.deepEqual(
+      schemaCheckFromObject("authorityClassification", validation.authority_classification, "check authority classification").errors,
+      []
+    );
     assert.ok(validation.checks.some((check) => check.label === "latest run" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => check.label === "artifact manifest" && check.status === "pass"));
     assert.ok(validation.checks.some((check) => (
@@ -399,6 +410,16 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     assert.ok(state.does_not_prove.includes("the consumer project product behavior is correct"));
     assert.equal(state.contract_health.runtime_evidence.status, "not_configured");
     assert.equal(state.contract_health.runtime_evidence.policy_coverage_status, "not_configured");
+    assert.equal(state.authority_classification.authority_mode, "not_configured");
+    assert.equal(state.authority_classification.proof_context.target_behavior_execution, false);
+    assert.equal(state.authority_classification.proof_context.runtime_evidence_status, "not_configured");
+    assert.equal(state.authority_classification.human_approval_required_actions.length, 1);
+    assert.equal(state.authority_classification.human_approval_required_actions[0].artifact_path, ".evals/project.json");
+    assert.deepEqual(state.authority_classification.blocked_actions, []);
+    assert.deepEqual(
+      schemaCheckFromObject("authorityClassification", state.authority_classification, "state authority classification").errors,
+      []
+    );
     assert.equal(state.evidence_packet.repo.root, resolvedConsumer);
     assert.match(state.evidence_packet.repo.name, /^evals-consumer-suite-/);
     assert.equal(state.evidence_packet.runtime_evidence_contract_health.status, "not_configured");

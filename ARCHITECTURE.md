@@ -125,6 +125,32 @@ Architecture Invariant: --repo-root is read-side artifact authority only. It
 must not become an adapter system, plugin hook, source-mining root, or hidden
 permission to run consumer commands.
 
+### src/lib/external-project-manifest.js
+
+external-project-manifest owns the read-side target manifest contract for
+external suite authority. It validates the schema-backed .evals/project.json
+shape, enforces repo-relative declared paths, rejects POSIX and Windows absolute
+paths, rejects traversal, and reports whether a manifest is present for an
+external repo root.
+
+Architecture Invariant: the external project manifest is target-owned evidence.
+It can declare suite ownership, runtime evidence policy, fixture roots, and
+privacy approval evidence, but it must not become executable adapter
+configuration or a hidden source-mining root.
+
+### src/lib/authority-classifier.js
+
+authority-classifier owns the machine-readable authority packet for external
+repo inspection. It converts manifest state, latest artifact validation,
+runtime evidence state, privacy approval status, and first-slice policy into
+authority_mode, proof_context, non_proof_claims, recovery_guidance,
+agent_next_actions, human_approval_required_actions, and blocked_actions.
+
+Architecture Invariant: absent evidence is not success. The classifier may say
+artifact_only, not_configured, or blocked, but it must not certify target
+behavior, required judge output, CI, PR, review-thread, tracker, or merge
+readiness lanes.
+
 ### src/commands
 
 The command modules turn CLI requests into calls to deep modules.
@@ -294,7 +320,8 @@ they do not define artifact truth.
 
 schemas contains the canonical JSON contracts for eval cases, suites, results,
 artifacts, latest pointers, scorer results, baseline results, trace events,
-runtime state, runtime evidence, claims, evidence, and score vectors.
+runtime state, runtime evidence, external project manifests, authority
+classifications, claims, evidence, and score vectors.
 
 Architecture Invariant: a public JSON field is a compatibility surface. Additive
 fields are preferred. Breaking changes require an explicit compatibility and
@@ -457,6 +484,11 @@ deterministic result shape, and closure evidence model.
 - A new current-state field belongs in runtime-state and its schema.
 - A new runtime evidence rule belongs in runtime-evidence-contract or
   claim-evidence-contract.
+- A new external project manifest rule belongs in external-project-manifest and
+  schemas/external-project-manifest.schema.json.
+- A new authority-mode, proof-context, non-proof-claim, or action-partition
+  rule belongs in authority-classifier and
+  schemas/authority-classification.schema.json.
 - A new broad gate belongs in scripts/verify.js only after the narrow proof
   exists.
 - A new architecture or governance decision belongs in .harness, but it still

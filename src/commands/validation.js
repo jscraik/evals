@@ -1,7 +1,9 @@
 import { join } from "node:path";
 
+import { classifyAuthority } from "../lib/authority-classifier.js";
 import { validateContractCatalog } from "../lib/contract-catalog.js";
 import { emitFailure } from "../lib/failures.js";
+import { loadExternalProjectManifestState } from "../lib/external-project-manifest.js";
 import { expectedProofContextFromCase, validateCaseFile, validateLatestRun } from "../lib/latest-run.js";
 import { insideRepo, insideRoot, rel, relFrom, repoRoot } from "../lib/paths.js";
 import { proofContractSchemaKeys, validateProofContractFile } from "../lib/proof-contract-validation.js";
@@ -178,6 +180,7 @@ export function checkCommand(jsonMode, options = {}) {
       })
     : validateLatestRun(latestPath, { artifactRepoRoot });
   const runtimeEvidenceValidation = defaultRepoRoot ? validateRuntimeEvidenceSuite() : skippedRuntimeEvidenceValidation();
+  const manifestState = defaultRepoRoot ? null : loadExternalProjectManifestState(artifactRepoRoot);
   const checks = (caseCheck ? [caseCheck] : []).concat(latestValidation.checks, runtimeEvidenceValidation.checks);
   const errors = (caseCheck?.errors || []).concat(latestValidation.errors, runtimeEvidenceValidation.errors);
   const validation = {
@@ -196,6 +199,14 @@ export function checkCommand(jsonMode, options = {}) {
     runtime_evidence: {
       policy_coverage: runtimeEvidenceValidation.policy_coverage
     },
+    authority_classification: defaultRepoRoot ? undefined : classifyAuthority({
+      manifestState,
+      runtimeEvidence: {
+        status: runtimeEvidenceValidation.policy_coverage.status,
+        required: manifestState?.manifest?.runtime_evidence_policy?.required === true
+      },
+      latestValidation
+    }),
     checks,
     errors
   };

@@ -75,6 +75,14 @@ export const schemaTargets = {
   validationResult: {
     schema: join(schemaDir, "validation-result.schema.json"),
     label: "validation result"
+  },
+  projectManifest: {
+    schema: join(schemaDir, "external-project-manifest.schema.json"),
+    label: "external project manifest"
+  },
+  authorityClassification: {
+    schema: join(schemaDir, "authority-classification.schema.json"),
+    label: "authority classification"
   }
 };
 

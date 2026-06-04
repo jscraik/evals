@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>External Evals Suite Authority Implementation Notes</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #1d2528;
+      --muted: #5b666a;
+      --line: #d9ddd8;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --warn: #9a5b00;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 28px 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 8px 0;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .status {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 18px 0 4px;
+    }
+    .tile {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .tile strong {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      display: table;
+    }
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+    th {
+      background: #eef3f1;
+      color: #263335;
+      font-weight: 650;
+    }
+    tr:last-child td {
+      border-bottom: 0;
+    }
+    code {
+      background: #eef1ec;
+      border: 1px solid #dde3dc;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+    .warn {
+      color: var(--warn);
+      font-weight: 650;
+    }
+    .ok {
+      color: var(--accent);
+      font-weight: 650;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>External Evals Suite Authority Implementation Notes</h1>
+      <p class="meta">Running notes for implementing <code>.harness/plan/2026-06-04-external-evals-suite-authority-plan.md</code>.</p>
+      <div class="status">
+        <div class="tile"><strong>Current slice</strong>PU-001 external project manifest contract</div>
+        <div class="tile"><strong>Goal state</strong>Scout refresh complete; worker slice in progress</div>
+        <div class="tile"><strong>Scope guard</strong>No black-box execution, judge gate, adapter, or external runner behavior opened</div>
+      </div>
+    </header>
+
+    <h2>Live Notes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Decision Or Change</th>
+          <th>Why It Matters</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2026-06-04 13:45</td>
+          <td>Created this browser-readable <code>implementation-notes.html</code> as the running notes surface requested during implementation.</td>
+          <td>The plan already had MDX implementation notes, but the user asked for an HTML file kept visible in Browser. This file is the additional live-readable surface.</td>
+          <td class="ok">Active</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 13:45</td>
+          <td>Browser plugin navigation tool was not exposed in the current tool list.</td>
+          <td>I can keep the HTML file current, but cannot honestly claim I opened it in Browser unless a Browser navigation tool becomes available. The intended URL is <code>file:///Users/jamiecraik/dev/evals/.harness/implementation-notes/implementation-notes.html</code>.</td>
+          <td class="warn">Tool blocked</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 13:46</td>
+          <td>Kept PU-001 centered on a target-owned manifest contract and authority classification, not execution.</td>
+          <td>The spec and repo phase-one hard blocks allow authority description but do not allow black-box execution, external adapters, or required judge gates.</td>
+          <td class="ok">Proceeding</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 13:56</td>
+          <td>Added <code>schemas/external-project-manifest.schema.json</code>, <code>src/lib/external-project-manifest.js</code>, manifest fixtures, and focused tests.</td>
+          <td>The schema owns closed contract shape; the owner module owns path containment and first-slice authority semantics. This keeps behavior in <code>src/lib</code> and avoids scattering policy checks through tests or docs.</td>
+          <td class="ok">Implemented</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 13:57</td>
+          <td>Allowed <code>black_box_execution</code> as vocabulary but blocked it as a first-slice default and returned missing-manifest actions without commands.</td>
+          <td>This is the main tradeoff: future suite authority can name the mode, but PU-001 cannot accidentally create executable behavior or hidden lifecycle authority.</td>
+          <td class="ok">Guarded</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 14:08</td>
+          <td>Review fixed a path-boundary gap: Windows absolute paths and backslash traversal now fail manifest validation.</td>
+          <td>The first implementation only caught POSIX-style absolute paths and traversal. The owner now uses <code>win32.isAbsolute</code> and splits on both slash styles, with regression tests.</td>
+          <td class="ok">Fixed</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 14:12</td>
+          <td>PU-001 validation passed: focused manifest tests, full test suite, smoke run, sequential smoke check, and goal-board validator.</td>
+          <td>Evidence supports the manifest contract and first-slice guardrails. It does not prove PR/CI/review readiness or target project behavior.</td>
+          <td class="ok">Validated</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 14:29</td>
+          <td>Added <code>src/lib/authority-classifier.js</code> and <code>schemas/authority-classification.schema.json</code> for PU-002.</td>
+          <td>The classifier now owns authority mode, proof context, non-proof claims, recovery guidance, and action partitions. It keeps judge status on an evaluator axis and keeps target execution false.</td>
+          <td class="ok">Implemented</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 14:34</td>
+          <td>Review removed the older manifest-level missing-manifest classifier.</td>
+          <td>Leaving both helpers would create two owners for action classification. The manifest module now validates manifests only; the authority classifier owns action partitions.</td>
+          <td class="ok">Simplified</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 14:58</td>
+          <td>Wired authority classification into external <code>check --repo-root</code> and <code>state --repo-root</code> JSON output.</td>
+          <td>The output now labels external artifact inspection as <code>not_configured</code> when the target-owned manifest is absent, includes non-proof claims, and exposes a human manifest action without executing target code.</td>
+          <td class="ok">Implemented</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 15:03</td>
+          <td>Review strengthened public-output tests by validating nested <code>authority_classification</code> packets against the classifier schema.</td>
+          <td>This keeps the public output from degrading into a generic object field while still avoiding duplicated schema shape through unsupported JSON Schema refs.</td>
+          <td class="ok">Hardened</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 15:18</td>
+          <td>Added target-owned privacy approval evidence fields to the external project manifest and wired blocked, expired, and pending statuses into action partitions.</td>
+          <td>evals does not decide privacy approval. It reads manifest evidence and reports blocked or human-required actions when the target-owned status is not approved or not_required.</td>
+          <td class="ok">Implemented</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 15:32</td>
+          <td>Accepted first-slice terms were added to <code>UBIQUITOUS_LANGUAGE.md</code>, and stable owner modules were added to <code>ARCHITECTURE.md</code>.</td>
+          <td>I kept this narrow: only external project manifest, authority classifier, authority mode, action partitions, and privacy approval evidence. No phase-one hard blocks were loosened.</td>
+          <td class="ok">PU-005</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 15:33</td>
+          <td>Cleaned the MDX implementation-notes artifact after finding patch-text residue from the initial board scaffolding.</td>
+          <td>This was artifact hygiene, not a runtime behavior change. The HTML file remains the running notes surface requested for Browser.</td>
+          <td class="ok">Cleaned</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 15:45</td>
+          <td>PU-005 validation passed across focused tests, full tests, smoke run, check, smoke check, state, and verify.</td>
+          <td>The smoke and verify commands generated ignored local run artifacts. I restored the tracked <code>latest.json</code> pointer afterward so the commit will not point at ignored evidence directories.</td>
+          <td class="ok">Validated</td>
+        </tr>
+        <tr>
+          <td>2026-06-04 15:56</td>
+          <td>Final review found and fixed one low testing gap: blocked and expired privacy classifier behavior now uses the declared fixtures.</td>
+          <td>Focused manifest/classifier tests and the full suite passed after the tweak. PR green-sweep triage is the next lane.</td>
+          <td class="ok">Reviewed</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Decisions To Watch</h2>
+    <p><strong>Manifest path:</strong> <code>.evals/project.json</code> is the first-slice target path from the decision artifact.</p>
+    <p><strong>Validation split:</strong> JSON Schema will cover shape and closed fields; a small semantic owner will cover repository-relative paths and first-slice authority constraints that the local schema subset cannot express safely.</p>
+    <p><strong>Black-box vocabulary:</strong> The schema may name <code>black_box_execution</code> so future plans can classify it, but PU-001 must keep it blocked or human-approval-required and must not add a run path.</p>
+    <p><strong>Privacy approval:</strong> evals validates manifest evidence and partitions actions, while target repositories retain the actual privacy approval decision.</p>
+    <p><strong>Browser surface:</strong> The requested Browser plugin flow is blocked because the required browser-control tool is not exposed in this session. The file path remains <code>file:///Users/jamiecraik/dev/evals/.harness/implementation-notes/implementation-notes.html</code>.</p>
+  </main>
+</body>
+</html>
