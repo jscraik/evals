@@ -2,55 +2,61 @@ schema_version: 1
 mode: create
 goal_path: docs/goals/external-evals-suite-authority/goal.md
 native_goal_status: active
-board_status: valid
-next_action: continue
+board_status: complete
+next_action: report
 truth_lanes:
   local_validation:
     status: pass
     evidence:
       - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/external-evals-suite-authority -> pass"
   generated_artifacts:
-    status: scaffolded
+    status: local_ignored_runs_validated
     evidence:
       - "docs/goals/external-evals-suite-authority/goal.md"
       - "docs/goals/external-evals-suite-authority/state.yaml"
       - "docs/goals/external-evals-suite-authority/receipts.jsonl"
       - ".harness/implementation-notes/2026-06-04-external-evals-suite-authority-notes.mdx"
+      - ".harness/evals/2026-06-04-external-evals-suite-authority-eval.md"
   remote_pr_checks:
-    status: not_started
-    evidence: []
+    status: blocked_or_pending
+    evidence:
+      - "PR #31 CodeRabbit failed: insufficient review credits."
+      - "PR #31 Snyk failed: private-test limit used."
+      - "Socket, deterministic-gates, and Semgrep pending at triage time."
   review_threads:
-    status: not_started
-    evidence: []
+    status: empty_review_decision
+    evidence:
+      - "gh pr view 31 reviewDecision was empty at triage time."
   tracker_state:
     status: confirmation_required
     evidence:
       - "Tracker mutation requires separate explicit decision."
   merge_readiness:
-    status: not_started
-    evidence: []
+    status: not_ready
+    evidence:
+      - "Remote checks are failed/pending; merge readiness is not claimed."
 continuation_gate:
   queued_user_input: absent
-  pending_work: present
-  decision: open
-  reason: "Scout refresh is active before Worker implementation."
+  pending_work: absent_for_local_implementation
+  decision: close_local_goal
+  reason: "Implementation, validation, review, branch, commit, push, PR creation, and PR triage are complete; remote check blockers are recorded separately."
 native_blocker_audit:
   observed_repeated_turns: 0
   required_repeated_turns: 3
   gate_met: false
-worker_must_pause: false
-work_should_pause: false
+worker_must_pause: true
+work_should_pause: true
 validation_evidence:
   outcome: pass
   commands:
     - "python3 /Users/jamiecraik/dev/agent-skills/Skills/agent-ops/goal-governor/scripts/check_goal_board.py docs/goals/external-evals-suite-authority -> pass"
 risks:
-  - "Tracker mutation remains confirmation_required."
-  - "Implementation must not cross phase-one hard blocks."
-  - "Each implementation slice requires simplify, architecture, testing, and ubiquitous-language review before the next Worker slice."
+  - "Tracker mutation remains confirmation_required; no Linear mutation was performed."
+  - "PR #31 is not green: CodeRabbit and Snyk are blocked by account/limit failures, and other checks were pending at triage time."
+  - "Merge readiness is not claimed."
 remaining_uncertainty:
-  - "Worker implementation has not started."
-  - "No PR or remote CI lane exists for this new goal yet."
+  - "Remote checks may change after the final triage window."
+  - "Review decision may change after reviewers or bots run."
 markers:
   - "/goal Follow docs/goals/external-evals-suite-authority/goal.md is a prompt convention"
   - "repo-canonical validation command"

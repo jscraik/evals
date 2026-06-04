@@ -1,7 +1,7 @@
 version: 2
 goal:
   slug: external-evals-suite-authority
-  status: active
+  status: done
   objective: "Implement the external evals suite authority plan as a governed PU-001 through PU-005 program with review after each slice and PR green-sweep triage after review."
   native_goal_id: "019e8f38-ea5d-7853-a82f-a25d4a5ad298"
   native_objective: "Implement /Users/jamiecraik/dev/evals/.harness/plan/2026-06-04-external-evals-suite-authority-plan.md as a governed Goal Governor program. Follow docs/goals/external-evals-suite-authority/goal.md, execute PU-001 through PU-005 without opening forbidden black-box/judge/external-runner scope, review after each implementation slice with simplify, improve-codebase-architecture, testing, and ubiquitous-language, then triage the completed review/PR lane with pr-green-sweep."
@@ -18,9 +18,9 @@ rules:
 checks:
   dirty_fingerprint: unknown
   last_verification:
-    command: "pnpm test test/authority-classifier.test.js test/external-project-manifest.test.js; pnpm test"
+    command: "gh pr view 31 --repo jscraik/evals --json number,url,title,state,headRefName,baseRefName,mergeable,reviewDecision,headRefOid; gh pr checks 31 --repo jscraik/evals --watch=false"
     outcome: pass
-    checked_at: "2026-06-04T15:56:00Z"
+    checked_at: "2026-06-04T16:08:00Z"
 completion_contract:
   outcome: "Implement the first executable authority-boundary increment from the source plan: external project manifest contract, authority classifier owner, artifact-only external inspection output, privacy approval evidence shape, and closeout vocabulary/architecture evidence where accepted."
   verification_surface:
@@ -317,7 +317,7 @@ tasks:
   - id: T012
     type: pm
     assignee: PM
-    status: active
+    status: done
     objective: "Run $pr-green-sweep git and PR triage after all implementation and review tasks are complete."
     inputs:
       - "T011 review receipt"
@@ -330,11 +330,11 @@ tasks:
     stop_if:
       - "Worktree is dirty with unclassified changes."
       - "PR state cannot be checked."
-    receipt_id: null
+    receipt_id: R012
   - id: T013
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     objective: "Perform final completion audit after PR green-sweep triage."
     inputs:
       - "T012 PR triage receipt"
@@ -345,4 +345,4 @@ tasks:
     verify: []
     stop_if:
       - "Any required truth lane remains unknown or blocked without owner waiver."
-    receipt_id: null
+    receipt_id: R013
