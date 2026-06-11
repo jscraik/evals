@@ -98,8 +98,8 @@ function names; avoid treating this document as an inline API reference.
 
 package.json defines the public local script surface. The repository currently
 has no runtime dependencies and no dev dependencies. That is architectural, not
-accidental: phase one keeps the proof spine runnable with local Node and repo
-files.
+accidental: phase one keeps the proof spine runnable with the repo-pinned Node
+toolchain and repo files.
 
 Architecture Invariant: adding a dependency is a design change, not routine
 cleanup. The default answer is to keep proof contracts and runner mechanics
@@ -432,6 +432,10 @@ Public JSON output should be additive unless a spec or ADR records a migration
 decision. latest.json, result artifacts, manifests, scorer results, baseline
 results, trace events, runtime state, and proof contracts are compatibility
 surfaces.
+
+Toolchain compatibility is pinned separately from public JSON compatibility.
+'.mise.toml' pins the known working Node runtime as `node = "26.3.0"`, and
+CI must use the same Node version for deterministic verification.
 
 ### Security And Privacy
 

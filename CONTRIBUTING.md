@@ -16,6 +16,19 @@ Before changing code or docs, read:
 Load the full spec, plan, and local reuse map only when the task touches their
 scope. 'AGENTS.md' defines that routing.
 
+## Toolchain
+
+Use the repo-pinned toolchain before running validation:
+
+~~~bash
+mise install
+~~~
+
+The known working Node runtime is pinned in '.mise.toml' as
+`node = "26.3.0"`. CI uses the same Node version through
+'actions/setup-node'. Keep the local pin and CI runtime aligned when changing
+toolchain compatibility.
+
 ## Scope
 
 Good phase-one changes:
