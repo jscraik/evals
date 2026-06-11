@@ -132,6 +132,10 @@ test("canonical commands are documented where contributors and support agents ne
 });
 
 test("CI workflow runs the deterministic verification gate", () => {
+  assert.ok(exists(".mise.toml"), "mise toolchain pin should exist");
+  const mise = read(".mise.toml");
+  assert.match(mise, /node = "26\.3\.0"/);
+
   assert.ok(exists(".github/workflows/ci.yml"), "CI workflow should exist");
   const workflow = read(".github/workflows/ci.yml");
   assert.match(workflow, /name: Deterministic Evals CI/);
@@ -146,7 +150,7 @@ test("CI workflow runs the deterministic verification gate", () => {
   assert.match(workflow, /uses: pnpm\/action-setup@[0-9a-f]{40}/);
   assert.match(workflow, /uses: actions\/setup-node@[0-9a-f]{40}/);
   assert.doesNotMatch(workflow, /uses: [^\n]+@v\d+/);
-  assert.match(workflow, /node-version: "22"/);
+  assert.match(workflow, /node-version: "26\.3\.0"/);
   assert.match(workflow, /pnpm install --frozen-lockfile/);
   assert.match(workflow, /pnpm verify/);
 
