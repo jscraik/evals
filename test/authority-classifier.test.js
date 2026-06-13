@@ -105,6 +105,8 @@ test("authority classifier emits human approval action when manifest is missing"
   assert.equal(packet.manifest_status, "missing");
   assert.equal(packet.adoption_readiness.status, "missing_input");
   assert.equal(packet.adoption_readiness.next_missing_input, ".evals/project.json");
+  assert.deepEqual(packet.adoption_readiness.warnings, []);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, []);
   assert.equal(packet.human_approval_required_actions.length, 1);
   assertActionItemContract(packet.human_approval_required_actions[0]);
   assert.equal(packet.human_approval_required_actions[0].artifact_path, ".evals/project.json");
@@ -121,6 +123,8 @@ test("authority classifier blocks invalid manifests", () => {
   assert.equal(packet.authority_mode, "blocked");
   assert.equal(packet.adoption_readiness.status, "blocked");
   assert.equal(packet.adoption_readiness.next_missing_input, ".evals/project.json");
+  assert.deepEqual(packet.adoption_readiness.warnings, ["project missing"]);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, [".evals/project.json"]);
   assert.equal(packet.blocked_actions.length, 1);
   assertActionItemContract(packet.blocked_actions[0]);
   assert.match(packet.blocked_actions[0].reason, /manifest is invalid/);
