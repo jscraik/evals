@@ -135,21 +135,28 @@ external repo root.
 
 Architecture Invariant: the external project manifest is target-owned evidence.
 It can declare suite ownership, runtime evidence policy, fixture roots, and
-privacy approval evidence, but it must not become executable adapter
-configuration or a hidden source-mining root.
+privacy approval evidence. Its suite_quality metadata can describe decision
+metrics, guardrails, oracle and evaluator authority context, and residual
+uncertainty, but it must not become executable adapter configuration, target
+product truth, or a hidden source-mining root.
 
 ### src/lib/authority-classifier.js
 
 authority-classifier owns the machine-readable authority packet for external
 repo inspection. It converts manifest state, latest artifact validation,
 runtime evidence state, privacy approval status, and first-slice policy into
-authority_mode, proof_context, non_proof_claims, recovery_guidance,
-agent_next_actions, human_approval_required_actions, and blocked_actions.
+authority_mode, proof_context, non_proof_claims, adoption_readiness,
+recovery_guidance, agent_next_actions, human_approval_required_actions,
+blocked_actions, and evaluator_axis.
 
 Architecture Invariant: absent evidence is not success. The classifier may say
 artifact_only, not_configured, or blocked, but it must not certify target
 behavior, required judge output, CI, PR, review-thread, tracker, or merge
 readiness lanes.
+
+Architecture Invariant: adoption_readiness is an input-completeness and warning
+signal for external artifact-only inspection. It must not be read as target
+product quality, CI, review-thread, tracker, or merge readiness.
 
 ### src/commands
 
@@ -488,10 +495,10 @@ deterministic result shape, and closure evidence model.
 - A new current-state field belongs in runtime-state and its schema.
 - A new runtime evidence rule belongs in runtime-evidence-contract or
   claim-evidence-contract.
-- A new external project manifest rule belongs in external-project-manifest and
-  schemas/external-project-manifest.schema.json.
-- A new authority-mode, proof-context, non-proof-claim, or action-partition
-  rule belongs in authority-classifier and
+- A new external project manifest or suite-quality rule belongs in
+  external-project-manifest and schemas/external-project-manifest.schema.json.
+- A new authority-mode, proof-context, non-proof-claim, adoption-readiness,
+  evaluator-axis, or action-partition rule belongs in authority-classifier and
   schemas/authority-classification.schema.json.
 - A new broad gate belongs in scripts/verify.js only after the narrow proof
   exists.
