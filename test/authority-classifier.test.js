@@ -142,6 +142,15 @@ test("authority classifier marks complete suite quality metadata ready without e
   assert.equal(packet.adoption_readiness.status, "ready");
   assert.equal(packet.adoption_readiness.next_missing_input, null);
   assert.deepEqual(packet.adoption_readiness.warnings, []);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, [
+    ".evals/project.json",
+    "privacy",
+    "authority",
+    "runtime_evidence_policy",
+    "artifact_policy",
+    "execution_policy",
+    "suite_quality"
+  ]);
   assert.equal(packet.evaluator_axis.judge_status_is_authority, false);
   assert.equal(packet.validation.status, "pass");
   assert.equal(schemaCheckFromObject("authorityClassification", packet, "authority-classification").status, "pass");
@@ -196,6 +205,11 @@ test("authority classifier emits human action for pending privacy approval", () 
   });
 
   assert.equal(packet.authority_mode, "not_configured");
+  assert.equal(packet.recovery_guidance.status, "human_required");
+  assert.equal(packet.adoption_readiness.status, "missing_input");
+  assert.equal(packet.adoption_readiness.next_missing_input, ".evals/project.json");
+  assert.match(packet.adoption_readiness.warnings.join("\n"), /privacy approval is pending/);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, [".evals/project.json", "privacy"]);
   assert.equal(packet.human_approval_required_actions[0].action_id, "privacy-approval-pending");
   assert.deepEqual(packet.blocked_actions, []);
 });

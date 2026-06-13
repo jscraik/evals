@@ -117,7 +117,7 @@ function missingSuiteQualityFields(manifest) {
     .map(([, label]) => label);
 }
 
-function adoptionReadiness({ manifestState, authorityMode }) {
+function adoptionReadiness({ manifestState, authorityMode, humanActions }) {
   if (manifestState.status === "missing") {
     return {
       status: "missing_input",
@@ -133,6 +133,15 @@ function adoptionReadiness({ manifestState, authorityMode }) {
       next_missing_input: externalProjectManifestPath,
       warnings: manifestState.errors,
       checked_inputs: [externalProjectManifestPath]
+    };
+  }
+
+  if (humanActions.length > 0) {
+    return {
+      status: "missing_input",
+      next_missing_input: humanActions[0].artifact_path || humanActions[0].source_requirement,
+      warnings: humanActions.map((action) => action.reason),
+      checked_inputs: [externalProjectManifestPath, "privacy"]
     };
   }
 
@@ -283,7 +292,7 @@ export function classifyAuthority(input = {}) {
   }
 
   const authorityMode = classifyMode({ requestedMode, manifestState, runtimeEvidence });
-  const readiness = adoptionReadiness({ manifestState, authorityMode });
+  const readiness = adoptionReadiness({ manifestState, authorityMode, humanActions });
   const packet = {
     schema_version: 1,
     authority_mode: authorityMode,

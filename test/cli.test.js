@@ -454,65 +454,14 @@ test("state reports ready adoption metadata without treating artifact inspection
   const repo = makeRepo();
   const consumer = makeConsumerSuite(repo);
   try {
-    writeFileSync(join(consumer, ".evals", "project.json"), JSON.stringify({
-      schema_version: 1,
-      manifest_version: "2026-06-11",
-      project: {
-        project_id: "consumer-smoke",
-        owner_repo: "jscraik/consumer"
-      },
-      suite_roots: [
-        ".evals"
-      ],
-      authority: {
-        supported_modes: [
-          "artifact_only"
-        ],
-        default_mode: "artifact_only"
-      },
-      runtime_evidence_policy: {
-        required: false,
-        missing_status: "not_configured"
-      },
-      privacy: {
-        privacy_class: "synthetic",
-        approval_status: "not_required",
-        scope: "synthetic fixture suite",
-        data_classes: [
-          "synthetic"
-        ],
-        retention_policy_ref: "not_required",
-        redaction_policy_ref: "not_required"
-      },
-      artifact_policy: {
-        artifact_roots: [
-          ".harness/evals/runs"
-        ],
-        allow_absolute_paths: false,
-        allow_parent_traversal: false
-      },
-      baseline_authority: {
-        owner: "target_project",
-        promotion_status: "not_configured"
-      },
-      execution_policy: {
-        allow_target_execution: false,
-        black_box_execution_status: "blocked"
-      },
-      suite_quality: {
-        steady_state_hypothesis: "PR closeout evidence separates local validation from merge-readiness claims.",
-        decision_metric: "reviewer can identify which closeout claims have artifact evidence",
-        guardrail_metrics: [
-          "CI status remains non-proof without CI evidence"
-        ],
-        unit_of_analysis: "one PR closeout packet",
-        denominator: "all packets selected for the consumer smoke suite",
-        residual_uncertainty: "artifact-only inspection cannot prove product behavior",
-        oracle_type: "artifact_contract",
-        evaluator_authority_status: "deterministic"
-      },
-      unknown_field_policy: "reject"
-    }, null, 2) + "\n");
+    const manifest = parseJson(readFileSync(
+      join(repo, "fixtures", "external-project-manifest", "good", "with-suite-quality.json"),
+      "utf8"
+    ));
+    manifest.project.project_id = "consumer-smoke";
+    manifest.project.display_name = "Consumer Smoke";
+    manifest.project.owner_repo = "jscraik/consumer";
+    writeFileSync(join(consumer, ".evals", "project.json"), JSON.stringify(manifest, null, 2) + "\n");
 
     const stateResult = runCli(repo, ["state", "--repo-root", consumer, "--json"]);
     assert.equal(stateResult.status, 0, stateResult.stderr || stateResult.stdout);
@@ -523,6 +472,15 @@ test("state reports ready adoption metadata without treating artifact inspection
     assert.equal(state.authority_classification.adoption_readiness.status, "ready");
     assert.equal(state.authority_classification.adoption_readiness.next_missing_input, null);
     assert.deepEqual(state.authority_classification.adoption_readiness.warnings, []);
+    assert.deepEqual(state.authority_classification.adoption_readiness.checked_inputs, [
+      ".evals/project.json",
+      "privacy",
+      "authority",
+      "runtime_evidence_policy",
+      "artifact_policy",
+      "execution_policy",
+      "suite_quality"
+    ]);
     assert.match(state.authority_classification.non_proof_claims.join("\n"), /does not prove target project product behavior/);
     assert.deepEqual(
       schemaCheckFromObject("authorityClassification", state.authority_classification, "state authority classification").errors,

@@ -15,7 +15,7 @@ pnpm evals state --repo-root <coding-harness-root> --json
 pnpm evals check --repo-root <coding-harness-root> --json
 ```
 
-The expected first output may still be `not_configured` or `blocked`. That is useful if it names the missing manifest, privacy approval, runtime evidence, artifact packet, or suite-quality field.
+The expected first authority mode may still be `not_configured` or `blocked`. That is useful when `authority_classification.adoption_readiness.status` names the live adoption state: `missing_input`, `blocked`, `warning`, or `ready`.
 
 ## Minimal Manifest Shape
 
@@ -55,7 +55,7 @@ The first adoption slice is useful when:
 
 - `pnpm evals state --repo-root <coding-harness-root> --json` emits `authority_classification.adoption_readiness.status`.
 - Missing adoption input appears in `authority_classification.adoption_readiness.next_missing_input`.
-- Complete suite-quality metadata changes adoption readiness from `warning` to `ready`.
+- Complete suite-quality metadata changes adoption readiness from `warning` to `ready` only when the manifest is valid and `authority_classification.authority_mode` is not `blocked`.
 - `authority_classification.proof_context.target_behavior_execution` remains `false`.
 - The packet still lists target behavior, CI, review, tracker, and merge readiness as non-proof unless explicit evidence exists.
 

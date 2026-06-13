@@ -42,6 +42,16 @@ test("external project manifest accepts optional suite quality metadata", () => 
   assert.deepEqual(result.errors, []);
 });
 
+test("external project manifest rejects empty suite quality guardrail metrics", () => {
+  const manifest = fixture("good/with-suite-quality.json");
+  manifest.suite_quality.guardrail_metrics = [];
+
+  const result = validateExternalProjectManifest(manifest);
+
+  assert.equal(result.status, "fail");
+  assert.match(result.errors.join("\n"), /suite_quality\.guardrail_metrics/);
+});
+
 test("external project manifest requires explicit privacy evidence", () => {
   const result = validateExternalProjectManifest(fixture("bad/missing-privacy-evidence.json"));
 
