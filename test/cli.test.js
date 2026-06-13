@@ -383,6 +383,8 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     assert.equal(validation.authority_classification.authority_mode, "not_configured");
     assert.equal(validation.authority_classification.proof_context.target_behavior_execution, false);
     assert.equal(validation.authority_classification.proof_context.runtime_evidence_status, "not_configured");
+    assert.equal(validation.authority_classification.adoption_readiness.status, "missing_input");
+    assert.equal(validation.authority_classification.adoption_readiness.next_missing_input, ".evals/project.json");
     assert.match(validation.authority_classification.non_proof_claims.join("\n"), /does not prove target project product behavior/);
     assert.equal(validation.authority_classification.human_approval_required_actions.length, 1);
     assert.equal(validation.authority_classification.human_approval_required_actions[0].artifact_path, ".evals/project.json");
@@ -413,6 +415,8 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     assert.equal(state.authority_classification.authority_mode, "not_configured");
     assert.equal(state.authority_classification.proof_context.target_behavior_execution, false);
     assert.equal(state.authority_classification.proof_context.runtime_evidence_status, "not_configured");
+    assert.equal(state.authority_classification.adoption_readiness.status, "missing_input");
+    assert.equal(state.authority_classification.adoption_readiness.next_missing_input, ".evals/project.json");
     assert.equal(state.authority_classification.human_approval_required_actions.length, 1);
     assert.equal(state.authority_classification.human_approval_required_actions[0].artifact_path, ".evals/project.json");
     assert.deepEqual(state.authority_classification.blocked_actions, []);
@@ -440,6 +444,91 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     const missingProducer = runCli(repo, ["check", "--repo-root", consumer, "--json"]);
     assert.equal(missingProducer.status, 1);
     assert.match(parseJson(missingProducer.stdout).errors.join("\n"), /external repo-root packets must include producer provenance/);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("state reports ready adoption metadata without treating artifact inspection as behavior proof", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  try {
+    writeFileSync(join(consumer, ".evals", "project.json"), JSON.stringify({
+      schema_version: 1,
+      manifest_version: "2026-06-11",
+      project: {
+        project_id: "consumer-smoke",
+        owner_repo: "jscraik/consumer"
+      },
+      suite_roots: [
+        ".evals"
+      ],
+      authority: {
+        supported_modes: [
+          "artifact_only"
+        ],
+        default_mode: "artifact_only"
+      },
+      runtime_evidence_policy: {
+        required: false,
+        missing_status: "not_configured"
+      },
+      privacy: {
+        privacy_class: "synthetic",
+        approval_status: "not_required",
+        scope: "synthetic fixture suite",
+        data_classes: [
+          "synthetic"
+        ],
+        retention_policy_ref: "not_required",
+        redaction_policy_ref: "not_required"
+      },
+      artifact_policy: {
+        artifact_roots: [
+          ".harness/evals/runs"
+        ],
+        allow_absolute_paths: false,
+        allow_parent_traversal: false
+      },
+      baseline_authority: {
+        owner: "target_project",
+        promotion_status: "not_configured"
+      },
+      execution_policy: {
+        allow_target_execution: false,
+        black_box_execution_status: "blocked"
+      },
+      suite_quality: {
+        steady_state_hypothesis: "PR closeout evidence separates local validation from merge-readiness claims.",
+        decision_metric: "reviewer can identify which closeout claims have artifact evidence",
+        guardrail_metrics: [
+          "CI status remains non-proof without CI evidence"
+        ],
+        unit_of_analysis: "one PR closeout packet",
+        denominator: "all packets selected for the consumer smoke suite",
+        residual_uncertainty: "artifact-only inspection cannot prove product behavior",
+        oracle_type: "artifact_contract",
+        evaluator_authority_status: "deterministic"
+      },
+      unknown_field_policy: "reject"
+    }, null, 2) + "\n");
+
+    const stateResult = runCli(repo, ["state", "--repo-root", consumer, "--json"]);
+    assert.equal(stateResult.status, 0, stateResult.stderr || stateResult.stdout);
+    const state = parseJson(stateResult.stdout);
+
+    assert.equal(state.authority_classification.authority_mode, "artifact_only");
+    assert.equal(state.authority_classification.proof_context.target_behavior_execution, false);
+    assert.equal(state.authority_classification.adoption_readiness.status, "ready");
+    assert.equal(state.authority_classification.adoption_readiness.next_missing_input, null);
+    assert.deepEqual(state.authority_classification.adoption_readiness.warnings, []);
+    assert.match(state.authority_classification.non_proof_claims.join("\n"), /does not prove target project product behavior/);
+    assert.deepEqual(
+      schemaCheckFromObject("authorityClassification", state.authority_classification, "state authority classification").errors,
+      []
+    );
+    assert.deepEqual(schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json").errors, []);
   } finally {
     cleanup(repo);
     cleanup(consumer);

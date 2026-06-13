@@ -35,6 +35,13 @@ test("external project manifest accepts public not-required privacy evidence", (
   assert.deepEqual(result.errors, []);
 });
 
+test("external project manifest accepts optional suite quality metadata", () => {
+  const result = validateExternalProjectManifest(fixture("good/with-suite-quality.json"));
+
+  assert.equal(result.status, "pass");
+  assert.deepEqual(result.errors, []);
+});
+
 test("external project manifest requires explicit privacy evidence", () => {
   const result = validateExternalProjectManifest(fixture("bad/missing-privacy-evidence.json"));
 

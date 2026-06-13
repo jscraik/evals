@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "manifest_version": "2026-06-11",
+  "project": {
+    "project_id": "quality-target",
+    "display_name": "Quality Target",
+    "owner_repo": "example/quality-target"
+  },
+  "suite_roots": [
+    ".evals"
+  ],
+  "authority": {
+    "supported_modes": [
+      "artifact_only"
+    ],
+    "default_mode": "artifact_only"
+  },
+  "runtime_evidence_policy": {
+    "required": false,
+    "missing_status": "not_configured"
+  },
+  "privacy": {
+    "privacy_class": "synthetic",
+    "approval_status": "not_required",
+    "scope": "synthetic fixtures only",
+    "data_classes": [
+      "synthetic"
+    ],
+    "retention_policy_ref": "not_required",
+    "redaction_policy_ref": "not_required"
+  },
+  "artifact_policy": {
+    "artifact_roots": [
+      ".harness/evals/runs"
+    ],
+    "allow_absolute_paths": false,
+    "allow_parent_traversal": false
+  },
+  "baseline_authority": {
+    "owner": "target_project",
+    "promotion_status": "not_configured"
+  },
+  "execution_policy": {
+    "allow_target_execution": false,
+    "black_box_execution_status": "blocked"
+  },
+  "suite_quality": {
+    "steady_state_hypothesis": "PR closeout evidence separates local validation from CI, review, tracker, and merge-readiness claims.",
+    "decision_metric": "reviewer can classify the closeout claim without relying on prose-only confidence",
+    "guardrail_metrics": [
+      "CI status remains non-proof unless explicit CI evidence is present",
+      "merge readiness remains non-proof unless explicit merge evidence is present"
+    ],
+    "unit_of_analysis": "one PR closeout evidence packet",
+    "denominator": "all PR closeout packets evaluated by this suite",
+    "residual_uncertainty": "artifact-only inspection cannot prove target product behavior",
+    "oracle_type": "artifact_contract",
+    "evaluator_authority_status": "deterministic"
+  },
+  "unknown_field_policy": "reject"
+}

@@ -18,6 +18,17 @@ const defaultNonProofClaims = [
   "artifact-only inspection does not prove merge readiness"
 ];
 
+const suiteQualityFields = [
+  ["steady_state_hypothesis", "suite_quality.steady_state_hypothesis"],
+  ["decision_metric", "suite_quality.decision_metric"],
+  ["guardrail_metrics", "suite_quality.guardrail_metrics"],
+  ["unit_of_analysis", "suite_quality.unit_of_analysis"],
+  ["denominator", "suite_quality.denominator"],
+  ["residual_uncertainty", "suite_quality.residual_uncertainty"],
+  ["oracle_type", "suite_quality.oracle_type"],
+  ["evaluator_authority_status", "suite_quality.evaluator_authority_status"]
+];
+
 function actionItem({
   actionId,
   actor,
@@ -94,6 +105,53 @@ function recoveryStatus({ authorityMode, humanActions, blockedActions, agentActi
   if (humanActions.length > 0) return "human_required";
   if (agentActions.length > 0) return "available";
   return "none";
+}
+
+function missingSuiteQualityFields(manifest) {
+  const quality = manifest?.suite_quality || {};
+  return suiteQualityFields
+    .filter(([field]) => {
+      const value = quality[field];
+      return Array.isArray(value) ? value.length === 0 : typeof value !== "string" || value.length === 0;
+    })
+    .map(([, label]) => label);
+}
+
+function adoptionReadiness({ manifestState, authorityMode }) {
+  if (manifestState.status === "missing") {
+    return {
+      status: "missing_input",
+      next_missing_input: externalProjectManifestPath,
+      warnings: [],
+      checked_inputs: []
+    };
+  }
+
+  if (manifestState.status === "invalid") {
+    return {
+      status: "blocked",
+      next_missing_input: externalProjectManifestPath,
+      warnings: manifestState.errors,
+      checked_inputs: [externalProjectManifestPath]
+    };
+  }
+
+  const missingFields = missingSuiteQualityFields(manifestState.manifest);
+  const warnings = missingFields.map((field) => field + " is not declared; suite quality signal remains warning-only");
+  return {
+    status: authorityMode === "blocked" ? "blocked" : warnings.length > 0 ? "warning" : "ready",
+    next_missing_input: missingFields[0] || null,
+    warnings,
+    checked_inputs: [
+      externalProjectManifestPath,
+      "privacy",
+      "authority",
+      "runtime_evidence_policy",
+      "artifact_policy",
+      "execution_policy",
+      "suite_quality"
+    ]
+  };
 }
 
 function actionPartitionContractErrors(packet) {
@@ -225,6 +283,7 @@ export function classifyAuthority(input = {}) {
   }
 
   const authorityMode = classifyMode({ requestedMode, manifestState, runtimeEvidence });
+  const readiness = adoptionReadiness({ manifestState, authorityMode });
   const packet = {
     schema_version: 1,
     authority_mode: authorityMode,
@@ -238,6 +297,7 @@ export function classifyAuthority(input = {}) {
       black_box_execution_status: "blocked"
     },
     non_proof_claims: defaultNonProofClaims,
+    adoption_readiness: readiness,
     recovery_guidance: {
       status: recoveryStatus({ authorityMode, humanActions, blockedActions, agentActions }),
       commands: agentActions.map((action) => action.command).filter((command) => typeof command === "string"),
