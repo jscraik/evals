@@ -52,6 +52,16 @@ test("external project manifest rejects empty suite quality guardrail metrics", 
   assert.match(result.errors.join("\n"), /suite_quality\.guardrail_metrics/);
 });
 
+test("external project manifest rejects suite quality without guardrail metrics", () => {
+  const manifest = fixture("good/with-suite-quality.json");
+  delete manifest.suite_quality.guardrail_metrics;
+
+  const result = validateExternalProjectManifest(manifest);
+
+  assert.equal(result.status, "fail");
+  assert.match(result.errors.join("\n"), /suite_quality\.guardrail_metrics: missing required property/);
+});
+
 test("external project manifest requires explicit privacy evidence", () => {
   const result = validateExternalProjectManifest(fixture("bad/missing-privacy-evidence.json"));
 
