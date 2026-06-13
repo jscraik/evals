@@ -82,7 +82,7 @@ This validation pass checked the review against source-specific themes extracted
 | Trustworthy Online Controlled Experiments | Direct text extraction      | hypotheses, key metrics, Overall Evaluation Criterion, guardrails, trustworthiness checks, Twyman's law, Simpson's paradox, carryover effects, network interactions                | Add experiment-design metadata before cross-repo or agent comparisons become authoritative.                              |
 | How to Measure Anything                   | Direct text extraction      | uncertainty, risk, calibrated estimates, value of information, random sampling, controlled experiments, human judges                                                               | Rank future eval work by uncertainty reduction and decision value, not by metric availability.                           |
 | Lessons Learned in Software Testing       | OCR sample from scanned PDF | context-driven testing, exploratory testing, lessons are not universal best practices, pilot studies, risk of uncritical adoption                                                  | Add exploratory charters, oracle notes, coverage notes, and context checks before freezing consumer suites.              |
-| AI evals study guide                      | Markdown text               | traces first, error analysis before judges, datasets, guardrails, safety, judge validation, TPR/TNR, false positives/false negatives, correction for judge error, production loops | Keep required LLM judges blocked in phase one while adding judge-readiness and trace-to-error-taxonomy metadata.         |
+| AI evals study guide                      | Markdown text               | traces first, error analysis before judges, datasets, guardrails, safety, judge validation, TPR/TNR, false positives/false negatives, correction for judge error, production loops | Keep required LLM judges blocked in phase one while adding evaluator_authority_status and trace-to-error-taxonomy metadata. |
 
 The validation did not require copying source text into this review. The review uses the books as lenses and keeps the repository's artifact authority boundaries intact.
 
@@ -569,7 +569,7 @@ High-leverage elevation moves:
 
 2. Add a safe external classification command.
 
-   It should classify a consumer repo's declared eval readiness without executing black-box code.
+   It should classify a consumer repo's declared adoption readiness without executing black-box code.
 
 3. Add a narrow black-box execution lane.
 
@@ -585,7 +585,7 @@ High-leverage elevation moves:
 
 6. Add warning-only suite quality metadata.
 
-   Begin with decision metric, guardrail, denominator, oracle type, residual uncertainty, and judge-readiness status.
+   Begin with decision metric, guardrail, denominator, oracle type, residual uncertainty, and evaluator_authority_status.
 
 ## 11. Future Constraints
 
@@ -688,7 +688,7 @@ coding-harness is the best first market for evals because it already feels the p
 - Add a fixture consumer repo in tests to exercise manifest classification.
 - Create one coding-harness adoption draft without executing project code.
 - Make pnpm evals state output point to the next missing adoption input when local_project_truth_status is not_evaluated.
-- Add warning-only suite checks for decision metric, guardrail, oracle type, residual uncertainty, and judge-readiness.
+- Add warning-only suite checks for decision metric, guardrail, oracle type, residual uncertainty, and evaluator_authority_status.
 
 ### High-Leverage Changes
 
@@ -752,7 +752,7 @@ Goal: increase adoption capacity.
 Actions:
 
 - Add a scaffold command for .evals/project.json and starter suites.
-- Add no-execution consumer readiness scoring.
+- Add no-execution consumer adoption readiness classification.
 - Add narrowly sandboxed black-box execution only after privacy and side-effect contracts are explicit.
 - Add reviewer packet summaries.
 - Add uncertainty, oracle, and evaluator-authority metadata once the first consumer route proves useful.
@@ -770,7 +770,7 @@ Actions:
 - Govern baseline promotion.
 - Improve fixture challenge quality.
 - Track reviewer comprehension time.
-- Separate adoption readiness scores from product quality scores.
+- Separate adoption readiness status from product quality scores.
 - Prevent cross-repo comparison from becoming false precision.
 - Track experiment validity, oracle quality, error taxonomy drift, and judge calibration debt.
 

@@ -194,16 +194,19 @@ Current public packet versions are:
 - embedded claim and evidence records: `schema_version: 1`
 
 The runtime state and runtime evidence packet versions were bumped when shared
-contract metadata, runtime-evidence health, and advisory external-root readiness
-became part of the public shape. Claim and evidence records stayed at version 1
-because their individual record contract did not change.
+contract metadata, runtime-evidence health, and advisory external-root
+`authority_classification.adoption_readiness` became part of the public shape.
+Claim and evidence records stayed at version 1 because their individual record
+contract did not change.
 
 When `--repo-root` points at another repository, `pnpm evals check --repo-root
 <path> --json` validates artifact consistency only. Until that repository has
 an explicit runtime-evidence policy, the command fails the runtime-evidence
-coverage check and the state packet's readiness verdict remains fail/advisory.
-That prevents a self-consistent artifact bundle from being mistaken for project
-readiness.
+coverage check and the state packet's runtime readiness verdict remains
+fail/advisory. `authority_classification.adoption_readiness` separately reports
+whether the target supplied manifest, privacy, execution-policy,
+artifact-policy, and suite-quality inputs for artifact-only inspection. Neither
+field certifies target behavior, CI, review, tracker, or merge readiness.
 
 Phase-one run artifacts are retained locally. Automatic retention duration is
 not defined yet; keep committed artifact bundles only when they are part of
