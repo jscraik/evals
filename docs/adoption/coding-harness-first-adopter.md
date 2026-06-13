@@ -19,13 +19,20 @@ The expected first authority mode may still be `not_configured` or `blocked`. Th
 
 ## Minimal Manifest Shape
 
-The first `.evals/project.json` should declare:
+The first `.evals/project.json` should declare at least the required schema fields:
 
 - `suite_roots`: the target-owned suite directory, usually `.evals`.
+- `authority.supported_modes`: include `artifact_only`.
 - `authority.default_mode`: `artifact_only`.
 - `runtime_evidence_policy.required`: `false` until coding-harness has target-owned runtime evidence ready for evals to classify.
+- `runtime_evidence_policy.missing_status`: `not_configured`.
+- `privacy.privacy_class`: the target-owned privacy class for this suite.
 - `privacy.approval_status`: `not_required`, `approved`, `pending`, `blocked`, or `expired`.
+- `privacy.scope`: the approved evidence scope.
+- `privacy.data_classes`: the data classes the suite may inspect.
 - `artifact_policy.artifact_roots`: target-owned run artifact roots.
+- `artifact_policy.allow_absolute_paths`: `false`.
+- `artifact_policy.allow_parent_traversal`: `false`.
 - `execution_policy.allow_target_execution`: `false`.
 - `execution_policy.black_box_execution_status`: `blocked`.
 - `suite_quality`: warning-only metadata for the first PR closeout suite.

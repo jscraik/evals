@@ -54,7 +54,16 @@ This review used current repository evidence, not memory alone:
 - Lessons Learned in Software Testing, Cem Kaner, James Bach, and Bret Pettichord, used as a context-driven testing lens
 - AI Evals For Engineers, PMs & QAs: Complete Study Guide, used as an AI-eval operations lens
 
-The search found no .evals/project.json adoption manifests in the sampled downstream roots. That is the most important live adoption signal in this review.
+Downstream manifest search evidence:
+
+```bash
+fd -a '^project\\.json$' /Users/jamiecraik/dev/coding-harness/.evals /Users/jamiecraik/dev/coding-harness
+fd -a '^project\\.json$' /Users/jamiecraik/dev/agent-skills/.evals /Users/jamiecraik/dev/agent-skills
+fd -a '^project\\.json$' /Users/jamiecraik/.agents/session-collector/.evals /Users/jamiecraik/.agents/session-collector
+fd -a '^project\\.json$' /Users/jamiecraik/.agents/otel-collector/.evals /Users/jamiecraik/.agents/otel-collector
+```
+
+All four commands returned exit 0 with empty output during the 2026-06-13 validation pass, so no .evals/project.json adoption manifests were observed in the sampled coding-harness, agent-skills, session-collector, or otel-collector roots. That is the most important live adoption signal in this review.
 
 Attachment validation update:
 
