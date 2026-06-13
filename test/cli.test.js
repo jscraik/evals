@@ -383,6 +383,8 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     assert.equal(validation.authority_classification.authority_mode, "not_configured");
     assert.equal(validation.authority_classification.proof_context.target_behavior_execution, false);
     assert.equal(validation.authority_classification.proof_context.runtime_evidence_status, "not_configured");
+    assert.equal(validation.authority_classification.adoption_readiness.status, "missing_input");
+    assert.equal(validation.authority_classification.adoption_readiness.next_missing_input, ".evals/project.json");
     assert.match(validation.authority_classification.non_proof_claims.join("\n"), /does not prove target project product behavior/);
     assert.equal(validation.authority_classification.human_approval_required_actions.length, 1);
     assert.equal(validation.authority_classification.human_approval_required_actions[0].artifact_path, ".evals/project.json");
@@ -413,6 +415,8 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     assert.equal(state.authority_classification.authority_mode, "not_configured");
     assert.equal(state.authority_classification.proof_context.target_behavior_execution, false);
     assert.equal(state.authority_classification.proof_context.runtime_evidence_status, "not_configured");
+    assert.equal(state.authority_classification.adoption_readiness.status, "missing_input");
+    assert.equal(state.authority_classification.adoption_readiness.next_missing_input, ".evals/project.json");
     assert.equal(state.authority_classification.human_approval_required_actions.length, 1);
     assert.equal(state.authority_classification.human_approval_required_actions[0].artifact_path, ".evals/project.json");
     assert.deepEqual(state.authority_classification.blocked_actions, []);
@@ -440,6 +444,49 @@ test("check and state can inspect repo-local suite artifacts by repo root", () =
     const missingProducer = runCli(repo, ["check", "--repo-root", consumer, "--json"]);
     assert.equal(missingProducer.status, 1);
     assert.match(parseJson(missingProducer.stdout).errors.join("\n"), /external repo-root packets must include producer provenance/);
+  } finally {
+    cleanup(repo);
+    cleanup(consumer);
+  }
+});
+
+test("state reports ready adoption metadata without treating artifact inspection as behavior proof", () => {
+  const repo = makeRepo();
+  const consumer = makeConsumerSuite(repo);
+  try {
+    const manifest = parseJson(readFileSync(
+      join(repo, "fixtures", "external-project-manifest", "good", "with-suite-quality.json"),
+      "utf8"
+    ));
+    manifest.project.project_id = "consumer-smoke";
+    manifest.project.display_name = "Consumer Smoke";
+    manifest.project.owner_repo = "jscraik/consumer";
+    writeFileSync(join(consumer, ".evals", "project.json"), JSON.stringify(manifest, null, 2) + "\n");
+
+    const stateResult = runCli(repo, ["state", "--repo-root", consumer, "--json"]);
+    assert.equal(stateResult.status, 0, stateResult.stderr || stateResult.stdout);
+    const state = parseJson(stateResult.stdout);
+
+    assert.equal(state.authority_classification.authority_mode, "artifact_only");
+    assert.equal(state.authority_classification.proof_context.target_behavior_execution, false);
+    assert.equal(state.authority_classification.adoption_readiness.status, "ready");
+    assert.equal(state.authority_classification.adoption_readiness.next_missing_input, null);
+    assert.deepEqual(state.authority_classification.adoption_readiness.warnings, []);
+    assert.deepEqual(state.authority_classification.adoption_readiness.checked_inputs, [
+      ".evals/project.json",
+      "privacy",
+      "authority",
+      "runtime_evidence_policy",
+      "artifact_policy",
+      "execution_policy",
+      "suite_quality"
+    ]);
+    assert.match(state.authority_classification.non_proof_claims.join("\n"), /does not prove target project product behavior/);
+    assert.deepEqual(
+      schemaCheckFromObject("authorityClassification", state.authority_classification, "state authority classification").errors,
+      []
+    );
+    assert.deepEqual(schemaCheckFromObject("state", state, ".harness/evals/runs/latest.json").errors, []);
   } finally {
     cleanup(repo);
     cleanup(consumer);

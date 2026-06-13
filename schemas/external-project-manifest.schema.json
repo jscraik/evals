@@ -260,6 +260,68 @@
         }
       }
     },
+    "suite_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guardrail_metrics"
+      ],
+      "properties": {
+        "steady_state_hypothesis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_metric": {
+          "type": "string",
+          "minLength": 1
+        },
+        "guardrail_metrics": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "unit_of_analysis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "denominator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "residual_uncertainty": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oracle_type": {
+          "type": "string",
+          "enum": [
+            "artifact_contract",
+            "schema",
+            "human_rubric",
+            "baseline",
+            "policy",
+            "metamorphic",
+            "llm_advisory",
+            "mixed"
+          ]
+        },
+        "evaluator_authority_status": {
+          "type": "string",
+          "enum": [
+            "deterministic",
+            "human_labeled",
+            "llm_advisory",
+            "llm_calibrated",
+            "statistically_corrected",
+            "blocked"
+          ]
+        }
+      }
+    },
     "unknown_field_policy": {
       "type": "string",
       "const": "reject"

@@ -11,6 +11,7 @@
     "manifest_status",
     "proof_context",
     "non_proof_claims",
+    "adoption_readiness",
     "recovery_guidance",
     "agent_next_actions",
     "human_approval_required_actions",
@@ -90,6 +91,48 @@
       "items": {
         "type": "string",
         "minLength": 1
+      }
+    },
+    "adoption_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "next_missing_input",
+        "warnings",
+        "checked_inputs"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "warning",
+            "missing_input",
+            "blocked"
+          ]
+        },
+        "next_missing_input": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "checked_inputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "recovery_guidance": {

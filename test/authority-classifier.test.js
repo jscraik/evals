@@ -86,6 +86,9 @@ test("authority classifier emits artifact-only authority for valid manifest and 
   assert.deepEqual(packet.agent_next_actions, []);
   assert.deepEqual(packet.human_approval_required_actions, []);
   assert.deepEqual(packet.blocked_actions, []);
+  assert.equal(packet.adoption_readiness.status, "warning");
+  assert.equal(packet.adoption_readiness.next_missing_input, "suite_quality.steady_state_hypothesis");
+  assert.match(packet.adoption_readiness.warnings.join("\n"), /suite_quality\.decision_metric/);
   assert.match(packet.non_proof_claims.join("\n"), /does not prove target project product behavior/);
   assert.equal(packet.validation.status, "pass");
   assert.equal(schemaCheckFromObject("authorityClassification", packet, "authority-classification").status, "pass");
@@ -100,6 +103,10 @@ test("authority classifier emits human approval action when manifest is missing"
 
   assert.equal(packet.authority_mode, "not_configured");
   assert.equal(packet.manifest_status, "missing");
+  assert.equal(packet.adoption_readiness.status, "missing_input");
+  assert.equal(packet.adoption_readiness.next_missing_input, ".evals/project.json");
+  assert.deepEqual(packet.adoption_readiness.warnings, []);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, []);
   assert.equal(packet.human_approval_required_actions.length, 1);
   assertActionItemContract(packet.human_approval_required_actions[0]);
   assert.equal(packet.human_approval_required_actions[0].artifact_path, ".evals/project.json");
@@ -114,9 +121,39 @@ test("authority classifier blocks invalid manifests", () => {
   });
 
   assert.equal(packet.authority_mode, "blocked");
+  assert.equal(packet.adoption_readiness.status, "blocked");
+  assert.equal(packet.adoption_readiness.next_missing_input, ".evals/project.json");
+  assert.deepEqual(packet.adoption_readiness.warnings, ["project missing"]);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, [".evals/project.json"]);
   assert.equal(packet.blocked_actions.length, 1);
   assertActionItemContract(packet.blocked_actions[0]);
   assert.match(packet.blocked_actions[0].reason, /manifest is invalid/);
+});
+
+test("authority classifier marks complete suite quality metadata ready without elevating behavior authority", () => {
+  const packet = classifyAuthority({
+    manifestState: manifestStateFromFixture("good/with-suite-quality.json"),
+    runtimeEvidence: { status: "not_configured", required: false },
+    latestValidation: latestPassed()
+  });
+
+  assert.equal(packet.authority_mode, "artifact_only");
+  assert.equal(packet.proof_context.target_behavior_execution, false);
+  assert.equal(packet.adoption_readiness.status, "ready");
+  assert.equal(packet.adoption_readiness.next_missing_input, null);
+  assert.deepEqual(packet.adoption_readiness.warnings, []);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, [
+    ".evals/project.json",
+    "privacy",
+    "authority",
+    "runtime_evidence_policy",
+    "artifact_policy",
+    "execution_policy",
+    "suite_quality"
+  ]);
+  assert.equal(packet.evaluator_axis.judge_status_is_authority, false);
+  assert.equal(packet.validation.status, "pass");
+  assert.equal(schemaCheckFromObject("authorityClassification", packet, "authority-classification").status, "pass");
 });
 
 test("authority classifier treats required missing runtime evidence as blocked", () => {
@@ -168,6 +205,11 @@ test("authority classifier emits human action for pending privacy approval", () 
   });
 
   assert.equal(packet.authority_mode, "not_configured");
+  assert.equal(packet.recovery_guidance.status, "human_required");
+  assert.equal(packet.adoption_readiness.status, "missing_input");
+  assert.equal(packet.adoption_readiness.next_missing_input, ".evals/project.json");
+  assert.match(packet.adoption_readiness.warnings.join("\n"), /privacy approval is pending/);
+  assert.deepEqual(packet.adoption_readiness.checked_inputs, [".evals/project.json", "privacy"]);
   assert.equal(packet.human_approval_required_actions[0].action_id, "privacy-approval-pending");
   assert.deepEqual(packet.blocked_actions, []);
 });
