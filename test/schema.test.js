@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -637,6 +637,121 @@ test("eval improvement validation rejects promoted packets linked to non-promoti
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("eval improvement validation rejects promoted packets linked outside the case-promotion root", () => {
+  const root = mkdtempSync(join(tmpdir(), "eval-improvement-outside-promotion-root-"));
+  try {
+    copyContractFixtures(root);
+    mkdirSync(join(root, ".harness", "eval-improvements"), { recursive: true });
+    mkdirSync(join(root, ".harness", "reframes"), { recursive: true });
+
+    const promotion = basePromotionPacket();
+    const promotionRef = ".harness/reframes/schema-valid-promotion.json";
+    writeFileSync(join(root, promotion.source_failure.source_artifact_ref), "# Source failure\n");
+    writeFileSync(join(root, promotionRef), JSON.stringify(promotion, null, 2));
+    writeFileSync(
+      join(root, ".harness", "eval-improvements", "outside-promotion-root.json"),
+      JSON.stringify(improvementForPromotion(promotion, promotionRef), null, 2)
+    );
+
+    const validation = validateEvalImprovements(root);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /linked case promotion must be a JSON file directly under \.harness\/case-promotions/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("eval improvement validation runs linked case-promotion semantic checks", () => {
+  const root = mkdtempSync(join(tmpdir(), "eval-improvement-promotion-semantics-"));
+  try {
+    copyContractFixtures(root);
+    mkdirSync(join(root, ".harness", "case-promotions"), { recursive: true });
+    mkdirSync(join(root, ".harness", "eval-improvements"), { recursive: true });
+    mkdirSync(join(root, ".harness", "reframes"), { recursive: true });
+
+    const promotion = {
+      ...basePromotionPacket(),
+      deterministic_case: {
+        ...basePromotionPacket().deterministic_case,
+        target_fixture_path: "README.md"
+      }
+    };
+    const promotionRef = ".harness/case-promotions/schema-valid-but-not-shared-contract-failure.json";
+    writeFileSync(join(root, "README.md"), "# Existing but not a shared-contract bad fixture\n");
+    writeFileSync(join(root, promotion.source_failure.source_artifact_ref), "# Source failure\n");
+    writeFileSync(join(root, promotionRef), JSON.stringify(promotion, null, 2));
+    writeFileSync(
+      join(root, ".harness", "eval-improvements", "semantic-failure.json"),
+      JSON.stringify(improvementForPromotion(promotion, promotionRef), null, 2)
+    );
+
+    const validation = validateEvalImprovements(root);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /validated promotions must point to a shared-contract bad fixture/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+function basePromotionPacket() {
+  return JSON.parse(readFileSync(join(sourceRoot, ".harness", "case-promotions", "2026-06-19-coding-harness-local-validation-not-merge-readiness.json"), "utf8"));
+}
+
+function copyContractFixtures(root) {
+  cpSync(join(sourceRoot, "contracts"), join(root, "contracts"), { recursive: true });
+  cpSync(join(sourceRoot, "fixtures", "contracts"), join(root, "fixtures", "contracts"), { recursive: true });
+}
+
+function improvementForPromotion(promotion, promotionRef) {
+  return {
+    schema_version: 1,
+    improvement_id: "eval-improvement:test:" + promotionRef.split("/").pop().replace(/\.json$/, ""),
+    source_evidence: {
+      origin: "mixed",
+      origin_path_policy: "external_origin_named_only",
+      repo_evidence_refs: [promotion.source_failure.source_artifact_ref, promotionRef],
+      contains_private_content: false,
+      contains_credentials: false,
+      redaction_status: "synthetic_no_redaction_needed"
+    },
+    feedback: {
+      reviewer_role: "human",
+      feedback_type: "wrong-authority-claim",
+      expected_behavior: "Keep local validation separate from merge readiness.",
+      failure_mode: "Local validation was treated as merge readiness.",
+      feedback_refs: [
+        promotion.source_failure.source_artifact_ref,
+        "fixtures/contracts/bad/local-pass-pr-done.md",
+        "fixtures/contracts/good/local-pass-ci-unknown.md"
+      ]
+    },
+    candidate_eval: {
+      candidate_type: "case-promotion",
+      assertion_shape: "trace-feedback-handoff",
+      oracle_type: "policy",
+      evaluator_authority_status: "deterministic",
+      coverage_dimensions: ["boundary-claim"]
+    },
+    promotion_decision: {
+      status: "promoted",
+      case_promotion_ref: promotionRef,
+      target_fixture_path: promotion.deterministic_case.target_fixture_path,
+      decision_reason: "Exercise linked case-promotion validation semantics."
+    },
+    authority_boundary: {
+      imports_external_runtime_dependency: false,
+      reads_user_agents_runtime_store: false,
+      requires_llm_judge_gate: false,
+      proves: ["linked promotion semantics are enforced"],
+      does_not_prove: ["external PR readiness"]
+    },
+    validation: {
+      status: "validated",
+      commands: ["node scripts/validate-eval-improvements.js"]
+    }
+  };
+}
 
 test("claim registry schema represents unevaluable claims explicitly", () => {
   const registrySchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "claim-registry.schema.json"), "utf8"));

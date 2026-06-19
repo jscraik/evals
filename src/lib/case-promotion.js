@@ -6,7 +6,7 @@ import { readJson } from "./json.js";
 import { insideRoot, rel, repoRoot } from "./paths.js";
 import { schemaCheckFromObject } from "./schema.js";
 
-const promotionRoot = ".harness/case-promotions";
+export const promotionRoot = ".harness/case-promotions";
 
 function promotionDir(root) {
   return join(root, promotionRoot);
@@ -103,7 +103,7 @@ function validatePromotionSemantics(promotion, promotionPath, root, catalogResul
   };
 }
 
-function validatePromotionFile(promotionPath, root, catalogResult) {
+export function validateCasePromotionFile(promotionPath, root, catalogResult = validateContractCatalog(root)) {
   let promotion;
   try {
     promotion = readJson(promotionPath);
@@ -142,7 +142,7 @@ function validatePromotionFile(promotionPath, root, catalogResult) {
 export function validateCasePromotions(root = repoRoot) {
   const catalogResult = validateContractCatalog(root);
   const promotionFiles = listPromotionFiles(root);
-  const checks = promotionFiles.map((promotionPath) => validatePromotionFile(promotionPath, root, catalogResult));
+  const checks = promotionFiles.map((promotionPath) => validateCasePromotionFile(promotionPath, root, catalogResult));
   const errors = [];
   if (promotionFiles.length === 0) errors.push(promotionRoot + ": no case-promotion JSON files found");
   errors.push(...checks.flatMap((check) => check.errors));

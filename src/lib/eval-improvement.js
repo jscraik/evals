@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 
+import { promotionRoot, validateCasePromotionFile } from "./case-promotion.js";
 import { readJson } from "./json.js";
 import { insideRoot, rel, repoRoot } from "./paths.js";
 import { schemaCheckFromObject } from "./schema.js";
@@ -40,18 +41,23 @@ function validateLinkedCasePromotion(errors, root, improvement) {
   const promotionRef = improvement.promotion_decision?.case_promotion_ref;
   if (!promotionRef) return;
 
+  if (!isDirectCasePromotionRef(promotionRef)) {
+    errors.push("promotion_decision.case_promotion_ref: linked case promotion must be a JSON file directly under " + promotionRoot);
+  }
+
   let promotion;
+  let promotionPath;
   try {
-    promotion = readJson(insideRoot(root, promotionRef, "evals repository"));
+    promotionPath = insideRoot(root, promotionRef, "evals repository");
+    promotion = readJson(promotionPath);
   } catch (error) {
     errors.push("promotion_decision.case_promotion_ref: linked case promotion is unreadable: " + error.message);
     return;
   }
 
-  const schemaCheck = schemaCheckFromObject("casePromotion", promotion, promotionRef);
-  if (schemaCheck.status !== "pass") {
-    errors.push("promotion_decision.case_promotion_ref: linked file is not a valid case-promotion packet: " + schemaCheck.errors.join("; "));
-    return;
+  const promotionCheck = validateCasePromotionFile(promotionPath, root);
+  if (promotionCheck.status !== "pass") {
+    errors.push("promotion_decision.case_promotion_ref: linked case promotion failed validation: " + promotionCheck.errors.join("; "));
   }
 
   if (promotion.validation?.status !== "validated") {
@@ -71,6 +77,15 @@ function validateLinkedCasePromotion(errors, root, improvement) {
   if (!evidenceRefs.has(promotion.source_failure?.source_artifact_ref)) {
     errors.push("promotion_decision.case_promotion_ref: linked promotion source_failure.source_artifact_ref must be included in improvement evidence refs");
   }
+}
+
+function isDirectCasePromotionRef(ref) {
+  if (typeof ref !== "string") return false;
+  const normalized = ref.replace(/\\/g, "/");
+  const prefix = promotionRoot + "/";
+  if (!normalized.startsWith(prefix)) return false;
+  const name = normalized.slice(prefix.length);
+  return name.endsWith(".json") && !name.includes("/");
 }
 
 function validateImprovementSemantics(improvement, improvementPath, root) {
