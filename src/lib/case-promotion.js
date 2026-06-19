@@ -21,13 +21,13 @@ function listPromotionFiles(root) {
     .sort();
 }
 
-function assertionResultsForTargetFixture(root, targetFixturePath) {
-  return validateContractCatalog(root).checks
+function assertionResultsForTargetFixture(catalogResult, targetFixturePath) {
+  return catalogResult.checks
     .flatMap((check) => check.assertion_results || [])
     .filter((result) => result.fixture_path === targetFixturePath);
 }
 
-function validatePromotionSemantics(promotion, promotionPath, root) {
+function validatePromotionSemantics(promotion, promotionPath, root, catalogResult) {
   const errors = [];
   const sourceRef = promotion.source_failure?.source_artifact_ref;
   const targetFixturePath = promotion.deterministic_case?.target_fixture_path;
@@ -74,7 +74,7 @@ function validatePromotionSemantics(promotion, promotionPath, root) {
   }
 
   if (promotion.validation?.status === "validated") {
-    const results = assertionResultsForTargetFixture(root, targetFixturePath);
+    const results = assertionResultsForTargetFixture(catalogResult, targetFixturePath);
     const matchingFailure = results.find((result) => (
       result.status === "pass" &&
       result.expected_status === "fail" &&
@@ -103,7 +103,7 @@ function validatePromotionSemantics(promotion, promotionPath, root) {
   };
 }
 
-function validatePromotionFile(promotionPath, root) {
+function validatePromotionFile(promotionPath, root, catalogResult) {
   let promotion;
   try {
     promotion = readJson(promotionPath);
@@ -119,7 +119,7 @@ function validatePromotionFile(promotionPath, root) {
 
   const schemaCheck = schemaCheckFromObject("casePromotion", promotion, promotionPath);
   const semanticCheck = schemaCheck.status === "pass"
-    ? validatePromotionSemantics(promotion, promotionPath, root)
+    ? validatePromotionSemantics(promotion, promotionPath, root, catalogResult)
     : {
       label: "case promotion semantics",
       schema_path: "semantic case-promotion contract",
@@ -140,8 +140,9 @@ function validatePromotionFile(promotionPath, root) {
 }
 
 export function validateCasePromotions(root = repoRoot) {
+  const catalogResult = validateContractCatalog(root);
   const promotionFiles = listPromotionFiles(root);
-  const checks = promotionFiles.map((promotionPath) => validatePromotionFile(promotionPath, root));
+  const checks = promotionFiles.map((promotionPath) => validatePromotionFile(promotionPath, root, catalogResult));
   const errors = [];
   if (promotionFiles.length === 0) errors.push(promotionRoot + ": no case-promotion JSON files found");
   errors.push(...checks.flatMap((check) => check.errors));

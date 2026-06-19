@@ -323,6 +323,7 @@ test("case promotion records keep real-case adoption manual and deterministic", 
   const promotionDir = join(sourceRoot, ".harness", "case-promotions");
   const promotions = readdirSync(promotionDir)
     .filter((file) => file.endsWith(".json"))
+    .sort()
     .map((file) => JSON.parse(readFileSync(join(promotionDir, file), "utf8")));
 
   assert.equal(schemaTargets.casePromotion.label, "case promotion");
@@ -472,10 +473,12 @@ test("case promotion records keep real-case adoption manual and deterministic", 
 });
 
 test("case promotion validation links candidates to deterministic shared-contract failures", () => {
+  const promotionDir = join(sourceRoot, ".harness", "case-promotions");
+  const expectedPromotionCount = readdirSync(promotionDir).filter((file) => file.endsWith(".json")).length;
   const validation = validateCasePromotions(sourceRoot);
 
   assert.equal(validation.status, "passed");
-  assert.equal(validation.promotions_checked, 1);
+  assert.equal(validation.promotions_checked, expectedPromotionCount);
   assert.equal(validation.checks[0].checks[0].label, "case promotion");
   assert.equal(validation.checks[0].checks[1].label, "case promotion semantics");
 });
@@ -485,6 +488,7 @@ test("eval improvement packets bridge traces and feedback without runtime author
   const improvementDir = join(sourceRoot, ".harness", "eval-improvements");
   const improvements = readdirSync(improvementDir)
     .filter((file) => file.endsWith(".json"))
+    .sort()
     .map((file) => JSON.parse(readFileSync(join(improvementDir, file), "utf8")));
 
   assert.equal(schemaTargets.evalImprovement.label, "eval improvement packet");
@@ -548,10 +552,12 @@ test("eval improvement packets bridge traces and feedback without runtime author
 });
 
 test("eval improvement validation links promoted packets to deterministic case promotions", () => {
+  const improvementDir = join(sourceRoot, ".harness", "eval-improvements");
+  const expectedImprovementCount = readdirSync(improvementDir).filter((file) => file.endsWith(".json")).length;
   const validation = validateEvalImprovements(sourceRoot);
 
   assert.equal(validation.status, "passed");
-  assert.equal(validation.improvements_checked, 1);
+  assert.equal(validation.improvements_checked, expectedImprovementCount);
   assert.equal(validation.checks[0].checks[0].label, "eval improvement packet");
   assert.equal(validation.checks[0].checks[1].label, "eval improvement semantics");
 });
