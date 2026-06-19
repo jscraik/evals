@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/case-promotion.schema.json",
+  "title": "Case Promotion",
+  "description": "Manual bridge from a sanitized downstream failure to a deterministic eval case without importing sibling runtime authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "promotion_id",
+    "source_failure",
+    "safety_boundary",
+    "quality_evidence",
+    "deterministic_case",
+    "decision_value",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "promotion_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+    "source_failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_system",
+        "source_artifact_ref",
+        "observed_failure_class",
+        "observed_at",
+        "redaction_status",
+        "contains_private_content",
+        "contains_credentials"
+      ],
+      "properties": {
+        "source_system": { "type": "string", "enum": ["coding-harness", "agent-skills", "evals", "other"] },
+        "source_artifact_ref": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" },
+        "observed_failure_class": {
+          "type": "string",
+          "enum": [
+            "local-validation-misread-as-merge-readiness",
+            "missing-review-thread-evidence",
+            "missing-tracker-evidence",
+            "artifact-claim-without-manifest-evidence",
+            "unclassified"
+          ]
+        },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "redaction_status": { "type": "string", "enum": ["redacted", "synthetic_no_redaction_needed"] },
+        "contains_private_content": { "type": "boolean", "const": false },
+        "contains_credentials": { "type": "boolean", "const": false }
+      }
+    },
+    "safety_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "imports_sibling_runtime_dependency",
+        "requires_source_mining",
+        "requires_black_box_execution",
+        "requires_dashboard",
+        "requires_llm_judge_gate",
+        "external_authority_claims"
+      ],
+      "properties": {
+        "imports_sibling_runtime_dependency": { "type": "boolean", "const": false },
+        "requires_source_mining": { "type": "boolean", "const": false },
+        "requires_black_box_execution": { "type": "boolean", "const": false },
+        "requires_dashboard": { "type": "boolean", "const": false },
+        "requires_llm_judge_gate": { "type": "boolean", "const": false },
+        "external_authority_claims": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["none"] }
+        }
+      }
+    },
+    "quality_evidence": {
+      "type": "object",
+      "description": "Attachment-derived guardrail and synthetic-data lessons captured as evidence metadata without becoming release authority.",
+      "additionalProperties": false,
+      "required": [
+        "labeled_examples",
+        "coverage_dimensions",
+        "metric_policy",
+        "synthetic_data_policy",
+        "improvement_loop"
+      ],
+      "properties": {
+        "labeled_examples": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "positive_count",
+            "negative_count",
+            "source_refs"
+          ],
+          "properties": {
+            "positive_count": { "type": "integer", "minimum": 1 },
+            "negative_count": { "type": "integer", "minimum": 1 },
+            "source_refs": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" }
+            }
+          }
+        },
+        "coverage_dimensions": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "boundary-claim",
+              "failure-class",
+              "legitimate-positive",
+              "adversarial-negative",
+              "sentence-level",
+              "whole-response",
+              "cluster-balance",
+              "topic-diversity"
+            ]
+          }
+        },
+        "metric_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "precision_target",
+            "recall_target",
+            "judge_gate_status",
+            "threshold_tuning_status"
+          ],
+          "properties": {
+            "precision_target": { "type": "number", "minimum": 0 },
+            "recall_target": { "type": "number", "minimum": 0 },
+            "judge_gate_status": { "type": "string", "enum": ["not_used", "advisory_until_calibrated"] },
+            "threshold_tuning_status": { "type": "string", "enum": ["not_applicable", "manual_candidate", "advisory_loop_only"] }
+          }
+        },
+        "synthetic_data_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "generation_status",
+            "diversity_strategy",
+            "privacy_status"
+          ],
+          "properties": {
+            "generation_status": { "type": "string", "enum": ["none", "manual_candidate", "advisory_only"] },
+            "diversity_strategy": { "type": "string", "enum": ["not_applicable", "topic_coverage", "cluster_balance", "adversarial_expansion"] },
+            "privacy_status": { "type": "string", "enum": ["synthetic_only", "sanitized_only"] }
+          }
+        },
+        "improvement_loop": {
+          "type": "object",
+          "description": "Trace-feedback-eval-handoff loop evidence, kept repo-local and advisory unless deterministic validation promotes it.",
+          "additionalProperties": false,
+          "required": [
+            "trace_evidence_refs",
+            "evidence_origins",
+            "human_review_status",
+            "generated_eval_status",
+            "handoff_status"
+          ],
+          "properties": {
+            "trace_evidence_refs": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" }
+            },
+            "evidence_origins": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "repo-local-artifacts",
+                  "user-agents-traces",
+                  "user-agents-sessions"
+                ]
+              }
+            },
+            "human_review_status": { "type": "string", "enum": ["not_required", "required_before_promotion", "recorded"] },
+            "generated_eval_status": { "type": "string", "enum": ["manual", "candidate_generated", "validated"] },
+            "handoff_status": { "type": "string", "enum": ["not_required", "candidate", "recorded"] }
+          }
+        }
+      }
+    },
+    "deterministic_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_fixture_path",
+        "expected_classification",
+        "oracle_type",
+        "evaluator_authority_status",
+        "reproduce_command"
+      ],
+      "properties": {
+        "target_fixture_path": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" },
+        "expected_classification": {
+          "type": "string",
+          "enum": ["non-proof-claim-detected", "missing-evidence-detected", "authority-boundary-preserved"]
+        },
+        "oracle_type": { "type": "string", "enum": ["artifact_contract", "schema", "policy"] },
+        "evaluator_authority_status": { "type": "string", "const": "deterministic" },
+        "reproduce_command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "decision_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["throughput_decision", "residual_uncertainty", "value_of_information"],
+      "properties": {
+        "throughput_decision": { "type": "string", "minLength": 1 },
+        "residual_uncertainty": { "type": "string", "minLength": 1 },
+        "value_of_information": { "type": "string", "minLength": 1 }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "commands"],
+      "properties": {
+        "status": { "type": "string", "enum": ["candidate", "fixture-added", "validated"] },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

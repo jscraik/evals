@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { validateCasePromotions } from "../src/lib/case-promotion.js";
+import { validateEvalImprovements } from "../src/lib/eval-improvement.js";
 import { validateProofContractObject } from "../src/lib/proof-contract-validation.js";
 import { schemaCheckFromObject, schemaTargets, supportedSchemaKeywords, validateWithSchema } from "../src/lib/schema.js";
 
@@ -314,6 +316,244 @@ test("eval case metadata classifies scenario buckets without making old cases in
     ).join("\n"),
     /expected one of exit-code/
   );
+});
+
+test("case promotion records keep real-case adoption manual and deterministic", () => {
+  const promotionSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "case-promotion.schema.json"), "utf8"));
+  const promotionDir = join(sourceRoot, ".harness", "case-promotions");
+  const promotions = readdirSync(promotionDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => JSON.parse(readFileSync(join(promotionDir, file), "utf8")));
+
+  assert.equal(schemaTargets.casePromotion.label, "case promotion");
+  assert.ok(promotions.length > 0);
+  for (const promotion of promotions) {
+    assert.deepEqual(validateWithSchema(promotion, promotionSchema), []);
+    assert.equal(promotion.safety_boundary.imports_sibling_runtime_dependency, false);
+    assert.equal(promotion.safety_boundary.requires_source_mining, false);
+    assert.equal(promotion.safety_boundary.requires_black_box_execution, false);
+    assert.equal(promotion.safety_boundary.requires_llm_judge_gate, false);
+    assert.deepEqual(promotion.safety_boundary.external_authority_claims, ["none"]);
+    assert.ok(promotion.quality_evidence.labeled_examples.positive_count >= 1);
+    assert.ok(promotion.quality_evidence.labeled_examples.negative_count >= 1);
+    assert.ok(promotion.quality_evidence.coverage_dimensions.includes("legitimate-positive"));
+    assert.ok(promotion.quality_evidence.coverage_dimensions.includes("adversarial-negative"));
+    assert.equal(promotion.quality_evidence.metric_policy.judge_gate_status, "not_used");
+    assert.equal(promotion.quality_evidence.synthetic_data_policy.privacy_status, "synthetic_only");
+    assert.ok(promotion.quality_evidence.improvement_loop.trace_evidence_refs.length >= 1);
+    assert.ok(promotion.quality_evidence.improvement_loop.evidence_origins.includes("user-agents-traces"));
+    assert.ok(promotion.quality_evidence.improvement_loop.evidence_origins.includes("user-agents-sessions"));
+    assert.equal(promotion.quality_evidence.improvement_loop.handoff_status, "recorded");
+    assert.equal(promotion.deterministic_case.evaluator_authority_status, "deterministic");
+    assert.doesNotThrow(() => readFileSync(join(sourceRoot, promotion.source_failure.source_artifact_ref), "utf8"));
+    assert.doesNotThrow(() => readFileSync(join(sourceRoot, promotion.deterministic_case.target_fixture_path), "utf8"));
+    for (const sourceRef of promotion.quality_evidence.labeled_examples.source_refs) {
+      assert.doesNotThrow(() => readFileSync(join(sourceRoot, sourceRef), "utf8"));
+    }
+    for (const traceRef of promotion.quality_evidence.improvement_loop.trace_evidence_refs) {
+      assert.doesNotThrow(() => readFileSync(join(sourceRoot, traceRef), "utf8"));
+    }
+  }
+
+  const [promotion] = promotions;
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        source_failure: {
+          ...promotion.source_failure,
+          contains_private_content: true
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /contains_private_content: expected const false/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        safety_boundary: {
+          ...promotion.safety_boundary,
+          requires_black_box_execution: true
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /requires_black_box_execution: expected const false/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        safety_boundary: {
+          ...promotion.safety_boundary,
+          external_authority_claims: ["ci-passed"]
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /expected one of none/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        quality_evidence: {
+          ...promotion.quality_evidence,
+          labeled_examples: {
+            ...promotion.quality_evidence.labeled_examples,
+            negative_count: 0
+          }
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /negative_count: must be >= 1/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        quality_evidence: {
+          ...promotion.quality_evidence,
+          coverage_dimensions: ["boundary-claim"]
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /coverage_dimensions: must contain at least 2 items/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        quality_evidence: {
+          ...promotion.quality_evidence,
+          metric_policy: {
+            ...promotion.quality_evidence.metric_policy,
+            judge_gate_status: "release_gate"
+          }
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /expected one of not_used, advisory_until_calibrated/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        quality_evidence: {
+          ...promotion.quality_evidence,
+          improvement_loop: {
+            ...promotion.quality_evidence.improvement_loop,
+            trace_evidence_refs: []
+          }
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /trace_evidence_refs: must contain at least 1 items/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...promotion,
+        deterministic_case: {
+          ...promotion.deterministic_case,
+          evaluator_authority_status: "llm_calibrated"
+        }
+      },
+      promotionSchema
+    ).join("\n"),
+    /expected const "deterministic"/
+  );
+});
+
+test("case promotion validation links candidates to deterministic shared-contract failures", () => {
+  const validation = validateCasePromotions(sourceRoot);
+
+  assert.equal(validation.status, "passed");
+  assert.equal(validation.promotions_checked, 1);
+  assert.equal(validation.checks[0].checks[0].label, "case promotion");
+  assert.equal(validation.checks[0].checks[1].label, "case promotion semantics");
+});
+
+test("eval improvement packets bridge traces and feedback without runtime authority", () => {
+  const improvementSchema = JSON.parse(readFileSync(join(sourceRoot, "schemas", "eval-improvement-packet.schema.json"), "utf8"));
+  const improvementDir = join(sourceRoot, ".harness", "eval-improvements");
+  const improvements = readdirSync(improvementDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => JSON.parse(readFileSync(join(improvementDir, file), "utf8")));
+
+  assert.equal(schemaTargets.evalImprovement.label, "eval improvement packet");
+  assert.ok(improvements.length > 0);
+  for (const improvement of improvements) {
+    assert.deepEqual(validateWithSchema(improvement, improvementSchema), []);
+    assert.equal(improvement.authority_boundary.imports_external_runtime_dependency, false);
+    assert.equal(improvement.authority_boundary.reads_user_agents_runtime_store, false);
+    assert.equal(improvement.authority_boundary.requires_llm_judge_gate, false);
+    assert.equal(improvement.source_evidence.origin_path_policy, "external_origin_named_only");
+    assert.equal(improvement.candidate_eval.evaluator_authority_status, "deterministic");
+    assert.notEqual(improvement.candidate_eval.oracle_type, "llm_advisory");
+    for (const evidenceRef of improvement.source_evidence.repo_evidence_refs) {
+      assert.doesNotThrow(() => readFileSync(join(sourceRoot, evidenceRef), "utf8"));
+    }
+    for (const feedbackRef of improvement.feedback.feedback_refs) {
+      assert.doesNotThrow(() => readFileSync(join(sourceRoot, feedbackRef), "utf8"));
+    }
+  }
+
+  const [improvement] = improvements;
+  assert.match(
+    validateWithSchema(
+      {
+        ...improvement,
+        authority_boundary: {
+          ...improvement.authority_boundary,
+          reads_user_agents_runtime_store: true
+        }
+      },
+      improvementSchema
+    ).join("\n"),
+    /reads_user_agents_runtime_store: expected const false/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...improvement,
+        source_evidence: {
+          ...improvement.source_evidence,
+          repo_evidence_refs: []
+        }
+      },
+      improvementSchema
+    ).join("\n"),
+    /repo_evidence_refs: must contain at least 1 items/
+  );
+  assert.match(
+    validateWithSchema(
+      {
+        ...improvement,
+        candidate_eval: {
+          ...improvement.candidate_eval,
+          evaluator_authority_status: "llm_calibrated"
+        }
+      },
+      improvementSchema
+    ).join("\n"),
+    /expected one of deterministic, human_labeled, llm_advisory, blocked/
+  );
+});
+
+test("eval improvement validation links promoted packets to deterministic case promotions", () => {
+  const validation = validateEvalImprovements(sourceRoot);
+
+  assert.equal(validation.status, "passed");
+  assert.equal(validation.improvements_checked, 1);
+  assert.equal(validation.checks[0].checks[0].label, "eval improvement packet");
+  assert.equal(validation.checks[0].checks[1].label, "eval improvement semantics");
 });
 
 test("claim registry schema represents unevaluable claims explicitly", () => {

@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jscraik.local/evals/eval-improvement-packet.schema.json",
+  "title": "Eval Improvement Packet",
+  "description": "Repo-local bridge from trace or session evidence plus feedback into a candidate deterministic eval improvement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "improvement_id",
+    "source_evidence",
+    "feedback",
+    "candidate_eval",
+    "promotion_decision",
+    "authority_boundary",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "improvement_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:-]*$" },
+    "source_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "origin_path_policy",
+        "repo_evidence_refs",
+        "contains_private_content",
+        "contains_credentials",
+        "redaction_status"
+      ],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "enum": [
+            "repo-local-artifacts",
+            "user-agents-traces",
+            "user-agents-sessions",
+            "mixed"
+          ]
+        },
+        "origin_path_policy": {
+          "type": "string",
+          "enum": [
+            "repo_relative_only",
+            "external_origin_named_only"
+          ]
+        },
+        "repo_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" }
+        },
+        "contains_private_content": { "type": "boolean", "const": false },
+        "contains_credentials": { "type": "boolean", "const": false },
+        "redaction_status": { "type": "string", "enum": ["redacted", "synthetic_no_redaction_needed"] }
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer_role",
+        "feedback_type",
+        "expected_behavior",
+        "failure_mode",
+        "feedback_refs"
+      ],
+      "properties": {
+        "reviewer_role": { "type": "string", "enum": ["human", "model_advisory", "mixed"] },
+        "feedback_type": {
+          "type": "string",
+          "enum": [
+            "missing-evidence",
+            "wrong-authority-claim",
+            "weak-fixture",
+            "coverage-gap",
+            "judge-calibration-needed"
+          ]
+        },
+        "expected_behavior": { "type": "string", "minLength": 1 },
+        "failure_mode": { "type": "string", "minLength": 1 },
+        "feedback_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" }
+        }
+      }
+    },
+    "candidate_eval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_type",
+        "assertion_shape",
+        "oracle_type",
+        "evaluator_authority_status",
+        "coverage_dimensions"
+      ],
+      "properties": {
+        "candidate_type": { "type": "string", "enum": ["fixture", "contract-assertion", "case-promotion", "coverage-report"] },
+        "assertion_shape": {
+          "type": "string",
+          "enum": [
+            "given-should-actual-expected",
+            "positive-negative-labeled-pair",
+            "trace-feedback-handoff"
+          ]
+        },
+        "oracle_type": { "type": "string", "enum": ["artifact_contract", "schema", "policy", "human_rubric", "llm_advisory"] },
+        "evaluator_authority_status": { "type": "string", "enum": ["deterministic", "human_labeled", "llm_advisory", "blocked"] },
+        "coverage_dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "boundary-claim",
+              "failure-class",
+              "legitimate-positive",
+              "adversarial-negative",
+              "sentence-level",
+              "whole-response",
+              "cluster-balance",
+              "topic-diversity",
+              "trace-feedback-loop"
+            ]
+          }
+        }
+      }
+    },
+    "promotion_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "case_promotion_ref",
+        "target_fixture_path",
+        "decision_reason"
+      ],
+      "properties": {
+        "status": { "type": "string", "enum": ["candidate", "rejected", "promoted"] },
+        "case_promotion_ref": { "type": ["string", "null"], "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" },
+        "target_fixture_path": { "type": ["string", "null"], "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$" },
+        "decision_reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "imports_external_runtime_dependency",
+        "reads_user_agents_runtime_store",
+        "requires_llm_judge_gate",
+        "proves",
+        "does_not_prove"
+      ],
+      "properties": {
+        "imports_external_runtime_dependency": { "type": "boolean", "const": false },
+        "reads_user_agents_runtime_store": { "type": "boolean", "const": false },
+        "requires_llm_judge_gate": { "type": "boolean", "const": false },
+        "proves": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "does_not_prove": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "commands"],
+      "properties": {
+        "status": { "type": "string", "enum": ["candidate", "validated"] },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

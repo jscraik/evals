@@ -12,6 +12,14 @@ export const schemaTargets = {
     schema: join(schemaDir, "eval-case.schema.json"),
     label: "eval case"
   },
+  casePromotion: {
+    schema: join(schemaDir, "case-promotion.schema.json"),
+    label: "case promotion"
+  },
+  evalImprovement: {
+    schema: join(schemaDir, "eval-improvement-packet.schema.json"),
+    label: "eval improvement packet"
+  },
   suite: {
     schema: join(schemaDir, "suite.schema.json"),
     label: "eval suite"
