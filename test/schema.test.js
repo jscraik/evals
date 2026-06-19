@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -560,6 +561,81 @@ test("eval improvement validation links promoted packets to deterministic case p
   assert.equal(validation.improvements_checked, expectedImprovementCount);
   assert.equal(validation.checks[0].checks[0].label, "eval improvement packet");
   assert.equal(validation.checks[0].checks[1].label, "eval improvement semantics");
+});
+
+test("eval improvement validation rejects promoted packets linked to non-promotion files", () => {
+  const root = mkdtempSync(join(tmpdir(), "eval-improvement-invalid-promotion-"));
+  try {
+    mkdirSync(join(root, ".harness", "eval-improvements"), { recursive: true });
+    mkdirSync(join(root, ".harness", "reframes"), { recursive: true });
+    mkdirSync(join(root, "fixtures", "contracts", "bad"), { recursive: true });
+    mkdirSync(join(root, "fixtures", "contracts", "good"), { recursive: true });
+
+    writeFileSync(join(root, "README.md"), "# Not a case promotion\n");
+    writeFileSync(join(root, ".harness", "reframes", "source.md"), "# Source\n");
+    writeFileSync(join(root, "fixtures", "contracts", "bad", "local-pass-pr-done.md"), "# Bad\n");
+    writeFileSync(join(root, "fixtures", "contracts", "good", "local-pass-ci-unknown.md"), "# Good\n");
+    writeFileSync(
+      join(root, ".harness", "eval-improvements", "bad-link.json"),
+      JSON.stringify(
+        {
+          schema_version: 1,
+          improvement_id: "eval-improvement:test:bad-link",
+          source_evidence: {
+            origin: "mixed",
+            origin_path_policy: "external_origin_named_only",
+            repo_evidence_refs: [".harness/reframes/source.md"],
+            contains_private_content: false,
+            contains_credentials: false,
+            redaction_status: "synthetic_no_redaction_needed"
+          },
+          feedback: {
+            reviewer_role: "human",
+            feedback_type: "wrong-authority-claim",
+            expected_behavior: "Keep local validation separate from merge readiness.",
+            failure_mode: "Local validation was treated as merge readiness.",
+            feedback_refs: [
+              ".harness/reframes/source.md",
+              "fixtures/contracts/bad/local-pass-pr-done.md",
+              "fixtures/contracts/good/local-pass-ci-unknown.md"
+            ]
+          },
+          candidate_eval: {
+            candidate_type: "case-promotion",
+            assertion_shape: "trace-feedback-handoff",
+            oracle_type: "policy",
+            evaluator_authority_status: "deterministic",
+            coverage_dimensions: ["boundary-claim"]
+          },
+          promotion_decision: {
+            status: "promoted",
+            case_promotion_ref: "README.md",
+            target_fixture_path: "fixtures/contracts/bad/local-pass-pr-done.md",
+            decision_reason: "This intentionally links to a non-promotion file."
+          },
+          authority_boundary: {
+            imports_external_runtime_dependency: false,
+            reads_user_agents_runtime_store: false,
+            requires_llm_judge_gate: false,
+            proves: ["schema accepts the packet shape"],
+            does_not_prove: ["README is a case promotion"]
+          },
+          validation: {
+            status: "validated",
+            commands: ["node scripts/validate-eval-improvements.js"]
+          }
+        },
+        null,
+        2
+      )
+    );
+
+    const validation = validateEvalImprovements(root);
+    assert.equal(validation.status, "failed");
+    assert.match(validation.errors.join("\n"), /linked case promotion is unreadable/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("claim registry schema represents unevaluable claims explicitly", () => {

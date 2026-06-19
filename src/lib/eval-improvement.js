@@ -36,6 +36,43 @@ function validateOptionalRepoRef(errors, root, label, ref) {
   validateRepoRefs(errors, root, label, [ref]);
 }
 
+function validateLinkedCasePromotion(errors, root, improvement) {
+  const promotionRef = improvement.promotion_decision?.case_promotion_ref;
+  if (!promotionRef) return;
+
+  let promotion;
+  try {
+    promotion = readJson(insideRoot(root, promotionRef, "evals repository"));
+  } catch (error) {
+    errors.push("promotion_decision.case_promotion_ref: linked case promotion is unreadable: " + error.message);
+    return;
+  }
+
+  const schemaCheck = schemaCheckFromObject("casePromotion", promotion, promotionRef);
+  if (schemaCheck.status !== "pass") {
+    errors.push("promotion_decision.case_promotion_ref: linked file is not a valid case-promotion packet: " + schemaCheck.errors.join("; "));
+    return;
+  }
+
+  if (promotion.validation?.status !== "validated") {
+    errors.push("promotion_decision.case_promotion_ref: linked case promotion must be validated");
+  }
+  if (promotion.deterministic_case?.evaluator_authority_status !== "deterministic") {
+    errors.push("promotion_decision.case_promotion_ref: linked case promotion must use deterministic evaluator authority");
+  }
+  if (promotion.deterministic_case?.target_fixture_path !== improvement.promotion_decision?.target_fixture_path) {
+    errors.push("promotion_decision.target_fixture_path: must match linked case promotion deterministic_case.target_fixture_path");
+  }
+
+  const evidenceRefs = new Set([
+    ...(improvement.source_evidence?.repo_evidence_refs || []),
+    ...(improvement.feedback?.feedback_refs || [])
+  ]);
+  if (!evidenceRefs.has(promotion.source_failure?.source_artifact_ref)) {
+    errors.push("promotion_decision.case_promotion_ref: linked promotion source_failure.source_artifact_ref must be included in improvement evidence refs");
+  }
+}
+
 function validateImprovementSemantics(improvement, improvementPath, root) {
   const errors = [];
 
@@ -61,6 +98,7 @@ function validateImprovementSemantics(improvement, improvementPath, root) {
     if (!improvement.promotion_decision.target_fixture_path) {
       errors.push("promotion_decision.target_fixture_path: promoted improvements must link to the promoted fixture");
     }
+    validateLinkedCasePromotion(errors, root, improvement);
     if (improvement.candidate_eval?.evaluator_authority_status !== "deterministic") {
       errors.push("candidate_eval.evaluator_authority_status: promoted improvements must use deterministic authority");
     }
