@@ -74,6 +74,19 @@ and their local semantic invariants. It is intentionally data-only: it does not
 load consumer plugins, execute scorers, call external services, or promote a
 baseline.
 
+Promotion and improvement packet validators:
+
+```bash
+node scripts/validate-case-promotions.js
+node scripts/validate-eval-improvements.js
+```
+
+These validators keep downstream failure promotion and trace-feedback handoff
+packets deterministic and repo-local. They can name external origins such as
+`~/.agents` traces or sessions as provenance, but they validate only
+repo-relative, sanitized evidence references and do not read external runtime
+stores.
+
 Regression test command:
 
 ```bash

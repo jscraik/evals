@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "improvement_id": "eval-improvement:2026-06-19:agents-trace-feedback-to-case-promotion",
+  "source_evidence": {
+    "origin": "mixed",
+    "origin_path_policy": "external_origin_named_only",
+    "repo_evidence_refs": [
+      ".harness/reframes/2026-05-23-evals-real-case-adoption.md",
+      ".harness/case-promotions/2026-06-19-coding-harness-local-validation-not-merge-readiness.json"
+    ],
+    "contains_private_content": false,
+    "contains_credentials": false,
+    "redaction_status": "synthetic_no_redaction_needed"
+  },
+  "feedback": {
+    "reviewer_role": "human",
+    "feedback_type": "wrong-authority-claim",
+    "expected_behavior": "Keep local validation, CI state, review-thread state, tracker state, and merge readiness as separate evidence lanes.",
+    "failure_mode": "A local validation pass was treated as proof that a pull request was done and ready to merge.",
+    "feedback_refs": [
+      ".harness/reframes/2026-05-23-evals-real-case-adoption.md",
+      "fixtures/contracts/bad/local-pass-pr-done.md",
+      "fixtures/contracts/good/local-pass-ci-unknown.md"
+    ]
+  },
+  "candidate_eval": {
+    "candidate_type": "case-promotion",
+    "assertion_shape": "trace-feedback-handoff",
+    "oracle_type": "policy",
+    "evaluator_authority_status": "deterministic",
+    "coverage_dimensions": [
+      "boundary-claim",
+      "failure-class",
+      "legitimate-positive",
+      "adversarial-negative",
+      "trace-feedback-loop"
+    ]
+  },
+  "promotion_decision": {
+    "status": "promoted",
+    "case_promotion_ref": ".harness/case-promotions/2026-06-19-coding-harness-local-validation-not-merge-readiness.json",
+    "target_fixture_path": "fixtures/contracts/bad/local-pass-pr-done.md",
+    "decision_reason": "The trace and feedback pattern has a deterministic local contract assertion, so the packet is promoted through the case-promotion bridge instead of relying on hosted telemetry or an advisory judge."
+  },
+  "authority_boundary": {
+    "imports_external_runtime_dependency": false,
+    "reads_user_agents_runtime_store": false,
+    "requires_llm_judge_gate": false,
+    "proves": [
+      "sanitized trace-feedback evidence was converted into a repo-owned deterministic promotion record",
+      "the promoted bad fixture fails the shared contract assertion locally"
+    ],
+    "does_not_prove": [
+      "the original ~/.agents trace or session still exists",
+      "external PR checks passed",
+      "review threads are resolved",
+      "tracker state is closed",
+      "the pull request is merge-ready"
+    ]
+  },
+  "validation": {
+    "status": "validated",
+    "commands": [
+      "node scripts/validate-eval-improvements.js",
+      "node scripts/validate-case-promotions.js",
+      "pnpm test test/schema.test.js"
+    ]
+  }
+}

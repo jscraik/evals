@@ -26,7 +26,9 @@ export const credentialScanRootCandidates = [
   ".harness/specs",
   ".harness/plan",
   ".harness/plans",
-  ".harness/linear"
+  ".harness/linear",
+  ".harness/case-promotions",
+  ".harness/eval-improvements"
 ];
 
 const excludedCredentialScanDirectories = new Set([
@@ -71,6 +73,14 @@ export const checks = [
   {
     command: "node scripts/validate-contracts.js",
     run: () => runCommand("node", ["scripts/validate-contracts.js"])
+  },
+  {
+    command: "node scripts/validate-case-promotions.js",
+    run: () => runCommand("node", ["scripts/validate-case-promotions.js"])
+  },
+  {
+    command: "node scripts/validate-eval-improvements.js",
+    run: () => runCommand("node", ["scripts/validate-eval-improvements.js"])
   },
   {
     command: "pnpm test",

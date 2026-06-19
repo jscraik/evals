@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "promotion_id": "case-promotion:2026-06-19:local-validation-not-merge-readiness",
+  "source_failure": {
+    "source_system": "coding-harness",
+    "source_artifact_ref": ".harness/reframes/2026-05-23-evals-real-case-adoption.md",
+    "observed_failure_class": "local-validation-misread-as-merge-readiness",
+    "observed_at": "2026-06-19T11:31:56Z",
+    "redaction_status": "synthetic_no_redaction_needed",
+    "contains_private_content": false,
+    "contains_credentials": false
+  },
+  "safety_boundary": {
+    "imports_sibling_runtime_dependency": false,
+    "requires_source_mining": false,
+    "requires_black_box_execution": false,
+    "requires_dashboard": false,
+    "requires_llm_judge_gate": false,
+    "external_authority_claims": ["none"]
+  },
+  "quality_evidence": {
+    "labeled_examples": {
+      "positive_count": 1,
+      "negative_count": 1,
+      "source_refs": [
+        "fixtures/contracts/good/local-pass-ci-unknown.md",
+        "fixtures/contracts/bad/local-pass-pr-done.md"
+      ]
+    },
+    "coverage_dimensions": [
+      "boundary-claim",
+      "failure-class",
+      "legitimate-positive",
+      "adversarial-negative",
+      "whole-response"
+    ],
+    "metric_policy": {
+      "precision_target": 1,
+      "recall_target": 1,
+      "judge_gate_status": "not_used",
+      "threshold_tuning_status": "not_applicable"
+    },
+    "synthetic_data_policy": {
+      "generation_status": "manual_candidate",
+      "diversity_strategy": "adversarial_expansion",
+      "privacy_status": "synthetic_only"
+    },
+    "improvement_loop": {
+      "trace_evidence_refs": [
+        ".harness/reframes/2026-05-23-evals-real-case-adoption.md",
+        "fixtures/contracts/bad/local-pass-pr-done.md"
+      ],
+      "evidence_origins": [
+        "repo-local-artifacts",
+        "user-agents-traces",
+        "user-agents-sessions"
+      ],
+      "human_review_status": "recorded",
+      "generated_eval_status": "manual",
+      "handoff_status": "recorded"
+    }
+  },
+  "deterministic_case": {
+    "target_fixture_path": "fixtures/contracts/bad/local-pass-pr-done.md",
+    "expected_classification": "non-proof-claim-detected",
+    "oracle_type": "policy",
+    "evaluator_authority_status": "deterministic",
+    "reproduce_command": "node scripts/validate-case-promotions.js"
+  },
+  "decision_value": {
+    "throughput_decision": "Preserve local validation as evidence without letting it imply CI, review-thread, tracker, or merge readiness.",
+    "residual_uncertainty": "This candidate proves the promotion record shape and one known non-proof claim class; it does not prove broad downstream adoption.",
+    "value_of_information": "High: it converts the self-proof concern into one redacted, locally replayable adoption bridge before larger adapters or judge lanes are considered."
+  },
+  "validation": {
+    "status": "validated",
+    "commands": [
+      "node scripts/validate-case-promotions.js",
+      "pnpm test test/schema.test.js",
+      "pnpm evals check --json",
+      "pnpm evals state --json"
+    ]
+  }
+}
